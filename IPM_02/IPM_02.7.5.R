@@ -3,6 +3,8 @@
 # ----------------------------------------------------
 # Code from MS submitted to publisher.
 
+# Run time approx. 5 mins
+
 library(IPMbook) ; library(jagsUI)
 
 # ~~~ requires data created in 2.7.4 ~~~
@@ -53,7 +55,7 @@ model {
 ")
 
 # Initial values
-inits <- function(){list(d=rgamma(4, 1, 1))} 
+inits <- function(){list(d=rgamma(4, 1, 1))}
 
 # Parameters monitored
 parameters <- c("pi")

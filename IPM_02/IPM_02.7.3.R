@@ -3,6 +3,8 @@
 # ----------------------------------------------------
 # Code from MS submitted to publisher.
 
+# Run time approx. 2 mins
+
 library(IPMbook) ; library(jagsUI)
 
 # 2.7 Using JAGS to fit simple statistical models from R: GLMs and GLMMs
@@ -21,7 +23,7 @@ N <- rpois(nsites, mean.abundance)      # Realized abundance N is Poisson
 table(N)                                # Note 7 unoccupied sites
 
 # N
-  # 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  21 
+  # 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  21
   # 7  13  38 109 141 157 144 126 101  69  47  24  14   7   1   1   1
 
 # Simulate one count per site between March and October
@@ -40,9 +42,9 @@ p <- plogis(qlogis(mean.p) + beta1.lp * sdate + beta2.lp * sdate2)
 C <- rbinom(nsites, N, p)
 
 # ~~~~ extra code for Figure 2.15 ~~~~
-# Plot abundance, detection, seasonal profile of counts 
+# Plot abundance, detection, seasonal profile of counts
 #  and counts versus abundance
-par(mfrow = c(2, 2), mar=c(5, 5, 2, 2), cex.lab=1.5, cex.axis=1.5, 
+par(mfrow = c(2, 2), mar=c(5, 5, 2, 2), cex.lab=1.5, cex.axis=1.5,
     cex.main=1.5, las=1)
 plot(survey.date, N, pch=16, col=rgb(0, 0, 0, 0.4), cex=1.5, xlab="Survey date",
     ylab=expression(paste('Snake abundance (', italic(N), ')')), frame=FALSE,
@@ -91,7 +93,7 @@ model {
 ")
 
 # Initial values
-inits <- function(){list(mean.p=runif(1, 0, 0.3), beta=runif(2, 0, 2))} 
+inits <- function(){list(mean.p=runif(1, 0, 0.3), beta=runif(2, 0, 2))}
 
 # Parameters monitored
 parameters <- c("alpha", "beta", "mean.p", "p")
@@ -143,7 +145,7 @@ print(cbind(mle, ASE), 3)      # Print MLEs and Ses
 summary(glm(cbind(C, N-C) ~ sdate + sdate2, family='binomial'))
 
 # Coefficients:
-            # Estimate Std. Error z value Pr(>|z|)    
+            # Estimate Std. Error z value Pr(>|z|)
 # (Intercept) -2.97874    0.07448 -39.991   <2e-16 ***
 # sdate       -0.30354    0.03227  -9.407   <2e-16 ***
 # sdate2       0.95098    0.04229  22.487   <2e-16 ***
@@ -151,7 +153,7 @@ summary(glm(cbind(C, N-C) ~ sdate + sdate2, family='binomial'))
 # Plot seasonal detection profile: truth (red) and estimate (blue) (Not shown)
 plot(survey.date, p, type="l", lty=1, lwd=5, col="red",
     xlab="Survey date (day of year)", ylab="Detection probabilty",
-    frame=FALSE, ylim=c(0, 0.6))   
+    frame=FALSE, ylim=c(0, 0.6))
 polygon(c(survey.date, rev(survey.date)), c(out4$q2.5$p,
     rev(out4$q97.5$p)), col="grey", border=NA)
 lines(survey.date, p, type="l", lty=1, lwd=5, col="red")

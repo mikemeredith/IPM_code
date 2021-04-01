@@ -3,6 +3,8 @@
 # ----------------------------------------------------
 # Code from MS submitted to publisher.
 
+# Run time approx. 3 mins
+
 library(IPMbook)
 
 # 2.7 Using JAGS to fit simple statistical models from R: GLMs and GLMMs

@@ -3,6 +3,8 @@
 # ----------------------------------------------------
 # Code from MS submitted to publisher.
 
+# Run time approx. 1 min
+
 library(IPMbook) ; library(jagsUI)
 
 # ~~~ need following fcode from 2.7.1 ~~~~~~~~
@@ -129,7 +131,7 @@ for(i in 1:12000){
 # Get posterior mean of theta (theta_hat)
 pm <- apply(pred2, 1, mean) # Posterior mean
 # Compute probability that theta_hat < 0.01
-prob <- apply(pred2, 1, function(x) mean((x - 0.01) < 0)) 
+prob <- apply(pred2, 1, function(x) mean((x - 0.01) < 0))
 # Compute minimum elevation at which prob > 0.95
 min.elev <- min(alt.elev.pred[prob > 0.95])
 print(min.elev)
