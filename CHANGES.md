@@ -2,6 +2,10 @@
 
 # CHANGES
 
+# 2021-04-04
+
+Improved formatting: mostly indenting and line breaks. Graphics parameters are now restored after plotting. Run times added.
+
 # 2021-04-01
 
 Uploaded code for remaining chapters. The code works, but needs tidying and formatting.
