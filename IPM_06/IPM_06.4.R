@@ -10,7 +10,6 @@ library(IPMbook) ; library(jagsUI)
 # 6.4 Estimation of process correlation among demographic parameters
 # ==================================================================
 
-library(IPMbook); library(jagsUI)
 data(woodchat64)
 marr <- marrayAge(woodchat64$ch, woodchat64$age)
 
@@ -22,93 +21,93 @@ jags.data<- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
 # Write JAGS model file
 cat(file="model4.txt", "
 model {
-# Priors and linear models
-for (t in 1:(n.occasions-1)){
-  logit(sj[t]) <- eps[1,t]
-  logit(sa[t]) <- eps[2,t]
-  log(f[t]) <- eps[3,t]
-  eps[1:3,t] ~ dmnorm.vcov(mu[], sigma2[,])
-  p[t] <- mean.p
-}
+  # Priors and linear models
+  for (t in 1:(n.occasions-1)){
+    logit(sj[t]) <- eps[1,t]
+    logit(sa[t]) <- eps[2,t]
+    log(f[t]) <- eps[3,t]
+    eps[1:3,t] ~ dmnorm.vcov(mu[], sigma2[,])
+    p[t] <- mean.p
+  }
 
-mu[1] <- logit(mean.sj)
-mu[2] <- logit(mean.sa)
-mu[3] <- log(mean.f)
+  mu[1] <- logit(mean.sj)
+  mu[2] <- logit(mean.sa)
+  mu[3] <- log(mean.f)
 
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.f ~ dunif(0, 10)
-mean.p ~ dunif(0, 1)
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.f ~ dunif(0, 10)
+  mean.p ~ dunif(0, 1)
 
-# Reparameterize sigma2 in terms of SD and rho
-for (i in 1:3){
-  sigma2[i,i] <- sigma[i] * sigma[i]
-}
-for (i in 1:2){
-  for (j in (i+1):3){
-    sigma2[i,j] <- sigma[i] * sigma[j] * rho[i+j-2]
-    sigma2[j,i] <- sigma2[i,j]
-  } #j
-} #i
+  # Reparameterize sigma2 in terms of SD and rho
+  for (i in 1:3){
+    sigma2[i,i] <- sigma[i] * sigma[i]
+  }
+  for (i in 1:2){
+    for (j in (i+1):3){
+      sigma2[i,j] <- sigma[i] * sigma[j] * rho[i+j-2]
+      sigma2[j,i] <- sigma2[i,j]
+    } #j
+  } #i
 
-# Specify priors for SD and rho
-for (i in 1:3){
-  sigma[i] ~ dunif(0, 5)
-  rho[i] ~ dunif(-1,1)
-}
+  # Specify priors for SD and rho
+  for (i in 1:3){
+    sigma[i] ~ dunif(0, 5)
+    rho[i] ~ dunif(-1,1)
+  }
 
-sigma.res ~ dunif(0.5, 100)
-tau.res <- pow(sigma.res, -2)
+  sigma.res ~ dunif(0.5, 100)
+  tau.res <- pow(sigma.res, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1] ~ dunif(1, 300)
-N[2,1] ~ dunif(1, 300)
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1] ~ dunif(1, 300)
+  N[2,1] ~ dunif(1, 300)
 
-# Process model over time: our model for population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] <- f[t] / 2 * sj[t] * (N[1,t] + N[2,t])
-  N[2,t+1] <- sa[t] * (N[1,t] + N[2,t])
-}
+  # Process model over time: our model for population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] <- f[t] / 2 * sj[t] * (N[1,t] + N[2,t])
+    N[2,t+1] <- sa[t] * (N[1,t] + N[2,t])
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau.res)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau.res)
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Productivity data (Poisson regression model)
-for (t in 1:(n.occasions-1)){
-  J[t] ~ dpois(f[t] * B[t])
-}
+  # Productivity data (Poisson regression model)
+  for (t in 1:(n.occasions-1)){
+    J[t] ~ dpois(f[t] * B[t])
+  }
 }
 ")
 
@@ -126,7 +125,8 @@ ni <- 60000; nb <- 10000; nc <- 3; nt <- 10; na <- 2000
 # Call JAGS (ART 11 min), check convergence and summarize posteriors
 out4 <- jags(jags.data, inits, parameters, "model4.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out4)
+op <- par(mfrow=c(3, 3)); traceplot(out4)
+par(op)
 print(out4, 3)
 
               # mean     sd    2.5%     50%   97.5% overlap0     f  Rhat n.eff

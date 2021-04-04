@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 70 secs
+# Run time for test script 70 secs, full run 11 mins
 
 library(IPMbook) ; library(jagsUI)
 
@@ -73,28 +73,28 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model20.txt", "
 model {
-# Priors and linear models
-s.const ~ dunif(0, 1)          # Vague prior for constant s
-r.const ~ dunif(0, 1)          # Vague prior for constant r
+  # Priors and linear models
+  s.const ~ dunif(0, 1)          # Vague prior for constant s
+  r.const ~ dunif(0, 1)          # Vague prior for constant r
 
-for (i in 1:nind){             # Loop over individuals
-  for (t in f[i]:(nyears-1)){  # Loop over time intervals/occasions
-    s[i,t] <- s.const          # Here model pattern in s ...
-    r[i,t] <- r.const          # ... and r
-  } #t
-} #i
+  for (i in 1:nind){             # Loop over individuals
+    for (t in f[i]:(nyears-1)){  # Loop over time intervals/occasions
+      s[i,t] <- s.const          # Here model pattern in s ...
+      r[i,t] <- r.const          # ... and r
+    } #t
+  } #i
 
-# Likelihood
-for (i in 1:nind){
-  # Define latent state at first capture
-  z[i,f[i]] <- 1
-  for (t in (f[i]+1):nyears){
-    # State process
-    z[i,t] ~ dbern(z[i,t-1] * s[i,t-1])
-    # Observation process
-    y[i,t] ~ dbern((z[i,t-1]- z[i,t]) * r[i,t-1])
-  } #t
-} #i
+  # Likelihood
+  for (i in 1:nind){
+    # Define latent state at first capture
+    z[i,f[i]] <- 1
+    for (t in (f[i]+1):nyears){
+      # State process
+      z[i,t] ~ dbern(z[i,t-1] * s[i,t-1])
+      # Observation process
+      y[i,t] ~ dbern((z[i,t-1]- z[i,t]) * r[i,t-1])
+    } #t
+  } #i
 }
 ")
 
@@ -137,36 +137,36 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model21.txt", "
 model {
-# Priors and linear models
-s.const ~ dunif(0, 1)       # Vague prior for constant s
-r.const ~ dunif(0, 1)       # Vague prior for constant r
+  # Priors and linear models
+  s.const ~ dunif(0, 1)       # Vague prior for constant s
+  r.const ~ dunif(0, 1)       # Vague prior for constant r
 
-for (t in 1:(nyears-1)){     # Loop over time intervals/occasions
-  s[t] <- s.const           # Here model pattern in s ...
-  r[t] <- r.const           # ... and r
-} #t
+  for (t in 1:(nyears-1)){     # Loop over time intervals/occasions
+    s[t] <- s.const           # Here model pattern in s ...
+    r[t] <- r.const           # ... and r
+  } #t
 
-# Likelihood
-for (t in 1:(nyears-1)){
-  marr[t,1:nyears] ~ dmulti(pi[t,], rel[t])
-}
-# Define the cell probabilities of the m-array
-# Main diagonal
-for (t in 1:(nyears-1)){
-  pi[t,t] <- (1-s[t])*r[t]
-  # Above main diagonal
-  for (j in (t+1):(nyears-1)){
-    pi[t,j] <- prod(s[t:(j-1)])*(1-s[j])*r[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pi[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recovery
-for (t in 1:(nyears-1)){
-  pi[t,nyears] <- 1-sum(pi[t,1:(nyears-1)])
-} #t
+  # Likelihood
+  for (t in 1:(nyears-1)){
+    marr[t,1:nyears] ~ dmulti(pi[t,], rel[t])
+  }
+  # Define the cell probabilities of the m-array
+  # Main diagonal
+  for (t in 1:(nyears-1)){
+    pi[t,t] <- (1-s[t])*r[t]
+    # Above main diagonal
+    for (j in (t+1):(nyears-1)){
+      pi[t,j] <- prod(s[t:(j-1)])*(1-s[j])*r[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pi[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recovery
+  for (t in 1:(nyears-1)){
+    pi[t,nyears] <- 1-sum(pi[t,1:(nyears-1)])
+  } #t
 }
 ")
 

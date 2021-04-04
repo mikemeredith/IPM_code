@@ -54,7 +54,7 @@ model {
 ")
 
 # Initial values
-inits <- function(){list(d=rgamma(4, 1, 1))} 
+inits <- function(){list(d=rgamma(4, 1, 1))}
 
 # Parameters monitored
 parameters <- c("pi")
@@ -65,7 +65,8 @@ ni <- 110000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out5 <- jags(jags.data, inits, parameters, "model4.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 3)); traceplot(out5)     # Not shown
+op <- par(mfrow=c(2, 3)); traceplot(out5)     # Not shown
+par(op)
 print(out5, 3)
 
 #            mean    sd   2.5%    50%  97.5% overlap0 f Rhat n.eff
@@ -139,7 +140,7 @@ model {
 ")
 
 # Initial values
-inits <- function(){list(phi=runif(1, 0, 1), p=runif(1, 0, 1))} 
+inits <- function(){list(phi=runif(1, 0, 1), p=runif(1, 0, 1))}
 
 # Parameters monitored
 parameters <- c("phi", "p", "pi1", "pi2", "pi3")
@@ -150,7 +151,8 @@ ni <- 10000; nb <- 5000; nc <- 3; nt <- 5; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out6 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out6)    # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out6)    # Not shown
+par(op)
 print(out6, 3)
 
            # mean    sd   2.5%    50%  97.5% overlap0 f  Rhat n.eff
@@ -177,7 +179,7 @@ print(mean(out6$sims.list$phi * out6$sims.list$p), 3)
 save(out6, file="IPM_02.7.4_out6.RData")
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# ~~~~ bonus code ~~~~
+# ~~~~ code  for MLE analysis ~~~~
 # For a quick comparison with MLEs of the same model, we use functionality in Mike Meredith's wicked package and find slightly less agreement than what we have perhaps come to expect. The reasons for which may be small sample size and asymmetric posterior distributions.
 
 library(wiqid)

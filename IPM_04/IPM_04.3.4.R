@@ -75,7 +75,7 @@ tmp[tmp == -Inf] <- NA
 obsN2 <- apply(tmp, 2, sum, na.rm=TRUE)
 
 # ~~~~ Plot true and observed population size (Fig. 4.7 upper) ~~~~
-par(mfrow=c(2, 1), mar=c(4, 4, 4, 2))
+op <- par(mfrow=c(2, 1), mar=c(4, 4, 4, 2))
 library(scales)
 co <- viridis_pal(option='E')(20)[c(4, 14)]
 plot(trueN, type='b', lty=1, pch=16, col='red', ylim=c(0, 100),
@@ -86,6 +86,7 @@ axis(2, las=1)
 axis(1)
 legend(y=110, x=4, c("True population size", "Observed, imperfect detection (y1)",
     "Observed, additional coverage bias (y2)"), pch=rep(16, 3), col=c('red', co), bty='n')
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Data bundle
@@ -146,7 +147,8 @@ ni <- 6000; nb <- 1000; nc <- 3; nt <- 5; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out7 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out7)    # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out7)    # Not shown
+par(op)
 print(out7, 3)
 
 # Data bundle
@@ -155,7 +157,8 @@ jags.data <- list(y=y2, nterritory=nterritory, nvisit=nvisit, nyear=nyear)
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out8 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out8)     # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out8)     # Not shown
+par(op)
 print(out8, 3)                          # Not shown
 
 # ~~~~ Plot the estimates (add lower panel of Fig. 4.7) ~~~~
@@ -173,4 +176,3 @@ axis(1)
 legend(y=40, x=4,c('True population size', 'Population size estimate from y1',
     'Population size estimate from y2'), pch=c(16, rep(15, 2)), col=c('red', co), bty='n')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-

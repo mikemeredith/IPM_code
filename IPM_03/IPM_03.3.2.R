@@ -27,7 +27,7 @@ lambda <- R0 <- GT <- numeric(nsim)
 stable.stage <- matrix(NA, ncol=2, nrow=nsim)
 sensitivity <- matrix(NA, ncol=4, nrow=nsim)
 
-# Generate demographic values from beta and normal distributions	
+# Generate demographic values from beta and normal distributions
 sj.sim <- rbeta2(nsim, mean.sj, se.sj.e)
 sa.sim <- rbeta2(nsim, mean.sa, se.sa.e)
 f1.sim <- rnorm(nsim, mean.f1, se.f1.e)
@@ -37,19 +37,20 @@ fa.sim <- rnorm(nsim, mean.fa, se.fa.e)
 for (s in 1:nsim){
   if(s %% 1000 == 0) {cat(paste("*** Simrep", s, "***\n"))}  # Counter
   # Transition matrix
-  A <- matrix(c(sj.sim[s] * f1.sim[s], sj.sim[s] * fa.sim[s], sa.sim[s], sa.sim[s]), ncol=2, byrow=TRUE)
+  A <- matrix(c(sj.sim[s] * f1.sim[s], sj.sim[s] * fa.sim[s], sa.sim[s], sa.sim[s]),
+      ncol=2, byrow=TRUE)
   eigenA <- eigen(A)
   # Asymptotic population growth rate
-  lambda[s] <- max(Re(eigenA$values))  
-   
+  lambda[s] <- max(Re(eigenA$values))
+
   # Stable stage distribution
   u <- which.max(Re(eigenA$values))
   revec <- Re(eigenA$vectors[,u])
   stable.stage[s,] <- revec / sum(revec)
-   
+
   # Lower level sensitivities
   levec <- Re(solve(eigenA$vectors)[u,])
-  senmat <- levec %*% t(revec) 
+  senmat <- levec %*% t(revec)
   derivmat <- matrix(c(f1.sim[s], fa.sim[s], 0, 0), ncol=2, byrow=TRUE)
   sensitivity[s,1] <- sum(senmat * derivmat)
   derivmat <- matrix(c(sj.sim[s], 0, 0, 0), ncol=2, byrow=TRUE)
@@ -92,8 +93,8 @@ round(summary_table, 3)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code to produce figure 3.11 ~~~~
+op <- par(mar=c(4, 4, 3, 0), las=1, cex=1.1, "mfrow")
 layout(matrix(1:4, 2, 2, byrow=TRUE), widths=c(1.1, 1), heights=c(1, 1), TRUE)
-par(mar=c(4, 4, 3, 0), las=1, cex=1.1)
 a <- hist(lambda, nclass=50, col="dodgerblue", main="",
     xlab=expression(paste("Asymptotic population growth rate (", lambda, ")")), prob=TRUE)
 mtext("A", at=a$mids[2], cex=1.5)
@@ -109,4 +110,5 @@ mtext("C", at=a$mids[2], cex=1.5)
 par(mar=c(4, 2, 3, 2))
 a <- hist(GT, nclass=30, col="dodgerblue", main="", xlab="Generation time", prob=TRUE)
 mtext("D", at=a$mids[2], cex=1.5)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -54,6 +54,7 @@ mean(r)                     # Compute stochastic growth rate
 # [1] 0.02552
 
 # Plot graphs with estimated population growth rates and size
+op <- par("mfrow", "las")
 layout(matrix(1:2, 1, 2, byrow=TRUE), widths=c(1, 1), heights=1, TRUE)
 plot(r, type="l", lwd=1.5, ylab="Annual population growth rate", xlab="Time", axes=FALSE)
 axis(1)
@@ -69,6 +70,7 @@ mtext("B", at=3, cex=1.5)
 lines(N[2,], lwd=1.5, col="red")
 legend("topleft", lwd=c(1.5, 1.5), col=c("black", "red"),
     legend=c("1-year old", ">1-year old"), bty="n")
+par(op)
 
 # Define mean of the demographic parameters
 mean.sj <- 0.3
@@ -118,8 +120,8 @@ sum(is.na(alive[T,])) / nsim
 # [1]  0.28917
 
 # Plot graph with population growth rates (Fig. 3.14 and 3.15)
+op <- par(mar=c(4, 4, 2, 1), las=1, cex=1.1, "mfrow")
 layout(matrix(c(1, 1, 2, 3), 2, 2, byrow=TRUE), widths=c(1, 1), heights=c(1, 1), TRUE)
-par(mar=c(4, 4, 2, 1), las=1, cex=1.1)
 plot(r[,1], type="l", lwd=0.5, ylab="Annual population growth rate",
     xlab="Time", ylim=range(r[which(!is.na(alive))]), col="lightgrey", axes=FALSE)
 axis(1); axis(2)
@@ -140,6 +142,4 @@ a <- hist(mean.r[not.extinct], nclass=25, col="dodgerblue", main="",
 axis(1)
 axis(2, at=c(0, 2000, 4000, 6000, 8000, 10000), labels=c(0, 2, 4, 6, 8, 10))
 mtext("C", at=a$mids[1], cex=1.5)
-
-
-
+par(op)

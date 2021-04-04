@@ -3,8 +3,6 @@
 # ------------------------------------------------------
 # Code from MS submitted to publisher.
 
-library(IPMbook) ; library(jagsUI)
-
 
 # 7.2 Assumptions of integrated population models
 # ===============================================

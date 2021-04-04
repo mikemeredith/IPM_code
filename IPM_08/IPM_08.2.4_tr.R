@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 12 mins
+# Run time for test script 12 mins, full run 1.7 hrs
 
 library(IPMbook) ; library(jagsUI)
 
@@ -23,115 +23,115 @@ jags.data <- with(redbacked, list(n.occasions=ncol(marr.a), marr.j=marr.j,
 # Write JAGS model file
 cat(file="model2.txt", "
 model {
-# Priors and linear models
-# Models for demographic rates
-for (t in 1:(n.occasions-1)){
-  logit(phij[t]) <- alpha[1] + beta[1] * (N[t] - mean.C) + err.phij[t]
-  err.phij[t] ~ dnorm(0, tau.phij)
-  logit(phia[t]) <- alpha[2] + beta[2] * (N[t] - mean.C) + err.phia[t]
-  err.phia[t] ~ dnorm(0, tau.phia)
-  logit(pj[t]) <- logit.b0.pj + err.pj[t]
-  err.pj[t] ~ dnorm(0, tau.pj)
-  logit(pa[t]) <- logit.b0.pa + err.pa[t]
-  err.pa[t] ~ dnorm(0, tau.pa)
-}
-for (t in 1:n.occasions){
-  log(f[t]) <- alpha[3] + beta[3] * (N[t] - mean.C) + err.f[t]
-  err.f[t] ~ dnorm(0, tau.f)
-  log(omega[t]) <- alpha[4] + beta[4] * log(S[t] + R[t]) + err.om[t]
-  err.om[t] ~ dnorm(0, tau.om)
-}
+  # Priors and linear models
+  # Models for demographic rates
+  for (t in 1:(n.occasions-1)){
+    logit(phij[t]) <- alpha[1] + beta[1] * (N[t] - mean.C) + err.phij[t]
+    err.phij[t] ~ dnorm(0, tau.phij)
+    logit(phia[t]) <- alpha[2] + beta[2] * (N[t] - mean.C) + err.phia[t]
+    err.phia[t] ~ dnorm(0, tau.phia)
+    logit(pj[t]) <- logit.b0.pj + err.pj[t]
+    err.pj[t] ~ dnorm(0, tau.pj)
+    logit(pa[t]) <- logit.b0.pa + err.pa[t]
+    err.pa[t] ~ dnorm(0, tau.pa)
+  }
+  for (t in 1:n.occasions){
+    log(f[t]) <- alpha[3] + beta[3] * (N[t] - mean.C) + err.f[t]
+    err.f[t] ~ dnorm(0, tau.f)
+    log(omega[t]) <- alpha[4] + beta[4] * log(S[t] + R[t]) + err.om[t]
+    err.om[t] ~ dnorm(0, tau.om)
+  }
 
-# Priors for variance parameters (hyperparameters)
-tau.phij <- pow(sigma.phij, -2)
-sigma.phij ~ dunif(0, 10)
-sigma2.phij <- pow(sigma.phij, 2)
-tau.phia <- pow(sigma.phia, -2)
-sigma.phia ~ dunif(0, 10)
-sigma2.phia <- pow(sigma.phia, 2)
-tau.f <- pow(sigma.f, -2)
-sigma.f ~ dunif(0, 10)
-sigma2.f <- pow(sigma.f, 2)
-tau.om <- pow(sigma.om, -2)
-sigma.om ~ dunif(0, 10)
-sigma2.om <- pow(sigma.om, 2)
-tau.pj <- pow(sigma.pj, -2)
-sigma.pj ~ dunif(0, 10)
-sigma2.pj <- pow(sigma.pj, 2)
-tau.pa <- pow(sigma.pa, -2)
-sigma.pa ~ dunif(0, 10)
-sigma2.pa <- pow(sigma.pa, 2)
-tau ~ dgamma(0.001, 0.001)
-sigma2 <- 1 / tau
+  # Priors for variance parameters (hyperparameters)
+  tau.phij <- pow(sigma.phij, -2)
+  sigma.phij ~ dunif(0, 10)
+  sigma2.phij <- pow(sigma.phij, 2)
+  tau.phia <- pow(sigma.phia, -2)
+  sigma.phia ~ dunif(0, 10)
+  sigma2.phia <- pow(sigma.phia, 2)
+  tau.f <- pow(sigma.f, -2)
+  sigma.f ~ dunif(0, 10)
+  sigma2.f <- pow(sigma.f, 2)
+  tau.om <- pow(sigma.om, -2)
+  sigma.om ~ dunif(0, 10)
+  sigma2.om <- pow(sigma.om, 2)
+  tau.pj <- pow(sigma.pj, -2)
+  sigma.pj ~ dunif(0, 10)
+  sigma2.pj <- pow(sigma.pj, 2)
+  tau.pa <- pow(sigma.pa, -2)
+  sigma.pa ~ dunif(0, 10)
+  sigma2.pa <- pow(sigma.pa, 2)
+  tau ~ dgamma(0.001, 0.001)
+  sigma2 <- 1 / tau
 
-# Priors for the mean of demographic and resighting rates
-b0.pj ~ dunif(0, 1)
-b0.pa ~ dunif(0, 1)
+  # Priors for the mean of demographic and resighting rates
+  b0.pj ~ dunif(0, 1)
+  b0.pa ~ dunif(0, 1)
 
-# Priors for regression parameters of the demographic rates
-for (j in 1:4){
-  alpha[j] ~ dnorm(0, 0.001)
-  beta[j] ~ dunif(-5, 5)
-}
+  # Priors for regression parameters of the demographic rates
+  for (j in 1:4){
+    alpha[j] ~ dnorm(0, 0.001)
+    beta[j] ~ dunif(-5, 5)
+  }
 
-# Back-transformations
-logit.b0.pj <- logit(b0.pj)
-logit.b0.pa <- logit(b0.pa)
+  # Back-transformations
+  logit.b0.pj <- logit(b0.pj)
+  logit.b0.pa <- logit(b0.pa)
 
-# Population count data (state-space model)
-# Model for initial stage-spec. population sizes: discrete uniform priors
-R[1] ~ dcat(pNinit)      # Local recruits
-S[1] ~ dcat(pNinit)      # Surviving adults
-I[1] ~ dpois(omega[1])   # Immigrants
+  # Population count data (state-space model)
+  # Model for initial stage-spec. population sizes: discrete uniform priors
+  R[1] ~ dcat(pNinit)      # Local recruits
+  S[1] ~ dcat(pNinit)      # Surviving adults
+  I[1] ~ dpois(omega[1])   # Immigrants
 
-# Process model over time: our model of population dynamics
-for (t in 2:n.occasions){
-  R[t] ~ dpois(f[t-1]/2 * phij[t-1] * N[t-1])    # No. local recruits
-  S[t] ~ dbin(phia[t-1], N[t-1])                   # No. surviving adults
-  I[t] ~ dpois(omega[t])                           # No. immigrants
-}
+  # Process model over time: our model of population dynamics
+  for (t in 2:n.occasions){
+    R[t] ~ dpois(f[t-1]/2 * phij[t-1] * N[t-1])    # No. local recruits
+    S[t] ~ dbin(phia[t-1], N[t-1])                   # No. surviving adults
+    I[t] ~ dpois(omega[t])                           # No. immigrants
+  }
 
-# Observation process
-for (t in 1:n.occasions){
-  N[t] <- S[t] + R[t] + I[t]            # Total number of breeding females
-  logN[t] <- log(N[t])
-  C[t] ~ dlnorm(logN[t], tau)
-}
+  # Observation process
+  for (t in 1:n.occasions){
+    N[t] <- S[t] + R[t] + I[t]            # Total number of breeding females
+    logN[t] <- log(N[t])
+    C[t] ~ dlnorm(logN[t], tau)
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  qj[t] <- 1-pj[t]     # Probability of non-recapture (juv)
-  qa[t] <- 1-pa[t]     # Probability of non-recapture (ad)
-  pr.j[t,t] <- phij[t] * pj[t]
-  pr.a[t,t] <- phia[t] * pa[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(qa[t:(j-1)]) * pa[j] / qa[t]
-    pr.a[t,j] <- prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    qj[t] <- 1-pj[t]     # Probability of non-recapture (juv)
+    qa[t] <- 1-pa[t]     # Probability of non-recapture (ad)
+    pr.j[t,t] <- phij[t] * pj[t]
+    pr.a[t,t] <- phia[t] * pa[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(qa[t:(j-1)]) * pa[j] / qa[t]
+      pr.a[t,j] <- prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Productivity data (Poisson regression model)
-for (t in 1:n.occasions){
-  J[t] ~ dpois(B[t] * f[t])
-}
+  # Productivity data (Poisson regression model)
+  for (t in 1:n.occasions){
+    J[t] ~ dpois(B[t] * f[t])
+  }
 }
 ")
 
@@ -151,7 +151,8 @@ ni <- 11000; nb <- 1000; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing
 # Call JAGS (ART 139 min), check convergence and summarize posteriors
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3));  traceplot(out2)
+op <- par(mfrow=c(3, 3));  traceplot(out2)
+par(op)
 
 print(out2, 3)
 
@@ -237,14 +238,13 @@ for (t in 1:n){
 
 library(scales)
 library(plotrix)
-par(mfrow=c(1,2), mar=c(4.5,4,2,1), cex=1.15)
+op <- par(mfrow=c(1,2), mar=c(4.5,4,2,1), cex=1.15)
 plot(density(out2$sims.list$beta[,4]), type="l", lwd=2, xlim=c(-0.5, 1), main=NA,
     xlab=expression('Strength of density-dependence ('*beta[I]*')'),
     ylab="Density", col="black", axes=FALSE)
 axis(1)
 axis(2, las=1)
 corner.label("A", font=2, cex=1.15)
-#text("A", x=-0.5, y=2.2, font=2)
 
 nx <- min(lower):max(upper)
 I.pred <- matrix(NA, nrow=out2$mcmc.info$n.samples, ncol=length(nx))
@@ -263,6 +263,6 @@ segments(m, out2$q2.5$I[1:n], m, out2$q97.5$I[1:n], col="grey50")
 points(y=out2$mean$I, x=m, pch=16, cex=1.3)
 axis(2, las=1)
 axis(1)
-#text("B", x=min(lower), y=max(out2$q97.5$I), font=2)
 corner.label("B", font=2, cex=1.15)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

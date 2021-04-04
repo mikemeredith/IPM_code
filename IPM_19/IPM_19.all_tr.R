@@ -3,14 +3,13 @@
 # -------------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 17 mins
+# Run time for test script 17 mins, full run 3.5 hrs
 
 library(IPMbook) ; library(jagsUI)
 
 # 19.4 Component data likelihoods
-# =============================================
+# ===============================
 
-library(IPMbook); library(jagsUI)
 data(catbird)
 str(catbird)
 
@@ -35,7 +34,11 @@ str(catbird)
 # ====================================
 
 # Bundle data and produce data overview
-jags.data <- with(catbird, list(y=y, f=getFirst(y), r=r, sta=station, n.sta=length(unique(station)), n.years=ncol(y), n.ind=nrow(y), C=count, n.counts=length(count), str=stratum, yr=year-1991, n.str=length(unique(stratum)), I=firstyr, obs=observer, n.obs=length(unique(observer)), area=area, pNinit=dUnif(1, 50)))
+jags.data <- with(catbird, list(y=y, f=getFirst(y), r=r, sta=station,
+    n.sta=length(unique(station)), n.years=ncol(y), n.ind=nrow(y), C=count,
+    n.counts=length(count), str=stratum, yr=year-1991,
+    n.str=length(unique(stratum)), I=firstyr, obs=observer,
+    n.obs=length(unique(observer)), area=area, pNinit=dUnif(1, 50)))
 
 str(jags.data)
 
@@ -65,94 +68,94 @@ str(jags.data)
 
 # Write JAGS model file
 cat(file="model1.txt", "
-model {
-# Priors and linear models
-for (i in 1:n.ind){
-  for (t in f[i]:(n.years-1)){
-    logit(p[i,t]) <- lp0[t] + alpha[sta[i]]
-  } #t
-} #i
+  model {
+  # Priors and linear models
+  for (i in 1:n.ind){
+    for (t in f[i]:(n.years-1)){
+      logit(p[i,t]) <- lp0[t] + alpha[sta[i]]
+    } #t
+  } #i
 
-for (t in 1:(n.years-1)){
-  phi[t] ~ dunif(0, 1)           # Survival probability
-  lp0[t] <- logit(p0[t])         # Recapture probability
-  p0[t] ~ dunif(0, 1)
-  kappa[t] ~ dunif(0, 1)         # Predetermined residency probability
-  pi[t] ~ dunif(0, 1)            # Residency probability
-  rho[t] ~ dunif(0, 5)           # Recruitment
-}
+  for (t in 1:(n.years-1)){
+    phi[t] ~ dunif(0, 1)           # Survival probability
+    lp0[t] <- logit(p0[t])         # Recapture probability
+    p0[t] ~ dunif(0, 1)
+    kappa[t] ~ dunif(0, 1)         # Predetermined residency probability
+    pi[t] ~ dunif(0, 1)            # Residency probability
+    rho[t] ~ dunif(0, 5)           # Recruitment
+  }
 
-# Random station effect for recapture probability
-for (j in 1:n.sta){
-  alpha[j] ~ dnorm(0, tau.p)
-}
-sigma.p ~ dunif(0, 10)
-tau.p <- pow(sigma.p, -2)
+  # Random station effect for recapture probability
+  for (j in 1:n.sta){
+    alpha[j] ~ dnorm(0, tau.p)
+  }
+  sigma.p ~ dunif(0, 10)
+  tau.p <- pow(sigma.p, -2)
 
-# Random observer effect for survey observation model
-for (i in 1:n.obs){
-  omega[i] ~ dnorm(0, tau.om)
-}
-tau.om ~ dgamma(0.001,0.001)
-sd.om <- pow(tau.om, -0.5)
+  # Random observer effect for survey observation model
+  for (i in 1:n.obs){
+    omega[i] ~ dnorm(0, tau.om)
+  }
+  tau.om ~ dgamma(0.001,0.001)
+  sd.om <- pow(tau.om, -0.5)
 
-# Overdispersion
-for (k in 1:n.counts){
-  eps[k] ~ dnorm(0, tau.eps)
-}
-tau.eps ~ dgamma(0.001,0.001)
-sd.eps <- pow(tau.eps, -0.5)
+  # Overdispersion
+  for (k in 1:n.counts){
+    eps[k] ~ dnorm(0, tau.eps)
+  }
+  tau.eps ~ dgamma(0.001,0.001)
+  sd.eps <- pow(tau.eps, -0.5)
 
-# Start-up (novice) effect for survey
-eta ~ dnorm(0, 0.001)
+  # Start-up (novice) effect for survey
+  eta ~ dnorm(0, 0.001)
 
-# BBS data (state-space model)
-# Model for initial abundance in each stratum: uniform priors
-for (s in 1:n.str){
-  N[s,1] ~ dcat(pNinit)
-}
-# Process model over space and time: our model of population dynamics
-for (s in 1:n.str){
-  for (t in 2:n.years){
-    S[s,t] ~ dbin(phi[t-1], N[s,t-1])
-    R[s,t] ~ dpois(rho[t-1] * N[s,t-1])
-    N[s,t] <- S[s,t] + R[s,t]
-  } #t
-} #s
-# Observation model: overdispersed Poisson
-for (k in 1:n.counts){
-  log(lambda[k]) <- log(N[str[k],yr[k]]) + omega[obs[k]] + eta * I[k] + eps[k]
-  C[k] ~ dpois(lambda[k])
-}
+  # BBS data (state-space model)
+  # Model for initial abundance in each stratum: uniform priors
+  for (s in 1:n.str){
+    N[s,1] ~ dcat(pNinit)
+  }
+  # Process model over space and time: our model of population dynamics
+  for (s in 1:n.str){
+    for (t in 2:n.years){
+      S[s,t] ~ dbin(phi[t-1], N[s,t-1])
+      R[s,t] ~ dpois(rho[t-1] * N[s,t-1])
+      N[s,t] <- S[s,t] + R[s,t]
+    } #t
+  } #s
+  # Observation model: overdispersed Poisson
+  for (k in 1:n.counts){
+    log(lambda[k]) <- log(N[str[k],yr[k]]) + omega[obs[k]] + eta * I[k] + eps[k]
+    C[k] ~ dpois(lambda[k])
+  }
 
-# MAPS data (CJS model with state-space likelihood)
-for (i in 1:n.ind){
-  # Model for initial state
-  for (t in 1:f[i]){
-    z[i,t] <- 1
-  } #t
-  # Model for residency state
-  u[i] ~ dbern(pi[f[i]])
-  r[i] ~ dbern(u[i] * kappa[f[i]])   # Observation model for residency
-  # State process
-  for (t in (f[i]+1):n.years){
-    z[i,t] ~ dbern(z[i,t-1] * phi[t-1] * u[i])
-    # Observation process
-    y[i,t] ~ dbern(p[i,t-1] * z[i,t])
-  } #t
-} #i
+  # MAPS data (CJS model with state-space likelihood)
+  for (i in 1:n.ind){
+    # Model for initial state
+    for (t in 1:f[i]){
+      z[i,t] <- 1
+    } #t
+    # Model for residency state
+    u[i] ~ dbern(pi[f[i]])
+    r[i] ~ dbern(u[i] * kappa[f[i]])   # Observation model for residency
+    # State process
+    for (t in (f[i]+1):n.years){
+      z[i,t] ~ dbern(z[i,t-1] * phi[t-1] * u[i])
+      # Observation process
+      y[i,t] ~ dbern(p[i,t-1] * z[i,t])
+    } #t
+  } #i
 
-# Derived parameters
-for (s in 1:n.str){
+  # Derived parameters
+  for (s in 1:n.str){
+    for (t in 1:n.years){
+      wN[s,t] <- area[s] * N[s,t] / sum(area)
+    } #t
+    trend[s] <- pow(N[s,n.years] / N[s,1], 1/(n.years-1))  # Strata-spe. trend
+  } #s
   for (t in 1:n.years){
-    wN[s,t] <- area[s] * N[s,t] / sum(area)
-  } #t
-  trend[s] <- pow(N[s,n.years] / N[s,1], 1/(n.years-1))  # Strata-spe. trend
-} #s
-for (t in 1:n.years){
-  wIndex[t] <- sum(wN[1:n.str,t])    # Weighted abundance index
-}
-trend.com <- pow(wIndex[n.years] / wIndex[1], 1/(n.years-1)) # Combined trend
+    wIndex[t] <- sum(wN[1:n.str,t])    # Weighted abundance index
+  }
+  trend.com <- pow(wIndex[n.years] / wIndex[1], 1/(n.years-1)) # Combined trend
 }
 ")
 
@@ -167,7 +170,8 @@ inits <- function(){
 }
 
 # Parameters monitored
-parameters <- c("phi", "rho", "pi", "p0", "kappa", "eta", "alpha", "sd.om", "sd.eps", "wIndex", "trend", "trend.com", "N")
+parameters <- c("phi", "rho", "pi", "p0", "kappa", "eta", "alpha", "sd.om",
+    "sd.eps", "wIndex", "trend", "trend.com", "N")
 
 # MCMC settings
 # ni <- 70000; nb <- 20000; nc <- 3; nt <- 25; na <- 2000
@@ -177,7 +181,8 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 2000  # ~~~ for testing
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
   n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 save(out1, file="CatbirdResults.Rdata")
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 
 
 # 19.6 Results
@@ -235,46 +240,55 @@ par(mfrow=c(3, 3)); traceplot(out1)
 # N[9,17]           1.082   0.291     1.000     1.000     2.000    FALSE 1.000 1.000  6000
 
 # ~~~~ code for Fig. 19.4 ~~~~
-par(mfrow=c(3,1), mar=c(2.5, 4.5, 0.5, 1))
+op <- par(mfrow=c(3,1), mar=c(2.5, 4.5, 0.5, 1))
 
 years <- 1992:2008
 ny <- length(years)
 ti <- seq(from=1.5, by=1, length.out=ny-1)
 
-plot(x=ti, y=out1$mean$phi, type="b", pch=16, ylim=c(0, 1), ylab="Apparent survival", xlab=NA, axes=FALSE)
+plot(x=ti, y=out1$mean$phi, type="b", pch=16, ylim=c(0, 1), ylab="Apparent survival",
+    xlab=NA, axes=FALSE)
 segments(ti, out1$q2.5$phi, ti, out1$q97.5$phi)
 axis(1, at=1:ny, labels=NA, tcl=-0.25)
 axis(1, at=c(1, 4, 7, 10, 13, 16), labels=NA, tcl=-0.5)
 axis(2, las=1)
 
 par(mar=c(2.5, 4.5, 0.5, 1))
-plot(x=ti, y=out1$mean$rho, type="b", pch=16, ylim=c(0, 1.1), ylab="Recruitment", xlab=NA, axes=FALSE)
+plot(x=ti, y=out1$mean$rho, type="b", pch=16, ylim=c(0, 1.1), ylab="Recruitment",
+    xlab=NA, axes=FALSE)
 segments(ti, out1$q2.5$rho, ti, out1$q97.5$rho)
 axis(1, at=1:ny, labels=NA, tcl=-0.25)
 axis(1, at=c(1, 4, 7, 10, 13, 16), labels=NA, tcl=-0.5)
 axis(2, las=1)
 
 par(mar=c(4.5, 4.5, 0.5, 1))
-plot(x=1:ny, y=out1$mean$wIndex, type="b", pch=16, ylim=c(15, 30), ylab="Abundance index", xlab=NA, axes=FALSE)
+plot(x=1:ny, y=out1$mean$wIndex, type="b", pch=16, ylim=c(15, 30), ylab="Abundance index",
+    xlab=NA, axes=FALSE)
 segments(1:ny, out1$q2.5$wIndex, 1:ny, out1$q97.5$wIndex)
 axis(1, at=1:ny, labels=NA, tcl=-0.25)
 axis(1, at=c(1, 4, 7, 10, 13, 16), labels=years[c(1, 4, 7, 10, 13, 16)], tcl=-0.5)
 axis(2, las=1)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 19.5 ~~~~
 library(denstrip)
 
-par(mar=c(3.5, 5, 1, 1))
+op <- par(mar=c(3.5, 5, 1, 1))
 plot(0, xlim=c(0.8, 10.2), ylim=c(0.9,1.1), axes=FALSE, pch=NA, ylab='Abundance trend', xlab=NA)
 for (s in 1:9){
-  denstrip(out1$sims.list$trend[,s], at=s, ticks=c(out1$mean$trend[s], out1$q2.5$trend[s], out1$q97.5$trend[s]), twd=c(5,2.5,2.5), tlen=c(2,2,2), width=1/5, horiz=FALSE)
+  denstrip(out1$sims.list$trend[,s], at=s,
+      ticks=c(out1$mean$trend[s], out1$q2.5$trend[s], out1$q97.5$trend[s]),
+      twd=c(5,2.5,2.5), tlen=c(2,2,2), width=1/5, horiz=FALSE)
    }
-denstrip(out1$sims.list$trend.com, at=10, ticks=c(out1$mean$trend.com, out1$q2.5$trend.com, out1$q97.5$trend.com), twd=c(5,2.5,2.5), tlen=c(2,2,2), width=1/5, horiz=FALSE, colmax='red')
+denstrip(out1$sims.list$trend.com, at=10,
+    ticks=c(out1$mean$trend.com, out1$q2.5$trend.com, out1$q97.5$trend.com),
+    twd=c(5,2.5,2.5), tlen=c(2,2,2), width=1/5, horiz=FALSE, colmax='red')
 abline(h=1, lty=2)
 axis(1, at=1:9, labels=1:9)
 axis(2, las=1)
 mtext('Stratum', side=1, line=2)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 19.6 ~~~~
@@ -301,19 +315,27 @@ for (s in 1:9){
 count.stat[,,7] <- table(catbird$stratum, catbird$year)
 count.stat[which(is.infinite(count.stat[,,]))] <- NA
 
-par(mfrow=c(3, 3), mar=c(2.5, 4.5, 1, 1))
+op <- par(mfrow=c(3, 3), mar=c(2.5, 4.5, 1, 1))
 for(s in 1:9){
-  lims <- range(c(count.stat[s,,5], count.stat[s,,6], out1$q2.5$N[s,], out1$q97.5$N[s,]), na.rm=TRUE) * c(0.9, 1.1)
-  plot(x=1:ny, y=out1$mean$N[s,], type="b", pch=16, ylim=lims, ylab="Abundance index", xlab=NA, axes=F)
-  if(s!=4 & s!=8) polygon(c(1:ny, ny:1), c(count.stat[s,,5], rev(count.stat[s,,6])), col=alpha('red', alpha=0.15), border=NA)
+  lims <- range(c(count.stat[s,,5], count.stat[s,,6], out1$q2.5$N[s,], out1$q97.5$N[s,]),
+      na.rm=TRUE) * c(0.9, 1.1)
+  plot(x=1:ny, y=out1$mean$N[s,], type="b", pch=16, ylim=lims, ylab="Abundance index",
+      xlab=NA, axes=FALSE)
+  if(s!=4 & s!=8)
+    polygon(c(1:ny, ny:1), c(count.stat[s,,5], rev(count.stat[s,,6])),
+        col=alpha('red', alpha=0.15), border=NA)
   if(s==4){
-    polygon(c(1:7, 7:1), c(count.stat[s,1:7,5], rev(count.stat[s,1:7,6])), col=alpha('red', alpha=0.15), border=NA)
-    polygon(c(9:ny, ny:9), c(count.stat[s,9:ny,5], rev(count.stat[s,9:ny,6])), col=alpha('red', alpha=0.15), border=NA)
-    }
+    polygon(c(1:7, 7:1), c(count.stat[s,1:7,5], rev(count.stat[s,1:7,6])),
+        col=alpha('red', alpha=0.15), border=NA)
+    polygon(c(9:ny, ny:9), c(count.stat[s,9:ny,5], rev(count.stat[s,9:ny,6])),
+        col=alpha('red', alpha=0.15), border=NA)
+  }
   if(s==8){
-    polygon(c(1:5, 5:1), c(count.stat[s,1:5,5], rev(count.stat[s,1:5,6])), col=alpha('red', alpha=0.15), border=NA)
-    polygon(c(7:ny, ny:7), c(count.stat[s,7:ny,5], rev(count.stat[s,7:ny,6])), col=alpha('red', alpha=0.15), border=NA)
-    }
+    polygon(c(1:5, 5:1), c(count.stat[s,1:5,5], rev(count.stat[s,1:5,6])),
+        col=alpha('red', alpha=0.15), border=NA)
+    polygon(c(7:ny, ny:7), c(count.stat[s,7:ny,5], rev(count.stat[s,7:ny,6])),
+        col=alpha('red', alpha=0.15), border=NA)
+  }
 
   segments(1:ny, out1$q2.5$N[s,], 1:ny, out1$q97.5$N[s,])
   lines(count.stat[s,,4], col="red")
@@ -323,3 +345,4 @@ for(s in 1:9){
   axis(2, las=1)
   text(y=lims[2], x=4.5, paste('stratum',s,': n = ', round(mean(count.stat[s,,7]),1)))
 }
+par(op)

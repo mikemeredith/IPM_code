@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 # Code from MS submitted to publisher.
 
-# Run time testing 3 mins, full run 13 hrs
+# Run time testing 3 mins, full run 14 hrs
 
 library(IPMbook) ; library(jagsUI)
 
@@ -15,84 +15,82 @@ library(IPMbook) ; library(jagsUI)
 
 # ~~~~ Code for the simulations: flow of information ~~~~
 
-library(IPMbook); library(jagsUI)
-
 # 1. Analyzing models
 # 1.1. Baseline IPM
 cat(file="model10.txt", "
 model {
-# Priors and linear models
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.sj
-  sa[t] <- mean.sa
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    sj[t] <- mean.sj
+    sa[t] <- mean.sa
+    p[t] <- mean.p
+  }
 
-sigma ~ dunif(0.5, 100)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 100)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1] ~ dunif(1, 300)
-N[2,1] ~ dunif(1, 300)
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1] ~ dunif(1, 300)
+  N[2,1] ~ dunif(1, 300)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
-  N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
+    N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
 
-# Productivity data (Poisson regression model)
-sJ ~ dpois(nJ * mean.f)
+  # Productivity data (Poisson regression model)
+  sJ ~ dpois(nJ * mean.f)
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Derived parameters
-# Annual population growth rate
-for (t in 1:(n.occasions-1)){
-  ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
-}
-# Total population size
-for (t in 1:n.occasions){
-  Ntot[t] <- N[1,t] + N[2,t]
-}
+  # Derived parameters
+  # Annual population growth rate
+  for (t in 1:(n.occasions-1)){
+    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
+  }
+  # Total population size
+  for (t in 1:n.occasions){
+    Ntot[t] <- N[1,t] + N[2,t]
+  }
 }
 ")
 
@@ -101,80 +99,80 @@ for (t in 1:n.occasions){
 # 1.2. IPM with more CMR data
 cat(file="model11.txt", "
 model {
-# Priors and linear models
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.sj
-  sa[t] <- mean.sa
-  p[t] <- mean.p
-}
-
-sigma ~ dunif(0.5, 100)
-tau <- pow(sigma, -2)
-
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1] ~ dunif(1, 300)
-N[2,1] ~ dunif(1, 300)
-
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
-  N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
-}
-
-# Observation model
-for (t in 1:n.occasions){
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
-
-# Productivity data (Poisson regression model)
-sJ ~ dpois(nJ * mean.f)
-
-# Capture-recapture data (CJS model with multinomial likelihood)
-for (k in 1:ex){
-  # Define the multinomial likelihood
   for (t in 1:(n.occasions-1)){
-    marr.j[t,1:n.occasions,k] ~ dmulti(pr.j[t,,k], rel.j[t,k])
-    marr.a[t,1:n.occasions,k] ~ dmulti(pr.a[t,,k], rel.a[t,k])
-  } #t
-  # Define the cell probabilities of the m-arrays
-  # Main diagonal
-  for (t in 1:(n.occasions-1)){
-    q[t,k] <- 1 - p[t]   # Probability of non-recapture
-    pr.j[t,t,k] <- sj[t] * p[t]
-    pr.a[t,t,k] <- sa[t] * p[t]
-    # Above main diagonal
-    for (j in (t+1):(n.occasions-1)){
-       pr.j[t,j,k] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1),k]) * p[j]
-       pr.a[t,j,k] <- prod(sa[t:j]) * prod(q[t:(j-1),k]) * p[j]
-     } #j
-     # Below main diagonal
-     for (j in 1:(t-1)){
-       pr.j[t,j,k] <- 0
-       pr.a[t,j,k] <- 0
-     } #j
-   } #t
-   # Last column: probability of non-recapture
-   for (t in 1:(n.occasions-1)){
-     pr.j[t,n.occasions,k] <- 1-sum(pr.j[t,1:(n.occasions-1),k])
-     pr.a[t,n.occasions,k] <- 1-sum(pr.a[t,1:(n.occasions-1),k])
-  } #t
-} #k
+    sj[t] <- mean.sj
+    sa[t] <- mean.sa
+    p[t] <- mean.p
+  }
 
-# Derived parameters
-# Annual population growth rate
-for (t in 1:(n.occasions-1)){
-  ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
-}
-# Total population size
-for (t in 1:n.occasions){
-  Ntot[t] <- N[1,t] + N[2,t]
-}
+  sigma ~ dunif(0.5, 100)
+  tau <- pow(sigma, -2)
+
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1] ~ dunif(1, 300)
+  N[2,1] ~ dunif(1, 300)
+
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
+    N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
+  }
+
+  # Observation model
+  for (t in 1:n.occasions){
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
+
+  # Productivity data (Poisson regression model)
+  sJ ~ dpois(nJ * mean.f)
+
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  for (k in 1:ex){
+    # Define the multinomial likelihood
+    for (t in 1:(n.occasions-1)){
+      marr.j[t,1:n.occasions,k] ~ dmulti(pr.j[t,,k], rel.j[t,k])
+      marr.a[t,1:n.occasions,k] ~ dmulti(pr.a[t,,k], rel.a[t,k])
+    } #t
+    # Define the cell probabilities of the m-arrays
+    # Main diagonal
+    for (t in 1:(n.occasions-1)){
+      q[t,k] <- 1 - p[t]   # Probability of non-recapture
+      pr.j[t,t,k] <- sj[t] * p[t]
+      pr.a[t,t,k] <- sa[t] * p[t]
+      # Above main diagonal
+      for (j in (t+1):(n.occasions-1)){
+         pr.j[t,j,k] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1),k]) * p[j]
+         pr.a[t,j,k] <- prod(sa[t:j]) * prod(q[t:(j-1),k]) * p[j]
+       } #j
+       # Below main diagonal
+       for (j in 1:(t-1)){
+         pr.j[t,j,k] <- 0
+         pr.a[t,j,k] <- 0
+       } #j
+     } #t
+     # Last column: probability of non-recapture
+     for (t in 1:(n.occasions-1)){
+       pr.j[t,n.occasions,k] <- 1-sum(pr.j[t,1:(n.occasions-1),k])
+       pr.a[t,n.occasions,k] <- 1-sum(pr.a[t,1:(n.occasions-1),k])
+    } #t
+  } #k
+
+  # Derived parameters
+  # Annual population growth rate
+  for (t in 1:(n.occasions-1)){
+    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
+  }
+  # Total population size
+  for (t in 1:n.occasions){
+    Ntot[t] <- N[1,t] + N[2,t]
+  }
 }
 ")
 
@@ -182,80 +180,80 @@ for (t in 1:n.occasions){
 # 1.3. IPM with multiple productivity data
 cat(file="model12.txt", "
 model {
-# Priors and linear models
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.sj
-  sa[t] <- mean.sa
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    sj[t] <- mean.sj
+    sa[t] <- mean.sa
+    p[t] <- mean.p
+  }
 
-sigma ~ dunif(0.5, 100)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 100)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1] ~ dunif(1, 300)
-N[2,1] ~ dunif(1, 300)
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1] ~ dunif(1, 300)
+  N[2,1] ~ dunif(1, 300)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
-  N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
+    N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
 
-# Productivity data (Poisson regression model)
-for (k in 1:ex){
-  sJ[k] ~ dpois(nJ[k] * mean.f)
-}
+  # Productivity data (Poisson regression model)
+  for (k in 1:ex){
+    sJ[k] ~ dpois(nJ[k] * mean.f)
+  }
 
-# Capture-recapture date (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture date (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Derived parameters
-# Annual population growth rate
-for (t in 1:(n.occasions-1)){
-  ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
-}
-# Total population size
-for (t in 1:n.occasions){
-  Ntot[t] <- N[1,t] + N[2,t]
-}
+  # Derived parameters
+  # Annual population growth rate
+  for (t in 1:(n.occasions-1)){
+    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
+  }
+  # Total population size
+  for (t in 1:n.occasions){
+    Ntot[t] <- N[1,t] + N[2,t]
+  }
 }
 ")
 
@@ -263,80 +261,80 @@ for (t in 1:n.occasions){
 # 1.4. IPM with more count data
 cat(file="model13.txt", "
 model {
-# Priors and linear models
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.sj
-  sa[t] <- mean.sa
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    sj[t] <- mean.sj
+    sa[t] <- mean.sa
+    p[t] <- mean.p
+  }
 
-sigma ~ dunif(0.5, 100)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 100)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1] ~ dunif(1, 300)
-N[2,1] ~ dunif(1, 300)
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1] ~ dunif(1, 300)
+  N[2,1] ~ dunif(1, 300)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
-  N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] <- mean.f/2 * mean.sj * (N[1,t] + N[2,t])
+    N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
+  }
 
-# Observation model
-for (k in 1:ex){
-  for (t in 1:n.occasions){
-    C[k,t] ~ dnorm(N[1,t] + N[2,t], tau)
+  # Observation model
+  for (k in 1:ex){
+    for (t in 1:n.occasions){
+      C[k,t] ~ dnorm(N[1,t] + N[2,t], tau)
+    } #t
+  } #k
+
+  # Productivity data (Poisson regression model)
+  sJ ~ dpois(nJ * mean.f)
+
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
   } #t
-} #k
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Productivity data (Poisson regression model)
-sJ ~ dpois(nJ * mean.f)
-
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
-
-# Derived parameters
-# Annual population growth rate
-for (t in 1:(n.occasions-1)){
-  ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
-}
-# Total population size
-for (t in 1:n.occasions){
-  Ntot[t] <- N[1,t] + N[2,t]
-}
+  # Derived parameters
+  # Annual population growth rate
+  for (t in 1:(n.occasions-1)){
+    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
+  }
+  # Total population size
+  for (t in 1:n.occasions){
+    Ntot[t] <- N[1,t] + N[2,t]
+  }
 }
 ")
 
@@ -380,7 +378,8 @@ res1 <- res2 <- res3 <- res4 <- array(NA, dim=c(45, 11, nsim))
 inits <- function(){list(mean.sj=runif(1, 0, 0.5))}
 
 # 2.11.2. Parameters monitored
-parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "N", "sigma", "ann.growth.rate", "Ntot")
+parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "N", "sigma",
+    "ann.growth.rate", "Ntot")
 
 # 2.11.3. MCMC settings
 ni <- 20000; nb <- 10000; nc <- 3; nt <- 1; na <- 2000
@@ -475,7 +474,8 @@ r.incl <- function(res, param, r.crit=1.1){
   return(h)
 }
 co <- c("red", rep("dodgerblue", 3))
-par(mfrow=c(2,2), cex=1.1, mar=c(3.5, 4, 1.5, 1))
+# op <- par(mfrow=c(2,2), cex=1.1, mar=c(3.5, 4, 1.5, 1))
+op <- par(mfrow=c(2,2), mar=c(3.5, 4, 1.5, 1))
 u <- which(as.numeric(table(c(r.incl(res1, 1), r.incl(res2, 1), r.incl(res3, 1),
     r.incl(res4, 1)))) == 4)[1:1000]
 lab <- expression('CV ('*italic('s')[italic(j)]*')')
@@ -515,4 +515,5 @@ boxplot(cbind(res1[26,2,u] / res1[26,1,u] * 100, res2[26,2,u] / res2[26,1,u] * 1
 axis(2, las=1)
 axis(1, at=1:4, labels=c("original", "10x CR", "10x Prod", "10x Count"))
 mtext("Population growth rate", at=2.5, line=0.5, adj=0.5, font=2)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

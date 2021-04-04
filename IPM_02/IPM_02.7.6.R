@@ -30,7 +30,7 @@ table(Pop)                     # Look at sample size per pop. (not shown)
 tapply(mass, Pop, mean)        # Look at sample means per population
 mean.mass                      # Compare with known true means (not shown)
 
-       # A        B        C 
+       # A        B        C
 # 131.6111 241.5000 246.8333
 
 # ~~~~ extra code for plotting ~~~~
@@ -45,7 +45,7 @@ segments(2.8, mean.mass[3], 3.2, mean.mass[3], col='red', lwd=2)
 
 # Figure 2.17
 s <- as.numeric(table(Pop))
-par(las=1, mar=c(4.1, 4.5, 2, 2), cex=1.5)
+op <- par(las=1, mar=c(4.1, 4.5, 2, 2), cex=1.5)
 plot(mass[Pop=='A'], rep(3, s[1]), axes=FALSE, pch=16, ylab="", col=rgb(0,0,0,0.4),
     xlab="Mass (g)", ylim=c(0.8, 3.2), xlim=c(0, 350))
 points(mass[Pop=='B'], rep(2, s[2]), pch=16, col=rgb(0,0,0,0.4))
@@ -55,6 +55,7 @@ axis(1)
 segments(mean.mass[3], 0.8, mean.mass[3], 1.2, col='red', lwd=2)
 segments(mean.mass[2], 1.8, mean.mass[2], 2.2, col='red', lwd=2)
 segments(mean.mass[1], 2.8, mean.mass[1], 3.2, col='red', lwd=2)
+par(op)
 
 # Bundle data
 pop <- as.numeric(Pop)    # Code factor levels as 1:3
@@ -95,7 +96,7 @@ model {
 ")
 
 # Initial values
-inits <- function(){list(alpha=rnorm(3, 100, 300))} 
+inits <- function(){list(alpha=rnorm(3, 100, 300))}
 
 # Parameters monitored
 parameters <- c("alpha", "sigma", "diff.12", "diff.13", "diff.23")
@@ -106,7 +107,8 @@ ni <- 60000; nb <- 10000; nc <- 3; nt <- 5; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out8 <- jags(jags.data, inits, parameters, "model7.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 2)); traceplot(out8)     # Not shown
+op <- par(mfrow=c(2, 2)); traceplot(out8)     # Not shown
+par(op)
 print(out8, 2)
 
 #            mean    sd   2.5%    50%  97.5% overlap0    f Rhat n.eff
@@ -127,14 +129,11 @@ mean.mass            # For population 1, 2 and 3 (or A, B and C)
 summary(lm(mass ~ Pop-1))  # Means parameterization of factor levels
 
 # Coefficients:
-     # Estimate Std. Error t value Pr(>|t|)    
+     # Estimate Std. Error t value Pr(>|t|)
 # popA  131.611     10.315   12.76   <2e-16 ***
 # popB  241.500      9.331   25.88   <2e-16 ***
 # popC  246.833      7.990   30.89   <2e-16 ***
 
 # Residual standard error: 43.76 on 67 degrees of freedom
-# Multiple R-squared:  0.9639,    Adjusted R-squared:  0.9622 
+# Multiple R-squared:  0.9639,    Adjusted R-squared:  0.9622
 # F-statistic: 595.7 on 3 and 67 DF,  p-value: < 2.2e-16
-
-
-

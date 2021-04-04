@@ -44,153 +44,153 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model1.txt", "
 model {
-# Priors and linear models
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f[1] ~ dunif(0, 10)
-mean.f[2] ~ dunif(0, 10)
+  # Priors and linear models
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f[1] ~ dunif(0, 10)
+  mean.f[2] ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.sj
-  sa[t] <- mean.sa
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    sj[t] <- mean.sj
+    sa[t] <- mean.sa
+    p[t] <- mean.p
+  }
 
-for (t in 1:n.occasions){
-  f[1,t] <- mean.f[1]
-  f[2,t] <- mean.f[2]
-}
+  for (t in 1:n.occasions){
+    f[1,t] <- mean.f[1]
+    f[2,t] <- mean.f[2]
+  }
 
-sigma ~ dunif(0.5, 1000)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 1000)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: discrete uniform priors
-N[1,1] ~ dcat(pNinit)
-N[2,1] ~ dcat(pNinit)
+  # Population count data (state-space model)
+  # Model for the initial population size: discrete uniform priors
+  N[1,1] ~ dcat(pNinit)
+  N[2,1] ~ dcat(pNinit)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] ~ dpois(N[1,t] * f[1,t] / 2 * sj[t] + N[2,t] * f[2,t] / 2 * sj[t])
-  N[2,t+1] ~ dbin(sa[t], N[1,t] + N[2,t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] ~ dpois(N[1,t] * f[1,t] / 2 * sj[t] + N[2,t] * f[2,t] / 2 * sj[t])
+    N[2,t+1] ~ dbin(sa[t], N[1,t] + N[2,t])
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
 
-# Assessing the fit of the state-space model
-# 1. Compute fit statistic for observed data
-# 1.1. Discrepancy measure: mean absolute error
-for (t in 1:n.occasions){
-  C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
-  Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
-}
-Dmape.obs <- sum(Dssm.obs)
-# 1.2. Test statistic: number of turns
-for (t in 1:(n.occasions-2)){
-  Tt1.obs[t] <- step(C[t+2] - C[t+1])
-  Tt2.obs[t] <- step(C[t+1] - C[t])
-  Tt3.obs[t] <- equals(Tt1.obs[t] + Tt2.obs[t], 1)
-}
-Tturn.obs <- sum(Tt3.obs)
+  # Assessing the fit of the state-space model
+  # 1. Compute fit statistic for observed data
+  # 1.1. Discrepancy measure: mean absolute error
+  for (t in 1:n.occasions){
+    C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
+    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
+  }
+  Dmape.obs <- sum(Dssm.obs)
+  # 1.2. Test statistic: number of turns
+  for (t in 1:(n.occasions-2)){
+    Tt1.obs[t] <- step(C[t+2] - C[t+1])
+    Tt2.obs[t] <- step(C[t+1] - C[t])
+    Tt3.obs[t] <- equals(Tt1.obs[t] + Tt2.obs[t], 1)
+  }
+  Tturn.obs <- sum(Tt3.obs)
 
-# 2. Compute fit statistic for replicate data
-# 2.1. Discrepancy measure: mean absolute error
-for (t in 1:n.occasions){
-  C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)     # Generate replicate data
-  Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
-}
-Dmape.rep <- sum(Dssm.rep)
-# 2.2. Test statistic: number of turns
-for (t in 1:(n.occasions-2)){
-  Tt1.rep[t] <- step(C.rep[t+2] - C.rep[t+1])
-  Tt2.rep[t] <- step(C.rep[t+1] - C.rep[t])
-  Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
-}
-Tturn.rep <- sum(Tt3.rep)
+  # 2. Compute fit statistic for replicate data
+  # 2.1. Discrepancy measure: mean absolute error
+  for (t in 1:n.occasions){
+    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)     # Generate replicate data
+    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
+  }
+  Dmape.rep <- sum(Dssm.rep)
+  # 2.2. Test statistic: number of turns
+  for (t in 1:(n.occasions-2)){
+    Tt1.rep[t] <- step(C.rep[t+2] - C.rep[t+1])
+    Tt2.rep[t] <- step(C.rep[t+1] - C.rep[t])
+    Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
+  }
+  Tturn.rep <- sum(Tt3.rep)
 
-# Productivity data (Poisson regression model)
-for (i in 1:length(J)){
-  J[i] ~ dpois(f[age[i], year[i]])
-}
+  # Productivity data (Poisson regression model)
+  for (i in 1:length(J)){
+    J[i] ~ dpois(f[age[i], year[i]])
+  }
 
-# Assessing the fit of the Poisson regression model
-# 1. Compute fit statistic for observed data
-# 1.1. Discrepancy measure: deviance
-for (i in 1:length(J)){
-  J.exp[i] <- f[age[i],year[i]]              # Expected data
-  D.obs[i] <- J[i] * log(J[i]/J.exp[i]) - (J[i] - J.exp[i])
-}
-Dd.obs <- sum(D.obs)
-# 1.2. Compute test statistic variance-mean ratio
-Tvm.obs <- pow(sd(J),2) / mean(J)
+  # Assessing the fit of the Poisson regression model
+  # 1. Compute fit statistic for observed data
+  # 1.1. Discrepancy measure: deviance
+  for (i in 1:length(J)){
+    J.exp[i] <- f[age[i],year[i]]              # Expected data
+    D.obs[i] <- J[i] * log(J[i]/J.exp[i]) - (J[i] - J.exp[i])
+  }
+  Dd.obs <- sum(D.obs)
+  # 1.2. Compute test statistic variance-mean ratio
+  Tvm.obs <- pow(sd(J),2) / mean(J)
 
-# 2. Compute fit statistic for replicate data
-# 2.1. Discrepancy measure: mean absolute error
-for (i in 1:length(J)){
-  J.rep[i] ~ dpois(f[age[i], year[i]])    # Generate replicate data
-  D.rep[i] <- J.rep[i] * log(J.rep[i]/J.exp[i]) - (J.rep[i] - J.exp[i])
-}
-Dd.rep <- sum(D.rep)
-# 2.2. Compute test statistic variance-mean ratio
-Tvm.rep <- pow(sd(J.rep),2) / mean(J.rep)
+  # 2. Compute fit statistic for replicate data
+  # 2.1. Discrepancy measure: mean absolute error
+  for (i in 1:length(J)){
+    J.rep[i] ~ dpois(f[age[i], year[i]])    # Generate replicate data
+    D.rep[i] <- J.rep[i] * log(J.rep[i]/J.exp[i]) - (J.rep[i] - J.exp[i])
+  }
+  Dd.rep <- sum(D.rep)
+  # 2.2. Compute test statistic variance-mean ratio
+  Tvm.rep <- pow(sd(J.rep),2) / mean(J.rep)
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Assessing the fit of the capture-recapture model
-# 1. Compute fit statistic for observed data
-# 1.1. Discrepancy measure: Freeman-Tukey statistic
-for (t in 1:(n.occasions-1)){
-  for (j in 1:n.occasions){
-    marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]  # Expected values
-    marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]  # Expected values
-    Dcjs.obs[t,j] <- pow(pow(marr.j[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
-    Dcjs.obs[t+n.occasions-1,j] <- pow(pow(marr.a[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
-  } #j
-} #t
-DFT.obs <- sum(Dcjs.obs)
+  # Assessing the fit of the capture-recapture model
+  # 1. Compute fit statistic for observed data
+  # 1.1. Discrepancy measure: Freeman-Tukey statistic
+  for (t in 1:(n.occasions-1)){
+    for (j in 1:n.occasions){
+      marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]  # Expected values
+      marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]  # Expected values
+      Dcjs.obs[t,j] <- pow(pow(marr.j[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
+      Dcjs.obs[t+n.occasions-1,j] <- pow(pow(marr.a[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
+    } #j
+  } #t
+  DFT.obs <- sum(Dcjs.obs)
 
-# 2. Compute fit statistic for replicate data
-# 2.1. Discrepancy measure: Freeman-Tukey statistic
-for (t in 1:(n.occasions-1)){
-  marr.j.rep[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])   # Generate replicate data
-  marr.a.rep[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-     for (j in 1:n.occasions){
-       Dcjs.rep[t,j] <- pow(pow(marr.j.rep[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
-       Dcjs.rep[t+n.occasions-1,j] <- pow(pow(marr.a.rep[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
-  } #j
-} #t
-DFT.rep <- sum(Dcjs.rep)
+  # 2. Compute fit statistic for replicate data
+  # 2.1. Discrepancy measure: Freeman-Tukey statistic
+  for (t in 1:(n.occasions-1)){
+    marr.j.rep[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])   # Generate replicate data
+    marr.a.rep[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+       for (j in 1:n.occasions){
+         Dcjs.rep[t,j] <- pow(pow(marr.j.rep[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
+         Dcjs.rep[t+n.occasions-1,j] <- pow(pow(marr.a.rep[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
+    } #j
+  } #t
+  DFT.rep <- sum(Dcjs.rep)
 }
 ")
 
@@ -208,7 +208,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 print(out1, 3)
 
               # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
@@ -284,7 +285,7 @@ plotDS <- function(jagsname, param, param2, at, twd=c(3,1.5,1.5),
 library(scales)
 co <- viridis_pal(option='E')(20)[5]
 
-par(mfrow=c(3, 2), las=1)
+op <- par(mfrow=c(3, 2), las=1)
 plotGOF(out1, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co, 0.3))
 
 hist(out1$sims.list$Tturn.rep, nclass=50, col=alpha(co, 0.3),
@@ -300,6 +301,7 @@ abline(v=out1$mean$Tvm.obs, col="red")
 axis(1); axis(2)
 
 plotGOF(out1, "DFT.obs", "DFT.rep", main="Cormack-Jolly-Seber model", col=alpha(co, 0.3))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 7.2.1.3 Sensitivity of posterior predictive checks to diagnose
@@ -320,133 +322,133 @@ jags.data <- with(woodchat5, list(marr.j=marr[,,1], marr.a=marr[,,2],
 # Write JAGS model file
 cat(file="model2.txt", "
 model {
-# Priors and linear models
-mean.s ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.s ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.s
-  sa[t] <- mean.s
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    sj[t] <- mean.s
+    sa[t] <- mean.s
+    p[t] <- mean.p
+  }
 
-for (t in 1:n.occasions){
-  f[1,t] <- mean.f
-  f[2,t] <- mean.f
-}
+  for (t in 1:n.occasions){
+    f[1,t] <- mean.f
+    f[2,t] <- mean.f
+  }
 
-sigma ~ dunif(0.5, 1000)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 1000)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: discrete uniform priors
-N[1,1] ~ dcat(pNinit)
-N[2,1] ~ dcat(pNinit)
+  # Population count data (state-space model)
+  # Model for the initial population size: discrete uniform priors
+  N[1,1] ~ dcat(pNinit)
+  N[2,1] ~ dcat(pNinit)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] ~ dpois(N[1,t] * f[1,t] / 2 * sj[t] + N[2,t] * f[2,t] / 2 * sj[t])
-  N[2,t+1] ~ dbin(sa[t], N[1,t] + N[2,t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] ~ dpois(N[1,t] * f[1,t] / 2 * sj[t] + N[2,t] * f[2,t] / 2 * sj[t])
+    N[2,t+1] ~ dbin(sa[t], N[1,t] + N[2,t])
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
 
-# Assessing the fit of the state-space model
-# 1. Compute fit statistic for observed data
-# Discrepancy measure: mean absolute error
-for (t in 1:n.occasions){
-  C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
-  Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
-}
-Dmape.obs <- sum(Dssm.obs)
+  # Assessing the fit of the state-space model
+  # 1. Compute fit statistic for observed data
+  # Discrepancy measure: mean absolute error
+  for (t in 1:n.occasions){
+    C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
+    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
+  }
+  Dmape.obs <- sum(Dssm.obs)
 
-# 2. Compute fit statistic for replicate data
-# Discrepancy measure: mean absolute error
-for (t in 1:n.occasions){
-  C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)     # Generate replicate data
-  Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
-}
-Dmape.rep <- sum(Dssm.rep)
+  # 2. Compute fit statistic for replicate data
+  # Discrepancy measure: mean absolute error
+  for (t in 1:n.occasions){
+    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)     # Generate replicate data
+    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
+  }
+  Dmape.rep <- sum(Dssm.rep)
 
-# Productivity data (Poisson regression model)
-for (i in 1:length(J)){
-  J[i] ~ dpois(f[age[i], year[i]])
-}
+  # Productivity data (Poisson regression model)
+  for (i in 1:length(J)){
+    J[i] ~ dpois(f[age[i], year[i]])
+  }
 
-# Assessing the fit of the Poisson regression model
-# 1. Compute fit statistic for observed data
-# Discrepancy measure: deviance
-for (i in 1:length(J)){
-  J.exp[i] <- f[age[i],year[i]]              # Expected data
-  D.obs[i] <- J[i] * log(J[i]/J.exp[i]) - (J[i] - J.exp[i])
-}
-Dd.obs <- sum(D.obs)
+  # Assessing the fit of the Poisson regression model
+  # 1. Compute fit statistic for observed data
+  # Discrepancy measure: deviance
+  for (i in 1:length(J)){
+    J.exp[i] <- f[age[i],year[i]]              # Expected data
+    D.obs[i] <- J[i] * log(J[i]/J.exp[i]) - (J[i] - J.exp[i])
+  }
+  Dd.obs <- sum(D.obs)
 
-# 2. Compute fit statistic for replicate data
-# Discrepancy measure: mean absolute error
-for (i in 1:length(J)){
-  J.rep[i] ~ dpois(f[age[i], year[i]])    # Generate replicate data
-  D.rep[i] <- J.rep[i] * log(J.rep[i]/J.exp[i]) - (J.rep[i] - J.exp[i])
-}
-Dd.rep <- sum(D.rep)
+  # 2. Compute fit statistic for replicate data
+  # Discrepancy measure: mean absolute error
+  for (i in 1:length(J)){
+    J.rep[i] ~ dpois(f[age[i], year[i]])    # Generate replicate data
+    D.rep[i] <- J.rep[i] * log(J.rep[i]/J.exp[i]) - (J.rep[i] - J.exp[i])
+  }
+  Dd.rep <- sum(D.rep)
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Assessing the fit of the capture-recapture model
-# 1. Compute fit statistic for observed data
-# 1.1. Discrepancy measure: Freeman-Tukey statistic
-for (t in 1:(n.occasions-1)){
-  for (j in 1:n.occasions){
-    marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]  # Expected values
-    marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]  # Expected values
-    Dcjs.obs[t,j] <- pow(pow(marr.j[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
-    Dcjs.obs[t+n.occasions-1,j] <- pow(pow(marr.a[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
-  } #j
-} #t
-DFT.obs <- sum(Dcjs.obs)
+  # Assessing the fit of the capture-recapture model
+  # 1. Compute fit statistic for observed data
+  # 1.1. Discrepancy measure: Freeman-Tukey statistic
+  for (t in 1:(n.occasions-1)){
+    for (j in 1:n.occasions){
+      marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]  # Expected values
+      marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]  # Expected values
+      Dcjs.obs[t,j] <- pow(pow(marr.j[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
+      Dcjs.obs[t+n.occasions-1,j] <- pow(pow(marr.a[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
+    } #j
+  } #t
+  DFT.obs <- sum(Dcjs.obs)
 
-# 2. Compute fit statistic for replicate data
-# 2.1. Discrepancy measure: Freeman-Tukey statistic
-for (t in 1:(n.occasions-1)){
-  marr.j.rep[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])   # Generate replicate data
-  marr.a.rep[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-     for (j in 1:n.occasions){
-       Dcjs.rep[t,j] <- pow(pow(marr.j.rep[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
-       Dcjs.rep[t+n.occasions-1,j] <- pow(pow(marr.a.rep[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
-  } #j
-} #t
-DFT.rep <- sum(Dcjs.rep)
+  # 2. Compute fit statistic for replicate data
+  # 2.1. Discrepancy measure: Freeman-Tukey statistic
+  for (t in 1:(n.occasions-1)){
+    marr.j.rep[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])   # Generate replicate data
+    marr.a.rep[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+       for (j in 1:n.occasions){
+         Dcjs.rep[t,j] <- pow(pow(marr.j.rep[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
+         Dcjs.rep[t+n.occasions-1,j] <- pow(pow(marr.a.rep[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
+    } #j
+  } #t
+  DFT.rep <- sum(Dcjs.rep)
 }
 ")
 
@@ -463,7 +465,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out2)
+op <- par(mfrow=c(3, 3)); traceplot(out2)
+par(op)
 print(out2, 3)
 
 # IPM3: no reproduction of 1y shrikes
@@ -475,133 +478,133 @@ jags.data <- with(woodchat5, list(marr.j=marr[,,1], marr.a=marr[,,2],
 # Write JAGS model file
 cat(file="model3.txt", "
 model {
-# Priors and linear models
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.sj
-  sa[t] <- mean.sa
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    sj[t] <- mean.sj
+    sa[t] <- mean.sa
+    p[t] <- mean.p
+  }
 
-for (t in 1:n.occasions){
-  f[t] <- mean.f
-}
+  for (t in 1:n.occasions){
+    f[t] <- mean.f
+  }
 
-sigma ~ dunif(0.5, 1000)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 1000)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: discrete uniform priors
-N[1,1] ~ dcat(pNinit)
-N[2,1] ~ dcat(pNinit)
+  # Population count data (state-space model)
+  # Model for the initial population size: discrete uniform priors
+  N[1,1] ~ dcat(pNinit)
+  N[2,1] ~ dcat(pNinit)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] ~ dpois(N[2,t] * f[t] / 2 * sj[t])
-  N[2,t+1] ~ dbin(sa[t], N[1,t] + N[2,t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] ~ dpois(N[2,t] * f[t] / 2 * sj[t])
+    N[2,t+1] ~ dbin(sa[t], N[1,t] + N[2,t])
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
 
-# Assessing the fit of the state-space model
-# 1. Compute fit statistic for observed data
-# Discrepancy measure: mean absolute error
-for (t in 1:n.occasions){
-  C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
-  Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
-}
-Dmape.obs <- sum(Dssm.obs)
+  # Assessing the fit of the state-space model
+  # 1. Compute fit statistic for observed data
+  # Discrepancy measure: mean absolute error
+  for (t in 1:n.occasions){
+    C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
+    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
+  }
+  Dmape.obs <- sum(Dssm.obs)
 
-# 2. Compute fit statistic for replicate data
-# Discrepancy measure: mean absolute error
-for (t in 1:n.occasions){
-  C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)     # Generate replicate data
-  Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
-}
-Dmape.rep <- sum(Dssm.rep)
+  # 2. Compute fit statistic for replicate data
+  # Discrepancy measure: mean absolute error
+  for (t in 1:n.occasions){
+    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)     # Generate replicate data
+    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
+  }
+  Dmape.rep <- sum(Dssm.rep)
 
-# Productivity data (Poisson regression model)
-for (i in 1:length(J)){
-  J[i] ~ dpois(f[year[i]])
-}
+  # Productivity data (Poisson regression model)
+  for (i in 1:length(J)){
+    J[i] ~ dpois(f[year[i]])
+  }
 
-# Assessing the fit of the Poisson regression model
-# 1. Compute fit statistic for observed data
-# Discrepancy measure: deviance
-for (i in 1:length(J)){
-  J.exp[i] <- f[year[i]]              # Expected data
-  D.obs[i] <- J[i] * log(J[i]/J.exp[i]) - (J[i] - J.exp[i])
-}
-Dd.obs <- sum(D.obs)
+  # Assessing the fit of the Poisson regression model
+  # 1. Compute fit statistic for observed data
+  # Discrepancy measure: deviance
+  for (i in 1:length(J)){
+    J.exp[i] <- f[year[i]]              # Expected data
+    D.obs[i] <- J[i] * log(J[i]/J.exp[i]) - (J[i] - J.exp[i])
+  }
+  Dd.obs <- sum(D.obs)
 
-# 2. Compute fit statistic for replicate data
-# Discrepancy measure: mean absolute error
-for (i in 1:length(J)){
-  J.rep[i] ~ dpois(f[year[i]])    # Generate replicate data
-  D.rep[i] <- J.rep[i] * log(J.rep[i]/J.exp[i]) - (J.rep[i] - J.exp[i])
-}
-Dd.rep <- sum(D.rep)
+  # 2. Compute fit statistic for replicate data
+  # Discrepancy measure: mean absolute error
+  for (i in 1:length(J)){
+    J.rep[i] ~ dpois(f[year[i]])    # Generate replicate data
+    D.rep[i] <- J.rep[i] * log(J.rep[i]/J.exp[i]) - (J.rep[i] - J.exp[i])
+  }
+  Dd.rep <- sum(D.rep)
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Assessing the fit of the capture-recapture model
-# 1. Compute fit statistic for observed data
-# 1.1. Discrepancy measure: Freeman-Tukey statistic
-for (t in 1:(n.occasions-1)){
-  for (j in 1:n.occasions){
-    marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]  # Expected values
-    marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]  # Expected values
-    Dcjs.obs[t,j] <- pow(pow(marr.j[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
-    Dcjs.obs[t+n.occasions-1,j] <- pow(pow(marr.a[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
-  } #j
-} #t
-DFT.obs <- sum(Dcjs.obs)
+  # Assessing the fit of the capture-recapture model
+  # 1. Compute fit statistic for observed data
+  # 1.1. Discrepancy measure: Freeman-Tukey statistic
+  for (t in 1:(n.occasions-1)){
+    for (j in 1:n.occasions){
+      marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]  # Expected values
+      marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]  # Expected values
+      Dcjs.obs[t,j] <- pow(pow(marr.j[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
+      Dcjs.obs[t+n.occasions-1,j] <- pow(pow(marr.a[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
+    } #j
+  } #t
+  DFT.obs <- sum(Dcjs.obs)
 
-# 2. Compute fit statistic for replicate data
-# 2.1. Discrepancy measure: Freeman-Tukey statistic
-for (t in 1:(n.occasions-1)){
-  marr.j.rep[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])   # Generate replicate data
-  marr.a.rep[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-  for (j in 1:n.occasions){
-    Dcjs.rep[t,j] <- pow(pow(marr.j.rep[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
-    Dcjs.rep[t+n.occasions-1,j] <- pow(pow(marr.a.rep[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
-  } #j
-} #t
-DFT.rep <- sum(Dcjs.rep)
+  # 2. Compute fit statistic for replicate data
+  # 2.1. Discrepancy measure: Freeman-Tukey statistic
+  for (t in 1:(n.occasions-1)){
+    marr.j.rep[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])   # Generate replicate data
+    marr.a.rep[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+    for (j in 1:n.occasions){
+      Dcjs.rep[t,j] <- pow(pow(marr.j.rep[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
+      Dcjs.rep[t+n.occasions-1,j] <- pow(pow(marr.a.rep[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
+    } #j
+  } #t
+  DFT.rep <- sum(Dcjs.rep)
 }
 ")
 
@@ -618,7 +621,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out3 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out3)
+op <- par(mfrow=c(3, 3)); traceplot(out3)
+par(op)
 print(out3, 3)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -626,7 +630,6 @@ print(out3, 3)
 # Load data
 library(IPMbook)
 data(woodchat7)
-# load("Woodchat7.Rdata")
 marr <- marrayAge(woodchat7$ch, woodchat7$age)
 
 # Bundle data
@@ -649,7 +652,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out4 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out4)
+op <- par(mfrow=c(3, 3)); traceplot(out4)
+par(op)
 print(out4, 3)
 
 # Fit IPM2
@@ -666,7 +670,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out5 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out5)
+op <- par(mfrow=c(3, 3)); traceplot(out5)
+par(op)
 print(out5, 3)
 
 # Fit IPM3
@@ -690,7 +695,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out6 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out6)
+op <- par(mfrow=c(3, 3)); traceplot(out6)
+par(op)
 print(out6, 3)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -699,57 +705,57 @@ print(out6, 3)
 # Write JAGS model file
 cat(file = "model4.txt", "
 model {
-# Priors and linear models
-for (t in 1:(n.occasions-1)){
-  sj[t] <- mean.sj
-  sa[t] <- mean.sa
-  p[t] <- mean.p
-}
+  # Priors and linear models
+  for (t in 1:(n.occasions-1)){
+    sj[t] <- mean.sj
+    sa[t] <- mean.sa
+    p[t] <- mean.p
+  }
 
-for (t in 1:n.occasions){
-  f[1,t] <- mean.f[1]
-  f[2,t] <- mean.f[2]
-}
+  for (t in 1:n.occasions){
+    f[1,t] <- mean.f[1]
+    f[2,t] <- mean.f[2]
+  }
 
-mean.sj ~ dunif(0, 1)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.f[1] ~ dunif(0, 10)
-mean.f[2] ~ dunif(0, 10)
+  mean.sj ~ dunif(0, 1)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.f[1] ~ dunif(0, 10)
+  mean.f[2] ~ dunif(0, 10)
 
-# Productivity data (Poisson regression model)
-for (i in 1:length(J)){
-  J[i] ~ dpois(f[age[i], year[i]])
-}
+  # Productivity data (Poisson regression model)
+  for (i in 1:length(J)){
+    J[i] ~ dpois(f[age[i], year[i]])
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1 - p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1 - p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 }
 ")
 
@@ -802,9 +808,9 @@ library(scales)
 library(plotrix)
 co <- viridis_pal(option='E')(20)[c(5, 11, 16)]
 
+op <- par(las=1, mar=c(3,7,3,1), "mfrow")
 layout(matrix(1:9, 3, 3, byrow=TRUE), widths=c(1.1, 1, 1), heights=c(1, 1, 1.1), TRUE)
 
-par(las=1, mar=c(3,7,3,1))
 plotGOF(out1, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co[1], 0.3))
 mtext(expression(bold(IPM[1])), side=2, las=0, line=5, font=2)
 corner.label('A', font=2, cex=1.25)
@@ -839,6 +845,7 @@ corner.label('H', font=2, cex=1.25)
 
 plotGOF(out3, "DFT.obs", "DFT.rep", main="Cormack-Jolly-Seber model", col=alpha(co[3], 0.3))
 corner.label('I', font=2, cex=1.25)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for Fig. 7.3 ~~~~
@@ -849,8 +856,8 @@ library(scales)
 library(plotrix)
 co <- viridis_pal(option='E')(20)[c(5, 11, 16)]
 
+op <- par(las=1, mar=c(3,7,3,1), "mfrow")
 layout(matrix(1:9, 3, 3, byrow=TRUE), widths=c(1.1, 1, 1), heights=c(1, 1, 1.1), TRUE)
-par(las=1, mar=c(3,7,3,1))
 plotGOF(out4, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co[1], 0.3))
 mtext(expression(bold(IPM[1])), side=2, las=0, line=5, font=2)
 corner.label('A', font=2, cex=1.25)
@@ -885,6 +892,7 @@ corner.label('H', font=2, cex=1.25)
 
 plotGOF(out6, "DFT.obs", "DFT.rep", main="Cormack-Jolly-Seber model", col=alpha(co[3], 0.3))
 corner.label('I', font=2, cex=1.25)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for Figure 7.4 ~~~~
@@ -898,11 +906,12 @@ labs <- c(expression(IPM[1]), expression(IPM[2]), expression(IPM[3]),
     expression(CJS[ ]), expression(IPM[1]), expression(IPM[2]),
     expression(IPM[3]), expression(CJS[ ]))
 
+op <- par(las=1, mar=c(5, 5, 2, 2), "mfrow")
 layout(matrix(1:4, 2, 2, byrow=TRUE), widths=c(1.25, 1.25), heights=c(1, 1), TRUE)
 
 # Top row
-par(las=1, mar=c(5, 5, 2, 2))
-plot(0, ylim=c(0.25, 0.45), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA, ylab="Juvenile survival")
+plot(0, ylim=c(0.25, 0.45), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA,
+    ylab="Juvenile survival")
 plotDS("out1", "mean.sj", at=1, colmax=co[1])
 plotDS("out2", "mean.s", at=2, colmax=co[2])
 plotDS("out3", "mean.sj", at=3, colmax=co[3])
@@ -917,7 +926,8 @@ mtext("Small sample size", side=1, at=2.5, line=3)
 mtext("Large sample size", side=1, at=7.5, line=3)
 corner.label('A', font=2, xoff=0.25)
 
-plot(0, ylim=c(0.4, 0.6), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA, ylab="Adult survival")
+plot(0, ylim=c(0.4, 0.6), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA,
+    ylab="Adult survival")
 plotDS("out1", "mean.sa", at=1, colmax=co[1])
 plotDS("out2", "mean.s", at=2, colmax=co[2])
 plotDS("out3", "mean.sa", at=3, colmax=co[3])
@@ -934,7 +944,8 @@ corner.label('B', font=2, xoff=0.25)
 
 # Second row
 labs[c(4,8)] <- expression(Pois[ ])
-plot(0, ylim=c(2.4, 3.3), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA, ylab="First year productivity")
+plot(0, ylim=c(2.4, 3.3), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA,
+    ylab="First year productivity")
 plotDS("out1", "mean.f[,1]", "mean.f[1]", at=1, colmax=co[1])
 plotDS("out2", "mean.f", at=2, colmax=co[2])
 plotDS("out7", "mean.f[,1]", "mean.f[1]", at=4)
@@ -947,7 +958,8 @@ mtext("Small sample size", side=1, at=2.5, line=3)
 mtext("Large sample size", side=1, at=7.5, line=3)
 corner.label('C', font=2, xoff=0.25)
 
-plot(0, ylim=c(2.95, 4.05), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA, ylab="Adult productivity")
+plot(0, ylim=c(2.95, 4.05), xlim=c(0.7,9.3), axes=F, pch=NA, xlab=NA,
+    ylab="Adult productivity")
 plotDS("out1", "mean.f[,2]", "mean.f[2]", at=1, colmax=co[1])
 plotDS("out2", "mean.f", at=2, colmax=co[2])
 plotDS("out3", "mean.f", at=3, colmax=co[3])
@@ -961,6 +973,7 @@ axis(1, at=c(1:4, 6:9), labels=labs)
 mtext("Small sample size", side=1, at=2.5, line=3)
 mtext("Large sample size", side=1, at=7.5, line=3)
 corner.label('D', font=2, xoff=0.25)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for Figure 7.5 ~~~~
@@ -989,9 +1002,8 @@ qu <- function(x) quantile(x, c(0.025, 0.975))
 T <- length(woodchat5$count)
 d <- 0.2
 
+op <- par(las=1, mar=c(3,5,3,1), "mfrow")
 layout(matrix(1:2, 2, 1, byrow=TRUE), widths=1.6, heights=c(1, 1), TRUE)
-
-par(las=1, mar=c(3,5,3,1))
 
 plot(y=apply(Ntot[,1,], 2, mean), x=(1:T)-d, type="b", ylim=c(80, 200),
     ylab="Number", xlab=NA, las=1, pch=16, axes=FALSE, col=co[1], main="Small sample size")
@@ -1025,4 +1037,5 @@ segments(1:T, apply(NtotL[,2,], 2, qu)[1,], 1:T, apply(NtotL[,2,], 2, qu)[2,], c
 points(y=apply(NtotL[,3,], 2, mean), x=(1:T)+d, type="b", pch=16, col=co[3])
 segments((1:T)+d, apply(NtotL[,3,], 2, qu)[1,], (1:T)+d, apply(NtotL[,3,], 2, qu)[2,], col=co[3])
 points(woodchat7$count, type="b", pch=1, lty=3)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

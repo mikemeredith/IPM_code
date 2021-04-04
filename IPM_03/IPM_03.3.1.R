@@ -19,7 +19,7 @@ f1 <- 1.3      # Number of female fledglings per 1-year old female
 fa <- 1.8      # Number of female fledglings per adult female
 
 # Define the transition matrix A (inspired by Woodchat shrike demography)
-A <- matrix(c(f1 * sj, fa * sj, 
+A <- matrix(c(f1 * sj, fa * sj,
               sa, sa), ncol=2, byrow=TRUE)
 dimnames(A) <- list(c("1y", "ad"), c("1y", "ad"))
 A              # print the matrix
@@ -27,7 +27,7 @@ A              # print the matrix
 # 1y  0.39 0.54
 # ad  0.55 0.55
 
-# Asymptotic population growth rate: 
+# Asymptotic population growth rate:
 # ''''''''''''''''''''''''''''''''''
 
 N1 <- c(10, 1)
@@ -37,7 +37,7 @@ N <- matrix(NA, nrow=2, ncol=T)     # Population sizes
 gr <- matrix(NA, nrow=3, ncol=T-1)  # Growth rates
 N[,1] <- N1
 for (t in 2:T){
-  N[,t] <- A %*% N[,t-1]  
+  N[,t] <- A %*% N[,t-1]
   gr[1,t-1] <- N[1,t] / N[1,t-1]
   gr[2,t-1] <- N[2,t] / N[2,t-1]
   gr[3,t-1] <- (N[1,t] + N[2,t]) / (N[1,t-1] + N[2,t-1])
@@ -45,8 +45,8 @@ for (t in 2:T){
 sr <- N[1, ] / colSums(N)               # State distribution (prop. 1y)
 
 # ~~~~ extra code for Figure 3.8 ~~~~
+op <- par(las=1, "mfrow")
 layout(matrix(1:3, 1, 3,byrow=TRUE), widths=c(1, 1, 1), heights=1, TRUE)
-par(las=1)
 # Plot stage-specific population size
 plot(N[1,], type="b", pch=16, ylim=range(c(min(N), colSums(N))), axes=FALSE,
     ylab="Population size", xlab="Time", col="red")
@@ -79,6 +79,7 @@ revec <- Re(eigen(A)$vectors[,u])
 abline(h=revec[1]/sum(revec), col="red", lty=2)
 abline(h=revec[2]/sum(revec), col="orange", lty=2)
 mtext("C", at=1, line=0.5, cex=1.5)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Compute asymptotic population growth rate (lambda)
@@ -96,7 +97,7 @@ rho2 <- 0.9   # Productivity of adult females
 
 # Define the transition matrix A
 Abat <- matrix(c(0, rho1*s1/2, rho2*s1/2,
-              s2, 0, 0, 
+              s2, 0, 0,
               0, s3, s3), ncol=3, byrow=TRUE)
 
 # Define R structures and do computations
@@ -116,9 +117,10 @@ sr <- sweep(N, 2, colSums(N), "/")   # Stage distribution
 
 # Plots
 co <- c("red", "orange", "tomato2")
+op <- par(las=1, cex=1.1, "mfrow")
 layout(matrix(1:3, 1, 3, byrow=TRUE), widths=c(1, 1, 1), heights=1, TRUE)
-par(las=1, cex=1.1)
-plot(N[1,], type="b", pch=16, ylim=range(c(min(N), colSums(N))), axes=FALSE, ylab="Population size", xlab="Time", col=co[1])
+plot(N[1,], type="b", pch=16, ylim=range(c(min(N), colSums(N))), axes=FALSE,
+    ylab="Population size", xlab="Time", col=co[1])
 points(N[2,], type="b", pch=16, col=co[2])
 points(N[3,], type="b", pch=16, col=co[3])
 points(colSums(N), type="b", pch=16, col="blue")
@@ -126,7 +128,8 @@ axis(1, at=1:T)
 axis(2)
 mtext("A", at=1, line=0.5, cex=1.5)
 
-plot(x=(1:(T-1)) + 0.5, y=gr[1,], type="b", pch=16, ylim=range(gr), xlim=c(1, T), axes=FALSE, ylab="Population growth rate", xlab="Time", col=co[1])
+plot(x=(1:(T-1)) + 0.5, y=gr[1,], type="b", pch=16, ylim=range(gr), xlim=c(1, T),
+    axes=FALSE, ylab="Population growth rate", xlab="Time", col=co[1])
 points(x=(1:(T-1)) + 0.5, y=gr[2,], type="b", pch=16, col=co[2])
 points(x=(1:(T-1)) + 0.5, y=gr[3,], type="b", pch=16, col=co[3])
 points(x=(1:(T-1)) + 0.5, y=gr[4,], type="b", pch=16, col="blue")
@@ -134,9 +137,11 @@ axis(1, at=1:T)
 axis(2)
 abline(h=max(Re(eigen(Abat)$values)), lty=2)
 mtext("B", at=1, line=0.5, cex=1.5)
-legend("topright", legend=c("1y", "2y", "ad", "total"), bty="n", pch=rep(16,4), lty=rep(1, 4), col=c(co, "blue"))
+legend("topright", legend=c("1y", "2y", "ad", "total"), bty="n", pch=rep(16,4),
+    lty=rep(1, 4), col=c(co, "blue"))
 
-plot(sr[1,], type="b", pch=16, ylab="Proportion of stage classes", axes=FALSE, col=co[1], ylim=c(0, 0.8), xlab="Time")
+plot(sr[1,], type="b", pch=16, ylab="Proportion of stage classes", axes=FALSE,
+    col=co[1], ylim=c(0, 0.8), xlab="Time")
 points(sr[2,], type="b", pch=16, col=co[2])
 points(sr[3,], type="b", pch=16, col=co[3])
 axis(1, at=1:T)
@@ -147,9 +152,10 @@ abline(h=revec[1]/sum(revec), col=co[1], lty=2)
 abline(h=revec[2]/sum(revec), col=co[2], lty=2)
 abline(h=revec[3]/sum(revec), col=co[3], lty=2)
 mtext("C", at=1, line=0.5, cex=1.5)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Stable stage distribution: 
+# Stable stage distribution:
 # ''''''''''''''''''''''''''
 
 ( u <- which.max(Re(eigen(A)$values)) )
@@ -160,7 +166,7 @@ mtext("C", at=1, line=0.5, cex=1.5)
 ( revec/sum(revec) )
 # [1] 0.4612162 0.5387838
 
-# Stage-specific reproductive values: 
+# Stage-specific reproductive values:
 # '''''''''''''''''''''''''''''''''''
 
 u <- which.max(Re(eigen(A)$values))
@@ -168,7 +174,7 @@ levec <- Re((eigen(A)$vectors)[u,])
 ( levec / sum(levec) )
 # [1] 0.4631655 0.5368345
 
-# Net reproductive rate: 
+# Net reproductive rate:
 # ''''''''''''''''''''''
 
 i <- 1:100             # 100 as our approximation to infinity
@@ -178,7 +184,7 @@ i <- 1:100             # 100 as our approximation to infinity
 # Generation time
 # '''''''''''''''
 
-Q <- 100                      # Our approximation to infinity 
+Q <- 100                      # Our approximation to infinity
 i <- 2:Q
 # G <- sj * f1 / lambda + sj * fa * sum(I * sa^(i-1) * lambda^(-i))
 ( G <- sj * f1 / lambda + sj * fa * sum(i * sa^(i-1) * lambda^(-i)) )
@@ -243,6 +249,7 @@ for (i in 1:501){
 }
 
 # Plots
+op <- par("mfrow", "las")
 layout(matrix(1:2, 1, 2, byrow=TRUE), widths=c(1, 1), heights=1, TRUE)
 co <- c("red", "orange", "darkgreen", "blue")
 lw <- 2
@@ -269,4 +276,4 @@ lines(y=lame[,2], x=es, col=co[2], lwd=lw)
 lines(y=lame[,3], x=es, col=co[3], lwd=lw)
 lines(y=lame[,4], x=es, col=co[4], lwd=lw)
 mtext("B", at=0.9, line=0.5, cex=1.5)
-
+par(op)

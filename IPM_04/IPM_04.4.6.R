@@ -68,7 +68,7 @@ model {
   # Priors and linear models
   for (i in 1:n.nest){
     for (t in f[i]:(k[i]-1)){
-      phi[i,t] <- phia[age[i] + t - f[i]] 
+      phi[i,t] <- phia[age[i] + t - f[i]]
     } #t
   } #i
 
@@ -102,7 +102,8 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 # Call JAGS from R (ART 0.1 min) and check convergence
 out16 <- jags(jags.data, inits, parameters, "model13.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out16)       # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out16)       # Not shown
+par(op)
 print(out16, 3)
 
             # mean     sd   2.5%     50%   97.5% overlap0     f  Rhat n.eff
@@ -116,7 +117,7 @@ print(out16, 3)
 # beta       0.078  0.032  0.016   0.078   0.141    FALSE 0.995 1.001  2152
 
 # ~~~ code for figure 4.13 ~~~~
-plot(out16$mean$phia, type="b", pch=16, ylim=range(c(out16$q2.5$phia, 1)), 
+plot(out16$mean$phia, type="b", pch=16, ylim=range(c(out16$q2.5$phia, 1)),
     ylab="Daily nest survival probability", xlab="Nestling age", axes=FALSE)
 segments(1:21, out16$q2.5$phia, 1:21, out16$q97.5$phia)
 axis(1, at=1:21, labels=NA, tcl=-0.25)

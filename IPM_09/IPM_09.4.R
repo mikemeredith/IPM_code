@@ -14,7 +14,7 @@ draws <- out1$sims.list
 # 9.4 Transient life-table response experiments
 # =============================================
 
-lambda <- expression(((n1 + n3) * 0.5 * phij * f1 + n2 * 0.5 * phij * f2 + 
+lambda <- expression(((n1 + n3) * 0.5 * phij * f1 + n2 * 0.5 * phij * f2 +
     (phia + om) * (n1 + n2 + n3))/ (n1 + n2 + n3))   # Define lambda
 
 D(lambda, "phij")      # Get derivative for juvenile apparent survival
@@ -32,7 +32,7 @@ mu <- list(phij=draws$mean.phij, phia=draws$mean.phia, om=draws$mean.omega,
     n2=apply(n2, 1, mean), n3=apply(n3, 1, mean))
 
 # Calculate sensitivities
-sens <- matrix(NA, n.draws, 8)  
+sens <- matrix(NA, n.draws, 8)
 colnames(sens) <- c("phij", "phia", "om", "f1", "f2", "n1", "n2", "n3")
 sens[,"phij"] <- eval(D(lambda, "phij"), envir=mu)
 sens[,"phia"] <- eval(D(lambda, "phia"), envir=mu)
@@ -45,13 +45,13 @@ sens[,"n3"] <- eval(D(lambda, "n3"), envir=mu)
 
 
 # Define matrix to store results
-cont <- matrix(NA, nrow=n.draws, ncol=8) 
+cont <- matrix(NA, nrow=n.draws, ncol=8)
 colnames(cont) <- c("phij", "phia", "om", "f1", "f2", "n1", "n2", "n3")
 
 # Calculate contributions for each demographic rate and stage-structured
 #   population size at each MCMC draw
 for (s in 1:n.draws){
-  dp_stoch <- cbind(draws$phij[s,], draws$phia[s,], draws$omega[s,], 
+  dp_stoch <- cbind(draws$phij[s,], draws$phia[s,], draws$omega[s,],
       draws$f1[s,1:n.years], draws$f2[s,1:n.years], n1[s,], n2[s,], n3[s,])
   # Derive process variance and covariance among demographic parameters using
   #  shrunken estimates of demographic rates and proportional pop. sizes
@@ -128,10 +128,10 @@ V2[V2>0] <- 0
 
 # Make figure
 colours <- c(colorRampPalette(c("blue4", "lightblue"))(2),
-    colorRampPalette(c("darkred", "yellow"))(3), 
+    colorRampPalette(c("darkred", "yellow"))(3),
     colorRampPalette(c("lightgreen", "darkgreen"))(3))
-par(mfrow=c(2,1), mar=c(4, 5, 1, 1))
-barplot(differences[,2], ylim=c(-0.35, 0.35), 
+op <- par(mfrow=c(2,1), mar=c(4, 5, 1, 1))
+barplot(differences[,2], ylim=c(-0.35, 0.35),
     ylab="Difference in population growth", axes=FALSE, border=NA)
 axis(2, las=1)
 abline(h=0)
@@ -146,4 +146,5 @@ barplot(V1, ylim=c(-0.35, 0.35), col=colours, ylab="Contribution",
 barplot(V2, add=TRUE, col=colours, axes=FALSE, border=NA)
 axis(2, las=1)
 abline(h=0)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

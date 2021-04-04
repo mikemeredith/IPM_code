@@ -83,7 +83,9 @@ model {
     # Population model
     N[1,t+1] ~ dpois(sj[t] * (f1[t] * N[1,t] + fa[t] * N[2,t]))
     N[2,t+1] ~ dbin(sa[t], (N[1,t] + N[2,t]))
-    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0)   # Determines whether population is still thriving (extinct = 0) or went extinct (extinct = 1)
+    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0)
+        # Determines whether population is still thriving (extinct = 0) or
+        # went extinct (extinct = 1)
   }
 }
 ")
@@ -121,7 +123,8 @@ for (s in 1:dimensions[1]){
   for (t in 1:dimensions[2]){
     # Calculate annual growth rate on log scale
     if (out7$sims.list$extinct[s,t] == 1) break
-    r.annual[t,s] <- log(out7$sims.list$N[s,1,t+1] + out7$sims.list$N[s,2,t+1]) - log(out7$sims.list$N[s,1,t] + out7$sims.list$N[s,2,t])
+    r.annual[t,s] <- log(out7$sims.list$N[s,1,t+1] + out7$sims.list$N[s,2,t+1]) -
+        log(out7$sims.list$N[s,1,t] + out7$sims.list$N[s,2,t])
   } #t
   r[s] <- mean(r.annual[which(out7$sims.list$extinct[s,] == 0),s])
   lambda[s] <- exp(r[s])

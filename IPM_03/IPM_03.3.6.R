@@ -42,8 +42,8 @@ for (s in 1:nsim){
 } #s
 
 # ~~~~ code for Fig. 3.16 ~~~~
+op <- par(mar=c(2, 4, 2, 1), las=1, cex=1.1, "mfrow")
 layout(matrix(1:3, 3, 1, byrow=TRUE), widths=2, heights=c(1, 1, 1.1), TRUE)
-par(mar=c(2, 4, 2, 1), las=1, cex=1.1)
 plot(colSums(N[,,1]), type="l", col="lightgrey", ylim=c(0, 120),
     ylab="Population size", xlab="", axes=FALSE)
 axis(1); axis(2)
@@ -64,7 +64,7 @@ for (s in 2:nsim){
 lines(apply(f1, 1, mean, na.rm=TRUE), col="black", lwd=1.5)
 mtext("B", at=1, cex=1.5)
 
-par(mar=c(4,4,2,1)) 
+par(mar=c(4,4,2,1))
 fa[fa==fa.int] <- NA
 plot(fa[,1], type="l", col="lightgrey", ylim=c(0.3, 2.3),
     ylab=expression(italic(f)[italic(a)]), xlab="Time", axes=FALSE)
@@ -74,6 +74,7 @@ for (s in 2:nsim){
 }
 lines(apply(fa, 1, mean, na.rm=TRUE), col="black", lwd=1.5)
 mtext("C", at=1, cex=1.5)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 mean(Nall[T+1,])
@@ -86,5 +87,3 @@ mean(fa[T,], na.rm=TRUE)
 
 mean(Nall[201,] == 0)
 # [1] 0.001
-
-

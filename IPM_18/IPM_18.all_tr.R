@@ -3,14 +3,13 @@
 # ----------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 8 mins
+# Run time for test script 8 mins, full run 3 hrs
 
 library(IPMbook) ; library(jagsUI)
 
 # 18.4 Component data likelihoods
-# =============================================
+# ===============================
 
-library(IPMbook); library(jagsUI)
 data(cormorant)
 str(cormorant)
 
@@ -70,279 +69,312 @@ str(jags.data)
 # Write JAGS model file
 cat(file = "model1.txt", "
 model {
-# -------------------------------------------------
-# Stages:
-# N: not-yet recruited individuals
-# B: breeders
-# Parameters:
-# phi[age, site, time]: survival probability
-# eta[departure site, arrival site, time]: natal dispersal
-# nu[departure site, arrival site, time]: breeding dispersal
-# kappa[site, time]: recruitment probability
-# rho[site, time]: productivity
-# p[site, time]: recapture probability
-# -------------------------------------------------
+  # -------------------------------------------------
+  # Stages:
+  # N: not-yet recruited individuals
+  # B: breeders
+  # Parameters:
+  # phi[age, site, time]: survival probability
+  # eta[departure site, arrival site, time]: natal dispersal
+  # nu[departure site, arrival site, time]: breeding dispersal
+  # kappa[site, time]: recruitment probability
+  # rho[site, time]: productivity
+  # p[site, time]: recapture probability
+  # -------------------------------------------------
 
-# Priors and linear models
-# Productivity
-for (t in 1:n.years){
+  # Priors and linear models
+  # Productivity
+  for (t in 1:n.years){
+    for (s in 1:3){
+      rho[s,t] <- mean.rho[s]
+    } #s
+  } #t
+  mean.rho[1] ~ dunif(0, 4)
+  mean.rho[2] ~ dunif(0, 4)
+  mean.rho[3] ~ dunif(0, 4)
+
+  # Parameters of multistate model
+  for (t in 1:(n.years-1)){
+    phi[1,1,t] ~ dunif(0, 1)
+    logit.phi[1,1,t] <- logit(phi[1,1,t])
+    logit.phi[2,1,t] <- logit.phi[1,1,t] + beta.phi[2,1]
+    phi[2,1,t] <- ilogit(logit.phi[2,1,t])
+    logit.kappa[1,t] <- mu.kappa[1] + mu.kappa[2] * t
+    kappa[1,t] <- ilogit(logit.kappa[1,t])
+    for (s in 2:3){
+      logit.phi[1,s,t] <- logit.phi[1,1,t] + beta.phi[1,s]
+      phi[1,s,t] <- ilogit(logit.phi[1,s,t])
+      logit.phi[2,s,t] <- logit.phi[1,1,t] + beta.phi[2,s]
+      phi[2,s,t] <- ilogit(logit.phi[2,s,t])
+      logit.kappa[s,t] <- logit.kappa[1,t] + mu.kappa[s+1]
+      kappa[s,t] <- ilogit(logit.kappa[s,t])
+    } #s
+    for (s in 1:3){
+      p[s,t] ~ dunif(0, 1)
+      eta[1,s,t] <- mean.eta[1,s]
+      eta[2,s,t] <- mean.eta[2,s]
+      eta[3,s,t] <- mean.eta[3,s]
+      nu[1,s,t] <- mean.nu[1,s]
+      nu[2,s,t] <- mean.nu[2,s]
+      nu[3,s,t] <- mean.nu[3,s]
+    } #s
+  } #t
+
+  # Multinomial logit link to impose the constraint that natal dispersal
+  #    does only depend on the site of departure
+  logit.mean.eta[1,2] ~ dnorm(0, 0.01)
+  logit.mean.eta[1,3] <- logit.mean.eta[1,2]
+  mean.eta[1,2] <- exp(logit.mean.eta[1,2]) /
+      (1 + exp(logit.mean.eta[1,2]) + exp(logit.mean.eta[1,3]))
+  mean.eta[1,3] <- exp(logit.mean.eta[1,3]) /
+      (1 + exp(logit.mean.eta[1,2]) + exp(logit.mean.eta[1,3]))
+  mean.eta[1,1] <- 1 - mean.eta[1,2] - mean.eta[1,3]
+  logit.mean.eta[2,1] ~ dnorm(0, 0.01)
+  logit.mean.eta[2,3] <- logit.mean.eta[2,1]
+  mean.eta[2,1] <- exp(logit.mean.eta[2,1]) /
+      (1 + exp(logit.mean.eta[2,1]) + exp(logit.mean.eta[2,3]))
+  mean.eta[2,3] <- exp(logit.mean.eta[2,3]) /
+      (1 + exp(logit.mean.eta[2,1]) + exp(logit.mean.eta[2,3]))
+  mean.eta[2,2] <- 1 - mean.eta[2,1] - mean.eta[2,3]
+  logit.mean.eta[3,1] ~ dnorm(0, 0.01)
+  logit.mean.eta[3,2] <- logit.mean.eta[3,1]
+  mean.eta[3,1] <- exp(logit.mean.eta[3,1]) /
+      (1 + exp(logit.mean.eta[3,1]) + exp(logit.mean.eta[3,2]))
+  mean.eta[3,2] <- exp(logit.mean.eta[3,2]) /
+      (1 + exp(logit.mean.eta[3,1]) + exp(logit.mean.eta[3,2]))
+  mean.eta[3,3] <- 1 - mean.eta[3,1] - mean.eta[3,2]
+
+  # Multinomial logit link to impose the constraint that breeding dispersal
+  #  does only depend on the site of arrival
+  logit.mean.nu[1,2] ~ dnorm(0, 0.01)
+  logit.mean.nu[1,3] ~ dnorm(0, 0.01)
+  logit.mean.nu[2,1] ~ dnorm(0, 0.01)
+  mean.nu[1,2] <- exp(logit.mean.nu[1,2]) /
+      (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
+  mean.nu[1,3] <- exp(logit.mean.nu[1,3]) /
+      (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
+  mean.nu[2,1] <- exp(logit.mean.nu[2,1]) /
+      (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
+  mean.nu[1,1] <- 1 - mean.nu[1,2] - mean.nu[1,3]
+  mean.nu[2,2] <- 1 - mean.nu[2,1] - mean.nu[1,3]
+  mean.nu[2,3] <- mean.nu[1,3]
+  mean.nu[3,1] <- mean.nu[2,1]
+  mean.nu[3,2] <- mean.nu[1,2]
+  mean.nu[3,3] <- 1 - mean.nu[3,1] - mean.nu[3,2]
+
+  for (i in 1:4){
+    mu.kappa[i] ~ dnorm(0, 0.01)
+  }
+
+  beta.phi[2,1] ~ dnorm(0, 0.01)
+  beta.phi[1,2] ~ dnorm(0, 0.01)
+  beta.phi[2,2] ~ dnorm(0, 0.01)
+  beta.phi[1,3] ~ dnorm(0, 0.01)
+  beta.phi[2,3] ~ dnorm(0, 0.01)
+
+  # Residual (observation) error
   for (s in 1:3){
-    rho[s,t] <- mean.rho[s]
-  } #s
-} #t
-mean.rho[1] ~ dunif(0, 4)
-mean.rho[2] ~ dunif(0, 4)
-mean.rho[3] ~ dunif(0, 4)
+    sigma[s] ~ dunif(0.05, 1000)
+    tau[s] <- pow(sigma[s], -2)
+  }
 
-# Parameters of multistate model
-for (t in 1:(n.years-1)){
-  phi[1,1,t] ~ dunif(0, 1)
-  logit.phi[1,1,t] <- logit(phi[1,1,t])
-  logit.phi[2,1,t] <- logit.phi[1,1,t] + beta.phi[2,1]
-  phi[2,1,t] <- ilogit(logit.phi[2,1,t])
-  logit.kappa[1,t] <- mu.kappa[1] + mu.kappa[2] * t
-  kappa[1,t] <- ilogit(logit.kappa[1,t])
-  for (s in 2:3){
-    logit.phi[1,s,t] <- logit.phi[1,1,t] + beta.phi[1,s]
-    phi[1,s,t] <- ilogit(logit.phi[1,s,t])
-    logit.phi[2,s,t] <- logit.phi[1,1,t] + beta.phi[2,s]
-    phi[2,s,t] <- ilogit(logit.phi[2,s,t])
-    logit.kappa[s,t] <- logit.kappa[1,t] + mu.kappa[s+1]
-    kappa[s,t] <- ilogit(logit.kappa[s,t])
-  } #s
-  for (s in 1:3){
-    p[s,t] ~ dunif(0, 1)
-    eta[1,s,t] <- mean.eta[1,s]
-    eta[2,s,t] <- mean.eta[2,s]
-    eta[3,s,t] <- mean.eta[3,s]
-    nu[1,s,t] <- mean.nu[1,s]
-    nu[2,s,t] <- mean.nu[2,s]
-    nu[3,s,t] <- mean.nu[3,s]
-  } #s
-} #t
+  # Population count data (state-space model)
+  # Models for the initial population size: uniform priors
+  N[1,1] ~ dunif(4270, 7940)
+  B[1,1] ~ dunif(3500, 6500)
+  N[2,1] ~ dunif(1710, 3180)
+  B[2,1] ~ dunif(1400, 2600)
+  N[3,1] ~ dunif(680, 1270)
+  B[3,1] ~ dunif(560, 1040)
 
-# Multinomial logit link to impose the constraint that natal dispersal does only depend on the site of departure
-logit.mean.eta[1,2] ~ dnorm(0, 0.01)
-logit.mean.eta[1,3] <- logit.mean.eta[1,2]
-mean.eta[1,2] <- exp(logit.mean.eta[1,2]) / (1 + exp(logit.mean.eta[1,2]) + exp(logit.mean.eta[1,3]))
-mean.eta[1,3] <- exp(logit.mean.eta[1,3]) / (1 + exp(logit.mean.eta[1,2]) + exp(logit.mean.eta[1,3]))
-mean.eta[1,1] <- 1 - mean.eta[1,2] - mean.eta[1,3]
-logit.mean.eta[2,1] ~ dnorm(0, 0.01)
-logit.mean.eta[2,3] <- logit.mean.eta[2,1]
-mean.eta[2,1] <- exp(logit.mean.eta[2,1]) / (1 + exp(logit.mean.eta[2,1]) + exp(logit.mean.eta[2,3]))
-mean.eta[2,3] <- exp(logit.mean.eta[2,3]) / (1 + exp(logit.mean.eta[2,1]) + exp(logit.mean.eta[2,3]))
-mean.eta[2,2] <- 1 - mean.eta[2,1] - mean.eta[2,3]
-logit.mean.eta[3,1] ~ dnorm(0, 0.01)
-logit.mean.eta[3,2] <- logit.mean.eta[3,1]
-mean.eta[3,1] <- exp(logit.mean.eta[3,1]) / (1 + exp(logit.mean.eta[3,1]) + exp(logit.mean.eta[3,2]))
-mean.eta[3,2] <- exp(logit.mean.eta[3,2]) / (1 + exp(logit.mean.eta[3,1]) + exp(logit.mean.eta[3,2]))
-mean.eta[3,3] <- 1 - mean.eta[3,1] - mean.eta[3,2]
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.years-1)){
+    N[1,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,1,t] +
+        B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,1,t] +
+        B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,1,t] +
+        N[1,t] * phi[2,1,t] * (1 - kappa[1,t])
+    N[2,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,2,t] +
+        B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,2,t] +
+        B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,2,t] +
+        N[2,t] * phi[2,2,t] * (1 - kappa[2,t])
+    N[3,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,3,t] +
+        B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,3,t] +
+        B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,3,t] +
+        N[3,t] * phi[2,3,t] * (1 - kappa[3,t])
+    B[1,t+1] <- B[1,t] * phi[2,1,t] * nu[1,1,t] +
+        B[2,t] * phi[2,2,t] * nu[2,1,t] +
+        B[3,t] * phi[2,3,t] * nu[3,1,t] +
+        N[1,t] * phi[2,1,t] * kappa[1,t]
+    B[2,t+1] <- B[1,t] * phi[2,1,t] * nu[1,2,t] +
+        B[2,t] * phi[2,2,t] * nu[2,2,t] +
+        B[3,t] * phi[2,3,t] * nu[3,2,t] +
+        N[2,t] * phi[2,2,t] * kappa[2,t]
+    B[3,t+1] <- B[1,t] * phi[2,1,t] * nu[1,3,t] +
+        B[2,t] * phi[2,2,t] * nu[2,3,t] +
+        B[3,t] * phi[2,3,t] * nu[3,3,t] +
+        N[3,t] * phi[2,3,t] * kappa[3,t]
+  }
 
-# Multinomial logit link to impose the constraint that breeding dispersal does only depend on the site of arrival
-logit.mean.nu[1,2] ~ dnorm(0, 0.01)
-logit.mean.nu[1,3] ~ dnorm(0, 0.01)
-logit.mean.nu[2,1] ~ dnorm(0, 0.01)
-mean.nu[1,2] <- exp(logit.mean.nu[1,2]) / (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
-mean.nu[1,3] <- exp(logit.mean.nu[1,3]) / (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
-mean.nu[2,1] <- exp(logit.mean.nu[2,1]) / (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
-mean.nu[1,1] <- 1 - mean.nu[1,2] - mean.nu[1,3]
-mean.nu[2,2] <- 1 - mean.nu[2,1] - mean.nu[1,3]
-mean.nu[2,3] <- mean.nu[1,3]
-mean.nu[3,1] <- mean.nu[2,1]
-mean.nu[3,2] <- mean.nu[1,2]
-mean.nu[3,3] <- 1 - mean.nu[3,1] - mean.nu[3,2]
+  # Observation model
+  for (t in 1:n.years){
+    for (s in 1:3){
+      C[s,t] ~ dnorm(B[s,t], tau[s])
+    } #s
+  } #t
 
-for (i in 1:4){
-  mu.kappa[i] ~ dnorm(0, 0.01)
-}
+  # Multistate capture-recapture data (with multinomial likelihood)
+  # Define state-transition and reencounter probabilities
+  for (t in 1:(n.years-1)){
+    psi[1,t,1] <- 0
+    psi[1,t,2] <- 0
+    psi[1,t,3] <- 0
+    psi[1,t,4] <- 0
+    psi[1,t,5] <- 0
+    psi[1,t,6] <- 0
+    psi[1,t,7] <- phi[1,1,t] * eta[1,1,t]
+    psi[1,t,8] <- phi[1,1,t] * eta[1,2,t]
+    psi[1,t,9] <- phi[1,1,t] * eta[1,3,t]
+    psi[2,t,1] <- 0
+    psi[2,t,2] <- 0
+    psi[2,t,3] <- 0
+    psi[2,t,4] <- 0
+    psi[2,t,5] <- 0
+    psi[2,t,6] <- 0
+    psi[2,t,7] <- phi[1,2,t] * eta[2,1,t]
+    psi[2,t,8] <- phi[1,2,t] * eta[2,2,t]
+    psi[2,t,9] <- phi[1,2,t] * eta[2,3,t]
+    psi[3,t,1] <- 0
+    psi[3,t,2] <- 0
+    psi[3,t,3] <- 0
+    psi[3,t,4] <- 0
+    psi[3,t,5] <- 0
+    psi[3,t,6] <- 0
+    psi[3,t,7] <- phi[1,3,t] * eta[3,1,t]
+    psi[3,t,8] <- phi[1,3,t] * eta[3,2,t]
+    psi[3,t,9] <- phi[1,3,t] * eta[3,3,t]
+    psi[4,t,1] <- 0
+    psi[4,t,2] <- 0
+    psi[4,t,3] <- 0
+    psi[4,t,4] <- phi[2,1,t] * nu[1,1,t]
+    psi[4,t,5] <- phi[2,1,t] * nu[1,2,t]
+    psi[4,t,6] <- phi[2,1,t] * nu[1,3,t]
+    psi[4,t,7] <- 0
+    psi[4,t,8] <- 0
+    psi[4,t,9] <- 0
+    psi[5,t,1] <- 0
+    psi[5,t,2] <- 0
+    psi[5,t,3] <- 0
+    psi[5,t,4] <- phi[2,2,t] * nu[2,1,t]
+    psi[5,t,5] <- phi[2,2,t] * nu[2,2,t]
+    psi[5,t,6] <- phi[2,2,t] * nu[2,3,t]
+    psi[5,t,7] <- 0
+    psi[5,t,8] <- 0
+    psi[5,t,9] <- 0
+    psi[6,t,1] <- 0
+    psi[6,t,2] <- 0
+    psi[6,t,3] <- 0
+    psi[6,t,4] <- phi[2,3,t] * nu[3,1,t]
+    psi[6,t,5] <- phi[2,3,t] * nu[3,2,t]
+    psi[6,t,6] <- phi[2,3,t] * nu[3,3,t]
+    psi[6,t,7] <- 0
+    psi[6,t,8] <- 0
+    psi[6,t,9] <- 0
+    psi[7,t,1] <- 0
+    psi[7,t,2] <- 0
+    psi[7,t,3] <- 0
+    psi[7,t,4] <- phi[2,1,t] * kappa[1,t]
+    psi[7,t,5] <- 0
+    psi[7,t,6] <- 0
+    psi[7,t,7] <- phi[2,1,t] * (1-kappa[1,t])
+    psi[7,t,8] <- 0
+    psi[7,t,9] <- 0
+    psi[8,t,1] <- 0
+    psi[8,t,2] <- 0
+    psi[8,t,3] <- 0
+    psi[8,t,4] <- 0
+    psi[8,t,5] <- phi[2,2,t] * kappa[2,t]
+    psi[8,t,6] <- 0
+    psi[8,t,7] <- 0
+    psi[8,t,8] <- phi[2,2,t] * (1-kappa[2,t])
+    psi[8,t,9] <- 0
+    psi[9,t,1] <- 0
+    psi[9,t,2] <- 0
+    psi[9,t,3] <- 0
+    psi[9,t,4] <- 0
+    psi[9,t,5] <- 0
+    psi[9,t,6] <- phi[2,3,t] * kappa[3,t]
+    psi[9,t,7] <- 0
+    psi[9,t,8] <- 0
+    psi[9,t,9] <- phi[2,3,t] * (1-kappa[3,t])
 
-beta.phi[2,1] ~ dnorm(0, 0.01)
-beta.phi[1,2] ~ dnorm(0, 0.01)
-beta.phi[2,2] ~ dnorm(0, 0.01)
-beta.phi[1,3] ~ dnorm(0, 0.01)
-beta.phi[2,3] ~ dnorm(0, 0.01)
+    po[1,t] <- 0
+    po[2,t] <- 0
+    po[3,t] <- 0
+    po[4,t] <- p[1,t]
+    po[5,t] <- p[2,t]
+    po[6,t] <- p[3,t]
+    po[7,t] <- 0
+    po[8,t] <- 0
+    po[9,t] <- 0
 
-# Residual (observation) error
-for (s in 1:3){
-  sigma[s] ~ dunif(0.05, 1000)
-  tau[s] <- pow(sigma[s], -2)
-}
+    # Calculate probability of non-encounter (dq) and reshape the array
+    #  for the encounter probabilities
+    for (s in 1:ns){
+      dp[s,t,s] <- po[s,t]
+      dq[s,t,s] <- 1-po[s,t]
+    } #s
+    for (s in 1:(ns-1)){
+      for (m in (s+1):ns){
+        dp[s,t,m] <- 0
+        dq[s,t,m] <- 0
+      } #m
+    } #s
+    for (s in 2:ns){
+      for (m in 1:(s-1)){
+        dp[s,t,m] <- 0
+        dq[s,t,m] <- 0
+      } #m
+    } #s
+  } #t
 
-# Population count data (state-space model)
-# Models for the initial population size: uniform priors
-N[1,1] ~ dunif(4270, 7940)
-B[1,1] ~ dunif(3500, 6500)
-N[2,1] ~ dunif(1710, 3180)
-B[2,1] ~ dunif(1400, 2600)
-N[3,1] ~ dunif(680, 1270)
-B[3,1] ~ dunif(560, 1040)
+  # Define the multinomial likelihood
+  for (t in 1:((n.years-1)*ns)){
+    marr[t,1:(n.years*ns-(ns-1))] ~ dmulti(pr[t,], rel[t])
+  }
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.years-1)){
-  N[1,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,1,t] + B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,1,t] + B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,1,t] + N[1,t] * phi[2,1,t] * (1 - kappa[1,t])
-  N[2,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,2,t] + B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,2,t] + B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,2,t] + N[2,t] * phi[2,2,t] * (1 - kappa[2,t])
-  N[3,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,3,t] + B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,3,t] + B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,3,t] + N[3,t] * phi[2,3,t] * (1 - kappa[3,t])
-  B[1,t+1] <- B[1,t] * phi[2,1,t] * nu[1,1,t] + B[2,t] * phi[2,2,t] * nu[2,1,t] + B[3,t] * phi[2,3,t] * nu[3,1,t] + N[1,t] * phi[2,1,t] * kappa[1,t]
-  B[2,t+1] <- B[1,t] * phi[2,1,t] * nu[1,2,t] + B[2,t] * phi[2,2,t] * nu[2,2,t] + B[3,t] * phi[2,3,t] * nu[3,2,t] + N[2,t] * phi[2,2,t] * kappa[2,t]
-  B[3,t+1] <- B[1,t] * phi[2,1,t] * nu[1,3,t] + B[2,t] * phi[2,2,t] * nu[2,3,t] + B[3,t] * phi[2,3,t] * nu[3,3,t] + N[3,t] * phi[2,3,t] * kappa[3,t]
-}
+  # Define the cell probabilities of the multistate m-array
+  for (t in 1:(n.years-2)){
+    U[(t-1)*ns+(1:ns), (t-1)*ns+(1:ns)] <- ones
+    for (j in (t+1):(n.years-1)){
+      U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <-
+          U[(t-1)*ns+(1:ns), (j-2)*ns+(1:ns)] %*% psi[,t,] %*% dq[,t,]
+    } #j
+  } #t
+  U[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- ones
 
-# Observation model
-for (t in 1:n.years){
-  for (s in 1:3){
-    C[s,t] ~ dnorm(B[s,t], tau[s])
-  } #s
-} #t
+  # Diagonal
+  for (t in 1:(n.years-2)){
+    pr[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <-
+        U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] %*% psi[,t,] %*% dp[,t,]
+    # Above main diagonal
+    for (j in (t+1):(n.years-1)){
+      pr[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <-
+          U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] %*% psi[,j,] %*% dp[,j,]
+    } #j
+  } #t
+  pr[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- psi[,n.years-1,] %*% dp[,n.years-1,]
 
-# Multistate capture-recapture data (with multinomial likelihood)
-# Define state-transition and reencounter probabilities
-for (t in 1:(n.years-1)){
-  psi[1,t,1] <- 0
-  psi[1,t,2] <- 0
-  psi[1,t,3] <- 0
-  psi[1,t,4] <- 0
-  psi[1,t,5] <- 0
-  psi[1,t,6] <- 0
-  psi[1,t,7] <- phi[1,1,t] * eta[1,1,t]
-  psi[1,t,8] <- phi[1,1,t] * eta[1,2,t]
-  psi[1,t,9] <- phi[1,1,t] * eta[1,3,t]
-  psi[2,t,1] <- 0
-  psi[2,t,2] <- 0
-  psi[2,t,3] <- 0
-  psi[2,t,4] <- 0
-  psi[2,t,5] <- 0
-  psi[2,t,6] <- 0
-  psi[2,t,7] <- phi[1,2,t] * eta[2,1,t]
-  psi[2,t,8] <- phi[1,2,t] * eta[2,2,t]
-  psi[2,t,9] <- phi[1,2,t] * eta[2,3,t]
-  psi[3,t,1] <- 0
-  psi[3,t,2] <- 0
-  psi[3,t,3] <- 0
-  psi[3,t,4] <- 0
-  psi[3,t,5] <- 0
-  psi[3,t,6] <- 0
-  psi[3,t,7] <- phi[1,3,t] * eta[3,1,t]
-  psi[3,t,8] <- phi[1,3,t] * eta[3,2,t]
-  psi[3,t,9] <- phi[1,3,t] * eta[3,3,t]
-  psi[4,t,1] <- 0
-  psi[4,t,2] <- 0
-  psi[4,t,3] <- 0
-  psi[4,t,4] <- phi[2,1,t] * nu[1,1,t]
-  psi[4,t,5] <- phi[2,1,t] * nu[1,2,t]
-  psi[4,t,6] <- phi[2,1,t] * nu[1,3,t]
-  psi[4,t,7] <- 0
-  psi[4,t,8] <- 0
-  psi[4,t,9] <- 0
-  psi[5,t,1] <- 0
-  psi[5,t,2] <- 0
-  psi[5,t,3] <- 0
-  psi[5,t,4] <- phi[2,2,t] * nu[2,1,t]
-  psi[5,t,5] <- phi[2,2,t] * nu[2,2,t]
-  psi[5,t,6] <- phi[2,2,t] * nu[2,3,t]
-  psi[5,t,7] <- 0
-  psi[5,t,8] <- 0
-  psi[5,t,9] <- 0
-  psi[6,t,1] <- 0
-  psi[6,t,2] <- 0
-  psi[6,t,3] <- 0
-  psi[6,t,4] <- phi[2,3,t] * nu[3,1,t]
-  psi[6,t,5] <- phi[2,3,t] * nu[3,2,t]
-  psi[6,t,6] <- phi[2,3,t] * nu[3,3,t]
-  psi[6,t,7] <- 0
-  psi[6,t,8] <- 0
-  psi[6,t,9] <- 0
-  psi[7,t,1] <- 0
-  psi[7,t,2] <- 0
-  psi[7,t,3] <- 0
-  psi[7,t,4] <- phi[2,1,t] * kappa[1,t]
-  psi[7,t,5] <- 0
-  psi[7,t,6] <- 0
-  psi[7,t,7] <- phi[2,1,t] * (1-kappa[1,t])
-  psi[7,t,8] <- 0
-  psi[7,t,9] <- 0
-  psi[8,t,1] <- 0
-  psi[8,t,2] <- 0
-  psi[8,t,3] <- 0
-  psi[8,t,4] <- 0
-  psi[8,t,5] <- phi[2,2,t] * kappa[2,t]
-  psi[8,t,6] <- 0
-  psi[8,t,7] <- 0
-  psi[8,t,8] <- phi[2,2,t] * (1-kappa[2,t])
-  psi[8,t,9] <- 0
-  psi[9,t,1] <- 0
-  psi[9,t,2] <- 0
-  psi[9,t,3] <- 0
-  psi[9,t,4] <- 0
-  psi[9,t,5] <- 0
-  psi[9,t,6] <- phi[2,3,t] * kappa[3,t]
-  psi[9,t,7] <- 0
-  psi[9,t,8] <- 0
-  psi[9,t,9] <- phi[2,3,t] * (1-kappa[3,t])
+  # Below main diagonal
+  for (t in 2:(n.years-1)){
+    for (j in 1:(t-1)){
+      pr[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- zero
+    } #j
+  } #t
 
-  po[1,t] <- 0
-  po[2,t] <- 0
-  po[3,t] <- 0
-  po[4,t] <- p[1,t]
-  po[5,t] <- p[2,t]
-  po[6,t] <- p[3,t]
-  po[7,t] <- 0
-  po[8,t] <- 0
-  po[9,t] <- 0
-
-  # Calculate probability of non-encounter (dq) and reshape the array for the encounter probabilities
-  for (s in 1:ns){
-    dp[s,t,s] <- po[s,t]
-    dq[s,t,s] <- 1-po[s,t]
-  } #s
-  for (s in 1:(ns-1)){
-    for (m in (s+1):ns){
-      dp[s,t,m] <- 0
-      dq[s,t,m] <- 0
-    } #m
-  } #s
-  for (s in 2:ns){
-    for (m in 1:(s-1)){
-      dp[s,t,m] <- 0
-      dq[s,t,m] <- 0
-    } #m
-  } #s
-} #t
-
-# Define the multinomial likelihood
-for (t in 1:((n.years-1)*ns)){
-  marr[t,1:(n.years*ns-(ns-1))] ~ dmulti(pr[t,], rel[t])
-}
-
-# Define the cell probabilities of the multistate m-array
-for (t in 1:(n.years-2)){
-  U[(t-1)*ns+(1:ns), (t-1)*ns+(1:ns)] <- ones
-  for (j in (t+1):(n.years-1)){
-    U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-2)*ns+(1:ns)] %*% psi[,t,] %*% dq[,t,]
-  } #j
-} #t
-U[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- ones
-
-# Diagonal
-for (t in 1:(n.years-2)){
-  pr[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] %*% psi[,t,] %*% dp[,t,]
-  # Above main diagonal
-  for (j in (t+1):(n.years-1)){
-    pr[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] %*% psi[,j,] %*% dp[,j,]
-  } #j
-} #t
-pr[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- psi[,n.years-1,] %*% dp[,n.years-1,]
-
-# Below main diagonal
-for (t in 2:(n.years-1)){
-  for (j in 1:(t-1)){
-    pr[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- zero
-  } #j
-} #t
-
-# Last column: probability of non-recapture
-for (t in 1:((n.years-1)*ns)){
-  pr[t,(n.years*ns-(ns-1))] <- 1-sum(pr[t,1:((n.years-1)*ns)])
-} #t
+  # Last column: probability of non-recapture
+  for (t in 1:((n.years-1)*ns)){
+    pr[t,(n.years*ns-(ns-1))] <- 1-sum(pr[t,1:((n.years-1)*ns)])
+  } #t
 }
 ")
 
@@ -368,7 +400,8 @@ ni <- 3000; nb <- 1000; nt <- 1; nc <- 3; na <- 3000  # ~~~ for testing
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 save(out1, file = 'CormorantResults.Rdata')
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 
 
 # 18.6. Results
@@ -441,26 +474,29 @@ library(RColorBrewer)
 co1 <- brewer.pal(n = 8, name = 'Blues')[c(8,5)]
 co2 <- brewer.pal(n = 8, name = 'Greens')[c(5,8)]
 
+par(mar=c(1, 4.5, 2, 1), "mfrow")
 layout(matrix(1:6, 3, 2, byrow=TRUE), widths=c(1.6, 1.6), heights=c(1,1,1.15), TRUE)
 years <- 1991:2004
 ny <- length(years)-1
 
-par(mar=c(1, 4.5, 2, 1))
-
 site <- 1
 d <- 0.15
-plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 14000), axes=F, ylab="Population size", xlab=NA, col=co1[1])
+plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 14000),
+    axes=FALSE, ylab="Population size", xlab=NA, col=co1[1])
 mtext("Vorsø", side=3, line=-0.25)
-segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d, out1$q97.5$B[site,], col=co1[1])
+segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d, out1$q97.5$B[site,],
+    col=co1[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=NA)
 axis(2, at=c(0, 2000, 4000, 6000, 8000, 10000, 12000), tcl=-0.25, labels=NA)
 axis(2, las=1, at=c(0, 4000, 8000, 12000), tcl=-0.5, labels=c(0, 4000, 8000, 12000))
 points(y=out1$mean$N[site,], x=(1:length(years))+d, type="b", pch=16, col=co1[2])
-segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d, out1$q97.5$N[site,], col=co1[2])
+segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d, out1$q97.5$N[site,],
+    col=co1[2])
 points(cormorant$count[site,], pch=3, col="red")
 
-plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1), axes=F, ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
+plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1), axes=FALSE,
+    ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
 segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d, out1$q97.5$phi[1,site,], col=co2[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=NA)
@@ -472,7 +508,8 @@ legend("bottomleft", pch=c(16,16), col=co2, legend=c("Juvenile", "Adult"), bty="
 
 site <- 2
 d <- 0.15
-plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 4000), axes=F, ylab="Population size", xlab=NA, col=co1[1])
+plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 4000),
+    axes=FALSE, ylab="Population size", xlab=NA, col=co1[1])
 mtext("Mågeøerne", side=3, line=-0.25)
 segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d, out1$q97.5$B[site,], col=co1[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
@@ -483,7 +520,8 @@ points(y=out1$mean$N[site,], x=(1:length(years))+d, type="b", pch=16, col=co1[2]
 segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d, out1$q97.5$N[site,], col=co1[2])
 points(cormorant$count[site,], pch=3, col="red")
 
-plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1), axes=F, ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
+plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1), axes=FALSE,
+    ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
 segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d, out1$q97.5$phi[1,site,], col=co2[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=NA)
@@ -495,7 +533,8 @@ segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d, out1$q97.5$phi[2,si
 par(mar=c(3, 4.5, 2, 1))
 site <- 3
 d <- 0.15
-plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 12000), axes=F, ylab="Population size", xlab=NA, col=co1[1])
+plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 12000),
+    axes=FALSE, ylab="Population size", xlab=NA, col=co1[1])
 segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d, out1$q97.5$B[site,], col=co1[1])
 mtext("Stavns Fjord", side=3, line=-0.25)
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
@@ -505,9 +544,11 @@ axis(2, las=1, at=c(0, 4000, 8000, 12000), tcl=-0.5, labels=c(0, 4000, 8000, 120
 points(y=out1$mean$N[site,], x=(1:length(years))+d, type="b", pch=16, col=co1[2])
 segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d, out1$q97.5$N[site,], col=co1[2])
 points(cormorant$count[site,], pch=3, col="red")
-legend("topleft", pch=c(16, 16, 3), col=c(co1, "red"), legend=c("Breeders", "Non-breeders", "Counts"), lwd=c(NA, NA, 1), bty="n")
+legend("topleft", pch=c(16, 16, 3), col=c(co1, "red"),
+    legend=c("Breeders", "Non-breeders", "Counts"), lwd=c(NA, NA, 1), bty="n")
 
-plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1), axes=F, ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
+plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1),
+    axes=FALSE, ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
 segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d, out1$q97.5$phi[1,site,], col=co2[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=seq(years[1], years[14], by=2))
@@ -515,39 +556,59 @@ axis(2, at=c(0, 0.2, 0.4, 0.6, 0.8, 1), tcl=-0.25, labels=NA)
 axis(2, las=1, at=c(0, 0.4, 0.8), tcl=-0.5, labels=c("0", "0.4", "0.8"))
 points(y=out1$mean$phi[2,site,], x=(1:ny)+0.5+d, type="b", pch=16, col=co2[2])
 segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d, out1$q97.5$phi[2,site,], col=co2[2])
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Code for Fig. 18.4 ~~~~
 library(denstrip)
 library(plotrix)
+par(mar=c(4.5, 6, 3, 1), "mfrow")
 layout(matrix(1:3,3,1,byrow=TRUE), widths=1.6, heights=c(1,1,1), TRUE)
-par(mar=c(4.5, 6, 3, 1))
-plot(0, ylim=c(0.8, 3.2), xlim=c(0.725,1), axes=F, pch=NA, xlab="Natal site fidelity", ylab=NA)
-denstrip(out1$sims.list$mean.eta[,1,1], at=3, ticks=c(out1$mean$mean.eta[1,1], out1$q2.5$mean.eta[1,1], out1$q97.5$mean.eta[1,1]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
-denstrip(out1$sims.list$mean.eta[,2,2], at=2, ticks=c(out1$mean$mean.eta[2,2], out1$q2.5$mean.eta[2,2], out1$q97.5$mean.eta[2,2]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
-denstrip(out1$sims.list$mean.eta[,3,3], at=1, ticks=c(out1$mean$mean.eta[3,3], out1$q2.5$mean.eta[3,3], out1$q97.5$mean.eta[3,3]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+plot(0, ylim=c(0.8, 3.2), xlim=c(0.725,1), axes=FALSE, pch=NA, xlab="Natal site fidelity", ylab=NA)
+denstrip(out1$sims.list$mean.eta[,1,1], at=3,
+    ticks=c(out1$mean$mean.eta[1,1], out1$q2.5$mean.eta[1,1], out1$q97.5$mean.eta[1,1]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+denstrip(out1$sims.list$mean.eta[,2,2], at=2,
+    ticks=c(out1$mean$mean.eta[2,2], out1$q2.5$mean.eta[2,2], out1$q97.5$mean.eta[2,2]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+denstrip(out1$sims.list$mean.eta[,3,3], at=1,
+    ticks=c(out1$mean$mean.eta[3,3], out1$q2.5$mean.eta[3,3], out1$q97.5$mean.eta[3,3]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
 axis(1)
 axis(2, las=1, at=c(3,2,1), labels=c("Vorsø", "Mågeøerne", "Stavns\n Fjord"))
 corner.label('A', font=2, cex=1.25)
 
-plot(0, ylim=c(0.8, 3.2), xlim=c(0.973,1), axes=F, pch=NA, xlab="Breeding site fidelity", ylab=NA)
-denstrip(out1$sims.list$mean.nu[,1,1], at=3, ticks=c(out1$mean$mean.nu[1,1], out1$q2.5$mean.nu[1,1], out1$q97.5$mean.nu[1,1]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
-denstrip(out1$sims.list$mean.nu[,2,2], at=2, ticks=c(out1$mean$mean.nu[2,2], out1$q2.5$mean.nu[2,2], out1$q97.5$mean.nu[2,2]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
-denstrip(out1$sims.list$mean.nu[,3,3], at=1, ticks=c(out1$mean$mean.nu[3,3], out1$q2.5$mean.nu[3,3], out1$q97.5$mean.nu[3,3]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+plot(0, ylim=c(0.8, 3.2), xlim=c(0.973,1), axes=FALSE, pch=NA,
+    xlab="Breeding site fidelity", ylab=NA)
+denstrip(out1$sims.list$mean.nu[,1,1], at=3,
+    ticks=c(out1$mean$mean.nu[1,1], out1$q2.5$mean.nu[1,1], out1$q97.5$mean.nu[1,1]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+denstrip(out1$sims.list$mean.nu[,2,2], at=2,
+    ticks=c(out1$mean$mean.nu[2,2], out1$q2.5$mean.nu[2,2], out1$q97.5$mean.nu[2,2]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+denstrip(out1$sims.list$mean.nu[,3,3], at=1,
+    ticks=c(out1$mean$mean.nu[3,3], out1$q2.5$mean.nu[3,3], out1$q97.5$mean.nu[3,3]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
 axis(1, at=c(0.975, 0.98, 0.985, 0.99, 0.995, 1), labels=NA, tcl=-0.25)
 axis(1, at=c(0.98, 0.99, 1), labels=c('0.98', '0.99', '1.00'))
 
 axis(2, las=1, at=c(3,2,1), labels=c("Vorsø", "Mågeøerne", "Stavns\n Fjord"))
 corner.label('B', font=2, cex=1.25)
 
-plot(0, ylim=c(0.8, 3.2), xlim=c(1,3), axes=F, pch=NA, xlab="Productivity", ylab=NA)
-denstrip(out1$sims.list$mean.rho[,1], at=3, ticks=c(out1$mean$mean.rho[1], out1$q2.5$mean.rho[1], out1$q97.5$mean.rho[1]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
-denstrip(out1$sims.list$mean.rho[,2], at=2, ticks=c(out1$mean$mean.rho[2], out1$q2.5$mean.rho[2], out1$q97.5$mean.rho[2]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
-denstrip(out1$sims.list$mean.rho[,3], at=1, ticks=c(out1$mean$mean.rho[3], out1$q2.5$mean.rho[3], out1$q97.5$mean.rho[3]), twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+plot(0, ylim=c(0.8, 3.2), xlim=c(1,3), axes=FALSE, pch=NA, xlab="Productivity", ylab=NA)
+denstrip(out1$sims.list$mean.rho[,1], at=3,
+    ticks=c(out1$mean$mean.rho[1], out1$q2.5$mean.rho[1], out1$q97.5$mean.rho[1]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+denstrip(out1$sims.list$mean.rho[,2], at=2,
+    ticks=c(out1$mean$mean.rho[2], out1$q2.5$mean.rho[2], out1$q97.5$mean.rho[2]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
+denstrip(out1$sims.list$mean.rho[,3], at=1,
+    ticks=c(out1$mean$mean.rho[3], out1$q2.5$mean.rho[3], out1$q97.5$mean.rho[3]),
+    twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)
 axis(1)
 axis(2, las=1, at=c(3,2,1), labels=c("Vorsø", "Mågeøerne", "Stavns\n Fjord"))
 corner.label('C', font=2, cex=1.25)
-
+par(op)
 
 # ~~~~ Code for Fig. 18.5 ~~~~
 library(scales)
@@ -555,8 +616,9 @@ co <- viridis_pal(option='E')(20)[c(1,10,17)]
 years <- 1991:2004
 ny <- length(years)-1
 
-par(mar=c(3.5, 4.5, 1, 1))
-plot(y=out1$mean$kappa[1,], x=(1:ny)+0.5, type="b", pch=16, ylim=c(0, 1), axes=F, ylab='Recruitment probability', xlab=NA, xlim=c(1,length(years)), col=co[1])
+op <- par(mar=c(3.5, 4.5, 1, 1))
+plot(y=out1$mean$kappa[1,], x=(1:ny)+0.5, type="b", pch=16, ylim=c(0, 1), axes=FALSE,
+    ylab='Recruitment probability', xlab=NA, xlim=c(1,length(years)), col=co[1])
 segments((1:ny)+0.5, out1$q2.5$kappa[1,], (1:ny)+0.5, out1$q97.5$kappa[1,], col=co[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=seq(years[1], years[14], by=2))
@@ -567,4 +629,5 @@ segments((1:ny)+0.5+d, out1$q2.5$kappa[2,], (1:ny)+0.5+d, out1$q97.5$kappa[2,], 
 points(y=out1$mean$kappa[3,], x=(1:ny)+0.5-d, type="b", pch=16, col=co[3])
 segments((1:ny)+0.5-d, out1$q2.5$kappa[3,], (1:ny)+0.5-d, out1$q97.5$kappa[3,], col=co[3])
 legend('topright', pch=rep(16, 3), col=co, legend=c('Vorsø', 'Mågeøerne', 'Stavns Fjord'), bty='n')
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

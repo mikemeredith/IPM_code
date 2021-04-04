@@ -81,8 +81,8 @@ sum(is.na(alive[T,])) / nsim
 # [1] 0.38023
 
 # ~~~~ Plot graph with population growth rates (Fig. 3.15)  ~~~~
+op <- par(mar=c(4, 4, 2, 1), las=1, cex=1.1, "mfrow")
 layout(matrix(c(1, 1, 2, 3), 2, 2, byrow=TRUE), widths=c(1, 1), heights=c(1, 1), TRUE)
-par(mar=c(4, 4, 2, 1), las=1, cex=1.1)
 plot(r[,1], type="l", lwd=0.5, ylab="Annual population growth rate", xlab="Time",
     ylim=range(r[which(!is.na(alive))]), col="lightgrey", axes=FALSE)
 axis(1); axis(2)
@@ -101,5 +101,5 @@ a <- hist(mean.r[not.extinct], nclass=25, col="dodgerblue", main="",
 axis(1)
 axis(2, at=c(0, 2000, 4000, 6000, 8000, 10000), labels=c(0, 2, 4, 6, 8, 10))
 mtext("C", at=a$mids[1], cex=1.5)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-

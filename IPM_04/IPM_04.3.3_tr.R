@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 # Code from MS submitted to publisher.
 
-# Run time testing 6 mins, full run 15 mins
+# Run time testing 6 mins, full run 12 mins
 
 library(IPMbook) ; library(jagsUI)
 
@@ -101,7 +101,8 @@ ni <- 5000; nb <- 1000; nc <- 3; nt <- 4; na <- 1000
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
 out4 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE )
-par(mfrow=c(3, 3));  traceplot(out4)           # Not shown
+op <- par(mfrow=c(3, 3));  traceplot(out4)           # Not shown
+par(op)
 print(out4, 2)
 
                 # mean      sd      2.5%       50%     97.5% overlap0 f  Rhat n.eff
@@ -128,7 +129,7 @@ apply(out4$sims.list$totalN, 2, var) # Compare that variances in diagonal are ri
 
 # ~~~~ code to plot the results ~~~~
 # Compare estimates of total N and true values (not shown)
-par(cex = 1.25)
+op <- par(cex = 1.25)
 ylim <- range(c(out4$q2.5$totalN, out4$q97.5$totalN), 600)
 plot(dat$totalN, xlab = 'Year', ylab = 'Number', type = 'b', pch = 16,
     ylim = ylim, col = 'red', axes = FALSE)
@@ -138,11 +139,12 @@ axis(2, las = 1)
 #box()
 points(out4$mean$totalN, pch = 16, col = 'black')
 segments(1:dat$nyear, out4$q2.5$totalN, 1:dat$nyear, out4$q97.5$totalN, col = 'black')
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Plot posterior distributions of totalN (results not shown)
-# par(mfrow=c(3, 2), ask=TRUE)
-par(mfrow=c(3, 2), ask=dev.interactive(orNone=TRUE))  # ~~~ better for testing
+# op <- par(mfrow=c(3, 2), ask=TRUE)
+op <- par(mfrow=c(3, 2), ask=dev.interactive(orNone=TRUE))  # ~~~ better for testing
 for (t in 1:25){
   hist(out4$sims.list$totalN[,t], freq=FALSE, col='grey', main=paste('totalN in year', t))
   lines(density(out4$sims.list$totalN[,t]), col='blue', lwd=3)
@@ -150,9 +152,11 @@ for (t in 1:25){
       range(out4$sims.list$totalN[,t]), col='red', lwd=3, add=TRUE)
 #  hist(Nmixout$sims.list$logtotalN[,t], freq = FALSE)
 #  lines(density(Nmixout$sims.list$logtotalN[,t]), col = 'blue', lwd = 3)
-#  curve(dnorm(x, mean = Nmixout$mean$logtotalN[t], sd = Nmixout$sd$logtotalN[t]), range(Nmixout$sims.list$logtotalN[,t]), col = 'red', lwd = 3, add = TRUE)
+#  curve(dnorm(x, mean = Nmixout$mean$logtotalN[t], sd = Nmixout$sd$logtotalN[t]),
+#      range(Nmixout$sims.list$logtotalN[,t]), col = 'red', lwd = 3, add = TRUE)
   # browser()
 }
+par(op)
 
 # Data bundle
 jags.data <- list(Nhat=out4$mean$totalN, var.Nhat=out4$sd$totalN^2,
@@ -209,7 +213,8 @@ ni <- 50000; nb <- 25000; nc <- 3; nt <- 25; na <- 10000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out5 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE )
-par(mfrow=c(3, 3)); traceplot(out5)   # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out5)   # Not shown
+par(op)
 print(out5, 3)                        # Not shown
 
 # ~~~~ code for Fig. 4.5 ~~~~
@@ -289,7 +294,8 @@ ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
 # Call JAGS from R (ART 11 min), check convergence and summarize posteriors
 out6 <- jags(jags.data, inits, parameters, "model4.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out6)  # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out6)  # Not shown
+par(op)
 print(out6, 3)                       # Not shown
 
 # Compare posterior means and SDs under the two models

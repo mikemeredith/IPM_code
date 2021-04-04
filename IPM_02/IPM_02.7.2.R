@@ -64,7 +64,8 @@ ni <- 50000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART 1 min), check convergence and summarize posteriors
 out3 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 2)); traceplot(out3)  # May need jagsUI::traceplot
+op <- par(mfrow=c(2, 2)); traceplot(out3)  # May need jagsUI::traceplot
+par(op)
 print(out3, 3)
 
 #               mean    sd    2.5%     50%   97.5% overlap0 f Rhat n.eff
@@ -108,13 +109,14 @@ psd <- apply(pred1, 1, sd)  # Posterior SD (like prediction SE)
 CRI <- apply(pred1, 1, quantile, probs=c(0.025, 0.975)) # 95% CRI
 
 # ~~~~ extra code for Figure 2.13 ~~~~
-par(las=1, mar=c(4.1, 4.5, 2, 2))
+op <- par(las=1, mar=c(4.1, 4.5, 2, 2))
 plot(original.elev.pred, pm, xlab='Site elevation (m)',
     ylab=expression(paste('Apparent occupancy (', hat(theta), ')')),
     type='n', ylim=c(0.3, 1))
 polygon(c(original.elev.pred, rev(original.elev.pred)), c(CRI[1,],
     rev(CRI[2,])), col='grey', border=NA)
 lines(original.elev.pred, pm, type='l', lty=1, lwd=3, col='blue')
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Prepare another covariate with different range
@@ -146,3 +148,4 @@ abline(v=min.elev, lwd=2, lty=1, col='red')
 legend(x=600, y=0.3, lwd=rep(2, 2), col=c('blue', 'black'), bty='n',
     legend=c(expression(paste('Predicted apparent occupancy (', hat(theta),')')),
         expression(paste(italic(p),'(', hat(theta), ')<0.01'))))
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

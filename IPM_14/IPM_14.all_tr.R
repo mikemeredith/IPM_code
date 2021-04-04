@@ -3,7 +3,7 @@
 # -------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 2 mins
+# Run time for test script 2 mins, full run 15 mins
 
 library(IPMbook) ; library(jagsUI)
 
@@ -11,7 +11,6 @@ library(IPMbook) ; library(jagsUI)
 # =============================================
 
 # Load hoopoe data and produce data overview
-library(IPMbook); library(jagsUI)
 data(hoopoe)
 str(hoopoe)
 
@@ -57,138 +56,138 @@ jags.data <- with(hoopoe$reproInd, list(marr.j=marr.j, marr.a=marr.a,
 # Write JAGS model file
 cat(file="model2.txt", "
 model {
-# Priors and linear models
-# For mean and variance parameters
-mean.logit.phij <- logit(mean.phij)
-mean.phij ~ dunif(0, 1)
-mean.logit.phia <- logit(mean.phia)
-mean.phia ~ dunif(0, 1)
-mean.log.omega <- log(mean.omega)
-mean.omega ~ dunif(0, 50)
-mean.pa ~ dunif(0, 1)
-mean.pj ~ dunif(0, 1)
+  # Priors and linear models
+  # For mean and variance parameters
+  mean.logit.phij <- logit(mean.phij)
+  mean.phij ~ dunif(0, 1)
+  mean.logit.phia <- logit(mean.phia)
+  mean.phia ~ dunif(0, 1)
+  mean.log.omega <- log(mean.omega)
+  mean.omega ~ dunif(0, 50)
+  mean.pa ~ dunif(0, 1)
+  mean.pj ~ dunif(0, 1)
 
-sigma.phij ~ dunif(0, 3)
-tau.phij <- pow(sigma.phij, -2)
-sigma.phia ~ dunif(0, 3)
-tau.phia <- pow(sigma.phia, -2)
-sigma.omega ~ dunif(0.001, 5)
-tau.omega <- pow(sigma.omega, -2)
+  sigma.phij ~ dunif(0, 3)
+  tau.phij <- pow(sigma.phij, -2)
+  sigma.phia ~ dunif(0, 3)
+  tau.phia <- pow(sigma.phia, -2)
+  sigma.omega ~ dunif(0.001, 5)
+  tau.omega <- pow(sigma.omega, -2)
 
-sigma.rep ~ dunif(0.001, 5)
-tau.rep <- pow(sigma.rep, -2)
+  sigma.rep ~ dunif(0.001, 5)
+  tau.rep <- pow(sigma.rep, -2)
 
-for (g in 1:2){
-  alpha[g] ~ dnorm(0, 0.01)     # Not too low precision, for convergence
-  sigma.rep.t[g] ~ dunif(0.001, 2)
-  tau.rep.t[g] <- pow(sigma.rep.t[g], -2)
-}
+  for (g in 1:2){
+    alpha[g] ~ dnorm(0, 0.01)     # Not too low precision, for convergence
+    sigma.rep.t[g] ~ dunif(0.001, 2)
+    tau.rep.t[g] <- pow(sigma.rep.t[g], -2)
+  }
 
-# Mixture parameter
-gamma ~ dunif(0, 1)
+  # Mixture parameter
+  gamma ~ dunif(0, 1)
 
-# Residual (observation) error
-sigma ~ dunif(0.4, 20)      # lower bound >0
-tau <- pow(sigma, -2)
+  # Residual (observation) error
+  sigma ~ dunif(0.4, 20)      # lower bound >0
+  tau <- pow(sigma, -2)
 
-# Linear models for demographic parameters
-# Survival and recapture
-for (t in 1:(n.years-1)){
-  logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
-  phij[t] <- ilogit(logit.phij[t])
-  logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
-  phia[t] <- ilogit(logit.phia[t])
-  pa[t] <- mean.pa
-  pj[t] <- mean.pj
-}
+  # Linear models for demographic parameters
+  # Survival and recapture
+  for (t in 1:(n.years-1)){
+    logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
+    phij[t] <- ilogit(logit.phij[t])
+    logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
+    phia[t] <- ilogit(logit.phia[t])
+    pa[t] <- mean.pa
+    pj[t] <- mean.pj
+  }
 
-# Reproduction parameters
-for (g in 1:2){    # Loop over two groups
+  # Reproduction parameters
+  for (g in 1:2){    # Loop over two groups
+    for (t in 1:n.years){
+      log(rep[g,t]) <- alpha[g] + eps[g,t]
+      eps[g,t] ~ dnorm(0, tau.rep.t[g])
+    } #t
+  } #g
+
+  # Immigration parameters
   for (t in 1:n.years){
-    log(rep[g,t]) <- alpha[g] + eps[g,t]
-    eps[g,t] ~ dnorm(0, tau.rep.t[g])
+    log.omega[t] ~ dnorm(mean.log.omega, tau.omega)
+    omega[t] <- exp(log.omega[t])
+  }
+
+  # Population count data (state-space model)
+  # Model for initial stage-spec. population sizes
+  ini[1] ~ dcat(pNinit)               # Local recruits
+  ini[2] ~ dcat(pNinit)               # Surviving adults
+  ini[3] ~ dpois(omega[1])            # Immigrants
+  R[1,1] ~ dbin(1-gamma, ini[1])
+  R[2,1] <- ini[1]-R[1,1]
+  S[1,1] ~ dbin(1-gamma, ini[2])
+  S[2,1] <- ini[2]-S[1,1]
+  I[1,1] ~ dbin(1-gamma, ini[3])
+  I[2,1] <- ini[3]-I[1,1]
+
+  # Process model over time: our model of population dynamics
+  for (t in 2:n.years){
+    J[1,t] ~ dpois(rep[1,t-1] / 2 * phij[t-1] * N[1,t-1]) # Local recruits produced by females of group 1 (L)
+    J[2,t] ~ dpois(rep[2,t-1] / 2 * phij[t-1] * N[2,t-1]) # Local recruits produced by females of group 2 (H)
+    R[1,t] ~ dbin(1-gamma, J[1,t] + J[2,t]) # Allocate recruits to group 1
+    R[2,t] <- J[1,t] + J[2,t] - R[1,t]    # Allocate recruits to group 2 (H)
+    S[1,t] ~ dbin(phia[t-1], N[1,t-1])    # Surviving adults, group 1 (L)
+    S[2,t] ~ dbin(phia[t-1], N[2,t-1])    # Surviving adults, group 2 (H)
+    Itot[t] ~ dpois(omega[t])             # Total number of immigrants
+    I[1,t] ~ dbin(1-gamma, Itot[t])       # Immigrants of group 1 (L)
+    I[2,t] <- Itot[t]-I[1,t]              # Immigrants of group 2 (H)
+  }
+
+  # Observation model
+  for (t in 1:n.years){
+    N[1,t] <- S[1,t] + R[1,t] + I[1,t]    # Total no of females in group 1
+    N[2,t] <- S[2,t] + R[2,t] + I[2,t]    # Total no of females in group 2
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
+
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.years-1)){
+    marr.j[t,1:n.years] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.years-1)){
+    qj[t] <- 1-pj[t]
+    qa[t] <- 1-pa[t]
+    pr.j[t,t] <- phij[t] * pj[t]
+    pr.a[t,t] <- phia[t] * pa[t]
+    # Above main diagonal
+    for (j in (t+1):(n.years-1)){
+      pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(qa[t:(j-1)]) * pa[j] / qa[t]
+      pr.a[t,j] <- prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
   } #t
-} #g
+  # Last column: probability of non-recapture
+  for (t in 1:(n.years-1)){
+    pr.j[t,n.years] <- 1-sum(pr.j[t,1:(n.years-1)])
+    pr.a[t,n.years] <- 1-sum(pr.a[t,1:(n.years-1)])
+  }
 
-# Immigration parameters
-for (t in 1:n.years){
-  log.omega[t] ~ dnorm(mean.log.omega, tau.omega)
-  omega[t] <- exp(log.omega[t])
-}
+  # Productivity data (finite-mixture model with Gaussian error)
+  # Mixture
+  for (i in 1:nind){    # Loop over all ID of mothers with known annual prod.
+    k[i] ~ dbern(gamma)
+    h[i] <- k[i] + 1
+  }
 
-# Population count data (state-space model)
-# Model for initial stage-spec. population sizes
-ini[1] ~ dcat(pNinit)               # Local recruits
-ini[2] ~ dcat(pNinit)               # Surviving adults
-ini[3] ~ dpois(omega[1])            # Immigrants
-R[1,1] ~ dbin(1-gamma, ini[1])
-R[2,1] <- ini[1]-R[1,1]
-S[1,1] ~ dbin(1-gamma, ini[2])
-S[2,1] <- ini[2]-S[1,1]
-I[1,1] ~ dbin(1-gamma, ini[3])
-I[2,1] <- ini[3]-I[1,1]
-
-# Process model over time: our model of population dynamics
-for (t in 2:n.years){
-  J[1,t] ~ dpois(rep[1,t-1] / 2 * phij[t-1] * N[1,t-1]) # Local recruits produced by females of group 1 (L)
-  J[2,t] ~ dpois(rep[2,t-1] / 2 * phij[t-1] * N[2,t-1]) # Local recruits produced by females of group 2 (H)
-  R[1,t] ~ dbin(1-gamma, J[1,t] + J[2,t]) # Allocate recruits to group 1
-  R[2,t] <- J[1,t] + J[2,t] - R[1,t]    # Allocate recruits to group 2 (H)
-  S[1,t] ~ dbin(phia[t-1], N[1,t-1])    # Surviving adults, group 1 (L)
-  S[2,t] ~ dbin(phia[t-1], N[2,t-1])    # Surviving adults, group 2 (H)
-  Itot[t] ~ dpois(omega[t])             # Total number of immigrants
-  I[1,t] ~ dbin(1-gamma, Itot[t])       # Immigrants of group 1 (L)
-  I[2,t] <- Itot[t]-I[1,t]              # Immigrants of group 2 (H)
-}
-
-# Observation model
-for (t in 1:n.years){
-  N[1,t] <- S[1,t] + R[1,t] + I[1,t]    # Total no of females in group 1
-  N[2,t] <- S[2,t] + R[2,t] + I[2,t]    # Total no of females in group 2
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
-
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.years-1)){
-  marr.j[t,1:n.years] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.years-1)){
-  qj[t] <- 1-pj[t]
-  qa[t] <- 1-pa[t]
-  pr.j[t,t] <- phij[t] * pj[t]
-  pr.a[t,t] <- phia[t] * pa[t]
-  # Above main diagonal
-  for (j in (t+1):(n.years-1)){
-    pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(qa[t:(j-1)]) * pa[j] / qa[t]
-    pr.a[t,j] <- prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.years-1)){
-  pr.j[t,n.years] <- 1-sum(pr.j[t,1:(n.years-1)])
-  pr.a[t,n.years] <- 1-sum(pr.a[t,1:(n.years-1)])
-}
-
-# Productivity data (finite-mixture model with Gaussian error)
-# Mixture
-for (i in 1:nind){    # Loop over all ID of mothers with known annual prod.
-  k[i] ~ dbern(gamma)
-  h[i] <- k[i] + 1
-}
-
-# Productivity
-for (i in 1:nrep){  # Loop over all known-ID annual productivity data
-  f[i] ~ dnorm(rep[h[id[i]], year[i]], tau.rep)
-}
+  # Productivity
+  for (i in 1:nrep){  # Loop over all known-ID annual productivity data
+    f[i] ~ dnorm(rep[h[id[i]], year[i]], tau.rep)
+  }
 }
 ")
 
@@ -209,8 +208,9 @@ ni <- 4000; nb <- 1000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 
-par(mfrow=c(1,3))
+op <- par(mfrow=c(1,3))
 traceplot(out2, c('alpha', 'gamma'))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -243,142 +243,142 @@ str(jags.data)    # Remind ourselves of how the data look like
 # Write JAGS model file
 cat(file="model1.txt", "
 model {
-# Priors and linear models
-# For mean and variance parameters
-mean.logit.phij <- logit(mean.phij)
-mean.phij ~ dunif(0, 1)
-mean.logit.phia <- logit(mean.phia)
-mean.phia ~ dunif(0, 1)
-mean.log.omega <- log(mean.omega)
-mean.omega ~ dunif(0, 50)
-mean.pa ~ dunif(0, 1)
-mean.pj ~ dunif(0, 1)
+  # Priors and linear models
+  # For mean and variance parameters
+  mean.logit.phij <- logit(mean.phij)
+  mean.phij ~ dunif(0, 1)
+  mean.logit.phia <- logit(mean.phia)
+  mean.phia ~ dunif(0, 1)
+  mean.log.omega <- log(mean.omega)
+  mean.omega ~ dunif(0, 50)
+  mean.pa ~ dunif(0, 1)
+  mean.pj ~ dunif(0, 1)
 
-sigma.phij ~ dunif(0, 3)
-tau.phij <- pow(sigma.phij, -2)
-sigma.phia ~ dunif(0, 3)
-tau.phia <- pow(sigma.phia, -2)
-sigma.omega ~ dunif(0.001, 5)
-tau.omega <- pow(sigma.omega, -2)
+  sigma.phij ~ dunif(0, 3)
+  tau.phij <- pow(sigma.phij, -2)
+  sigma.phia ~ dunif(0, 3)
+  tau.phia <- pow(sigma.phia, -2)
+  sigma.omega ~ dunif(0.001, 5)
+  tau.omega <- pow(sigma.omega, -2)
 
-sigma.rep ~ dunif(0.001, 5)
-tau.rep <- pow(sigma.rep, -2)
+  sigma.rep ~ dunif(0.001, 5)
+  tau.rep <- pow(sigma.rep, -2)
 
-for (g in 1:2){
-  sigma.rep.t[g] ~ dunif(0.001, 2)
-  tau.rep.t[g] <- pow(sigma.rep.t[g], -2)
-}
+  for (g in 1:2){
+    sigma.rep.t[g] ~ dunif(0.001, 2)
+    tau.rep.t[g] <- pow(sigma.rep.t[g], -2)
+  }
 
-# Enforce order on the alphas: alpha[1] < alpha[2]
-alpha[1] ~ dnorm(0, 0.01)        # Not too low precision, for convergence
-alpha[2] <- alpha[1] + diff.alpha
-diff.alpha ~ dnorm(0, 0.01)T(0,) # Diff. must be positive; alpha[2] is
-                                 # defined to have higher values
-# Mixture parameter
-gamma ~ dunif(0, 0.5)
+  # Enforce order on the alphas: alpha[1] < alpha[2]
+  alpha[1] ~ dnorm(0, 0.01)        # Not too low precision, for convergence
+  alpha[2] <- alpha[1] + diff.alpha
+  diff.alpha ~ dnorm(0, 0.01)T(0,) # Diff. must be positive; alpha[2] is
+                                   # defined to have higher values
+  # Mixture parameter
+  gamma ~ dunif(0, 0.5)
 
-# Residual (observation) error
-sigma ~ dunif(0.4, 20)      # lower bound >0
-tau <- pow(sigma, -2)
+  # Residual (observation) error
+  sigma ~ dunif(0.4, 20)      # lower bound >0
+  tau <- pow(sigma, -2)
 
-# Linear models for demographic parameters
-# Survival and recapture
-for (t in 1:(n.years-1)){
-  logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
-  phij[t] <- ilogit(logit.phij[t])
-  logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
-  phia[t] <- ilogit(logit.phia[t])
-  pa[t] <- mean.pa
-  pj[t] <- mean.pj
-}
+  # Linear models for demographic parameters
+  # Survival and recapture
+  for (t in 1:(n.years-1)){
+    logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
+    phij[t] <- ilogit(logit.phij[t])
+    logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
+    phia[t] <- ilogit(logit.phia[t])
+    pa[t] <- mean.pa
+    pj[t] <- mean.pj
+  }
 
-# Reproduction parameters
-for (g in 1:2){    # Loop over two groups
+  # Reproduction parameters
+  for (g in 1:2){    # Loop over two groups
+    for (t in 1:n.years){
+      log(rep[g,t]) <- alpha[g] + eps[g,t]
+      eps[g,t] ~ dnorm(0, tau.rep.t[g])
+    } #t
+  } #g
+
+  # Immigration parameters
   for (t in 1:n.years){
-    log(rep[g,t]) <- alpha[g] + eps[g,t]
-    eps[g,t] ~ dnorm(0, tau.rep.t[g])
+    log.omega[t] ~ dnorm(mean.log.omega, tau.omega)
+    omega[t] <- exp(log.omega[t])
+  }
+
+  # Population count data (state-space model)
+  # Model for initial stage-spec. population sizes
+  ini[1] ~ dcat(pNinit)               # Local recruits
+  ini[2] ~ dcat(pNinit)               # Surviving adults
+  ini[3] ~ dpois(omega[1])            # Immigrants
+  R[1,1] ~ dbin(1-gamma, ini[1])
+  R[2,1] <- ini[1]-R[1,1]
+  S[1,1] ~ dbin(1-gamma, ini[2])
+  S[2,1] <- ini[2]-S[1,1]
+  I[1,1] ~ dbin(1-gamma, ini[3])
+  I[2,1] <- ini[3]-I[1,1]
+
+  # Process model over time: our model of population dynamics
+  for (t in 2:n.years){
+    J[1,t] ~ dpois(rep[1,t-1] / 2 * phij[t-1] * N[1,t-1]) # Local recruits produced by females of group 1 (L)
+    J[2,t] ~ dpois(rep[2,t-1] / 2 * phij[t-1] * N[2,t-1]) # Local recruits produced by females of group 2 (H)
+    R[1,t] ~ dbin(1-gamma, J[1,t] + J[2,t]) # Allocate recruits to group 1
+    R[2,t] <- J[1,t] + J[2,t] - R[1,t]    # Allocate recruits to group 2 (H)
+    S[1,t] ~ dbin(phia[t-1], N[1,t-1])    # Surviving adults, group 1 (L)
+    S[2,t] ~ dbin(phia[t-1], N[2,t-1])    # Surviving adults, group 2 (H)
+    Itot[t] ~ dpois(omega[t])             # Total number of immigrants
+    I[1,t] ~ dbin(1-gamma, Itot[t])       # Immigrants of group 1 (L)
+    I[2,t] <- Itot[t]-I[1,t]              # Immigrants of group 2 (H)
+  }
+
+  # Observation model
+  for (t in 1:n.years){
+    N[1,t] <- S[1,t] + R[1,t] + I[1,t]    # Total no of females in group 1
+    N[2,t] <- S[2,t] + R[2,t] + I[2,t]    # Total no of females in group 2
+    C[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
+
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.years-1)){
+    marr.j[t,1:n.years] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.years-1)){
+    qj[t] <- 1-pj[t]
+    qa[t] <- 1-pa[t]
+    pr.j[t,t] <- phij[t] * pj[t]
+    pr.a[t,t] <- phia[t] * pa[t]
+    # Above main diagonal
+    for (j in (t+1):(n.years-1)){
+      pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(qa[t:(j-1)]) * pa[j] / qa[t]
+      pr.a[t,j] <- prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
   } #t
-} #g
+  # Last column: probability of non-recapture
+  for (t in 1:(n.years-1)){
+    pr.j[t,n.years] <- 1-sum(pr.j[t,1:(n.years-1)])
+    pr.a[t,n.years] <- 1-sum(pr.a[t,1:(n.years-1)])
+  }
 
-# Immigration parameters
-for (t in 1:n.years){
-  log.omega[t] ~ dnorm(mean.log.omega, tau.omega)
-  omega[t] <- exp(log.omega[t])
-}
+  # Productivity data (finite-mixture model with Gaussian error)
+  # Mixture
+  for (i in 1:nind){    # Loop over all ID of mothers with known annual prod.
+    k[i] ~ dbern(gamma)
+    h[i] <- k[i] + 1
+  }
 
-# Population count data (state-space model)
-# Model for initial stage-spec. population sizes
-ini[1] ~ dcat(pNinit)               # Local recruits
-ini[2] ~ dcat(pNinit)               # Surviving adults
-ini[3] ~ dpois(omega[1])            # Immigrants
-R[1,1] ~ dbin(1-gamma, ini[1])
-R[2,1] <- ini[1]-R[1,1]
-S[1,1] ~ dbin(1-gamma, ini[2])
-S[2,1] <- ini[2]-S[1,1]
-I[1,1] ~ dbin(1-gamma, ini[3])
-I[2,1] <- ini[3]-I[1,1]
-
-# Process model over time: our model of population dynamics
-for (t in 2:n.years){
-  J[1,t] ~ dpois(rep[1,t-1] / 2 * phij[t-1] * N[1,t-1]) # Local recruits produced by females of group 1 (L)
-  J[2,t] ~ dpois(rep[2,t-1] / 2 * phij[t-1] * N[2,t-1]) # Local recruits produced by females of group 2 (H)
-  R[1,t] ~ dbin(1-gamma, J[1,t] + J[2,t]) # Allocate recruits to group 1
-  R[2,t] <- J[1,t] + J[2,t] - R[1,t]    # Allocate recruits to group 2 (H)
-  S[1,t] ~ dbin(phia[t-1], N[1,t-1])    # Surviving adults, group 1 (L)
-  S[2,t] ~ dbin(phia[t-1], N[2,t-1])    # Surviving adults, group 2 (H)
-  Itot[t] ~ dpois(omega[t])             # Total number of immigrants
-  I[1,t] ~ dbin(1-gamma, Itot[t])       # Immigrants of group 1 (L)
-  I[2,t] <- Itot[t]-I[1,t]              # Immigrants of group 2 (H)
-}
-
-# Observation model
-for (t in 1:n.years){
-  N[1,t] <- S[1,t] + R[1,t] + I[1,t]    # Total no of females in group 1
-  N[2,t] <- S[2,t] + R[2,t] + I[2,t]    # Total no of females in group 2
-  C[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
-
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.years-1)){
-  marr.j[t,1:n.years] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.years-1)){
-  qj[t] <- 1-pj[t]
-  qa[t] <- 1-pa[t]
-  pr.j[t,t] <- phij[t] * pj[t]
-  pr.a[t,t] <- phia[t] * pa[t]
-  # Above main diagonal
-  for (j in (t+1):(n.years-1)){
-    pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(qa[t:(j-1)]) * pa[j] / qa[t]
-    pr.a[t,j] <- prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.years-1)){
-  pr.j[t,n.years] <- 1-sum(pr.j[t,1:(n.years-1)])
-  pr.a[t,n.years] <- 1-sum(pr.a[t,1:(n.years-1)])
-}
-
-# Productivity data (finite-mixture model with Gaussian error)
-# Mixture
-for (i in 1:nind){    # Loop over all ID of mothers with known annual prod.
-  k[i] ~ dbern(gamma)
-  h[i] <- k[i] + 1
-}
-
-# Productivity
-for (i in 1:nrep){  # Loop over all known-ID annual productivity data
-  f[i] ~ dnorm(rep[h[id[i]], year[i]], tau.rep)
-}
+  # Productivity
+  for (i in 1:nrep){  # Loop over all known-ID annual productivity data
+    f[i] ~ dnorm(rep[h[id[i]], year[i]], tau.rep)
+  }
 }
 ")
 
@@ -398,7 +398,8 @@ ni <- 4000; nb <- 1000; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
 # Call JAGS (ART 15 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 print(out1, 3)
 
 # ~~~~ save the results ~~~~
@@ -409,8 +410,9 @@ save(out1, out2, file ="Hoopoe.Results.Rdata")
 # ============
 
 # Fig. 14.3
-par(mfrow=c(1,3))
+op <- par(mfrow=c(1,3))
 traceplot(out1, c('alpha', 'gamma'))
+par(op)
 
 print(out1, 3)
                    # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
@@ -468,10 +470,10 @@ library(scales)
 cl <- viridis_pal(option='E')(20)[c(18,2)]
 n.years <- ncol(out1$mean$rep)
 qu <- function(x) quantile(x, c(0.025, 0.975))
-par(mfrow=c(2,1), mar=c(1.5, 4, 2, 0), las=1)
+op <- par(mfrow=c(2,1), mar=c(1.5, 4, 2, 0), las=1)
 d <- 0.1
 plot(x=(1:n.years)+d, y=out1$mean$rep[1,], type="b", pch=16, ylim=c(3, 15),
-    xlab="", ylab="Productivity", axes=F, col=cl[1])
+    xlab="", ylab="Productivity", axes=FALSE, col=cl[1])
 segments((1:n.years)+d, out1$q2.5$rep[1,], (1:n.years)+d, out1$q97.5$rep[1,], col=cl[1])
 axis(2, las=1)
 axis(1, at=1:n.years, tcl=-0.25, labels=NA)
@@ -484,7 +486,7 @@ legend("topright", pch=c(17, 16), col=rev(cl),
 par(mar=c(4, 4, 1.5, 0))
 plot(x=(1:n.years)+d, y=out1$mean$N[1,], pch=16,
     ylim=range(c(out1$q2.5$N, out1$q97.5$N)), ylab="Population size",
-    xlab="", axes=F, col=cl[1], type="b")
+    xlab="", axes=FALSE, col=cl[1], type="b")
 segments((1:n.years)+d, out1$q2.5$N[1,], (1:n.years)+d, out1$q97.5$N[1,], col=cl[1])
 points(x=(1:n.years)-d, y=out1$mean$N[2,], pch=17, col=cl[2], type="b")
 segments((1:n.years)-d, out1$q2.5$N[2,], (1:n.years)-d, out1$q97.5$N[2,], col=cl[2])
@@ -492,4 +494,5 @@ axis(2, las=1)
 axis(1, at=1:n.years, tcl=-0.25, labels=NA)
 axis(1, at=c(1, 4, 7, 10, 13, 16),
     labels=c("2002", "2005", "2008", "2011", "2014", "2017"))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

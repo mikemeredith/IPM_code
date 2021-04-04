@@ -14,7 +14,7 @@ library(IPMbook) ; library(jagsUI)
 
 # Choose constants
 nyear <- 25              # Number of years
-N1 <- 30                 # Initial abundance 
+N1 <- 30                 # Initial abundance
 mu.lam <- 1.02           # Mean of the distribution of lambda
 sig2.lam <- 0.02         # Variance of the distribution of lambda
 
@@ -40,7 +40,7 @@ str(jags.data)
 
 # Write JAGS model file
 cat(file = "model6.txt", "
-model { 
+model {
   # Priors and linear models
   mu.lam ~ dunif(0, 10)           # Prior for mean growth rate
   sig.lam ~ dunif(0, 2)           # Prior for sd of growth rate
@@ -49,10 +49,10 @@ model {
 
   # Likelihood
   # Model for the initial population size: uniform priors
-  N[1] ~ dunif(0, 500)            
+  N[1] ~ dunif(0, 500)
   # Process model over time: our model of population dynamics
   for (t in 1:(T-1)){
-    lambda[t] ~ dnorm(mu.lam, tau.lam) 
+    lambda[t] ~ dnorm(mu.lam, tau.lam)
     N[t+1] ~ dpois(N[t] * lambda[t])
   }
 
@@ -65,7 +65,7 @@ model {
 
 # Initial values
 inits <- function(){list(sig.lam=runif(1, 0, 1), mu.lam=runif(1, 0.1, 2),
-    N=round(runif(nyear, 20, 40)))} 
+    N=round(runif(nyear, 20, 40)))}
 
 # Parameters monitored
 parameters <- c("mu.lam", "sig2.lam", "sig.lam", "N")
@@ -76,7 +76,8 @@ ni <- 20000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out9 <- jags(jags.data, inits, parameters, "model6.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3));  traceplot(out9)    # Not shown
+op <- par(mfrow=c(3, 3));  traceplot(out9)    # Not shown
+par(op)
 print(out9, 3)                          # Not shown
 
 # ~~~~ Plot of true and observed and estimated states (Fig. 4.8) ~~~~

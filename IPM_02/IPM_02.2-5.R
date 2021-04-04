@@ -25,8 +25,8 @@ pmf2 <- dbinom(all.possible, size=50, prob=0.5)  # pmf 2
 pmf3 <- dbinom(all.possible, size=50, prob=0.9)  # pmf 3
 
 # ~~~~ additional code for the plot ~~~~
-par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5, cex.main=2, las=1)
-plot(all.possible, pmf1, type="h", lend="butt", lwd=3, frame=FALSE, 
+op <- par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5, cex.main=2, las=1)
+plot(all.possible, pmf1, type="h", lend="butt", lwd=3, frame=FALSE,
     xlab="Counts (y)", ylab="Probability of y", main=expression(paste(theta, " = 0.1")))
 abline(v=20, col="blue", lwd=2)
 plot(all.possible, pmf2, type="h", lend="butt", lwd=3, frame=FALSE,
@@ -35,6 +35,7 @@ abline(v=20, col="blue", lwd=2)
 plot(all.possible, pmf3, type="h", lend="butt", lwd=3, frame=FALSE,
     xlab="Counts (y)", ylab="", main=expression(paste(theta, " = 0.9")))
 abline(v=20, col="blue", lwd=2)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Use RNG to obtain binomial density for pmf 3
@@ -46,14 +47,17 @@ like <- dbinom(20, 50, try.theta, log=FALSE)       # Likelihood
 loglike <- dbinom(20, 50, try.theta, log=TRUE)     # Log-Likelihood
 negloglike <- -dbinom(20, 50, try.theta, log=TRUE) # NLL
 
-par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5)
-plot(x=try.theta, y=like, xlab=expression(paste("Detection probability (", theta, ")")), ylab="Likelihood", frame=FALSE, type="p", pch=16, col="black")
+op <- par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5)
+plot(x=try.theta, y=like, xlab=expression(paste("Detection probability (", theta, ")")),
+    ylab="Likelihood", frame=FALSE, type="p", pch=16, col="black")
 abline(v=try.theta[which(like == max(like))], col="red", lwd=3)
-plot(x=try.theta, y=loglike, xlab=expression(paste("Detection probability (", theta, ")")), ylab="Log-Likelihood", frame=FALSE, type="p", pch=16, col="black")
+plot(x=try.theta, y=loglike, xlab=expression(paste("Detection probability (", theta, ")")),
+    ylab="Log-Likelihood", frame=FALSE, type="p", pch=16, col="black")
 abline(v=try.theta[which(loglike == max(loglike))], col="red", lwd=3)
-plot(x=try.theta, y=negloglike, xlab=expression(paste("Detection probability (", theta, ")")), ylab="Negative log-Likelihood", frame=FALSE, type="p", pch=16, col="black")
+plot(x=try.theta, y=negloglike, xlab=expression(paste("Detection probability (", theta, ")")),
+    ylab="Negative log-Likelihood", frame=FALSE, type="p", pch=16, col="black")
 abline(v=try.theta[which(negloglike == min(negloglike))], col="red", lwd=3)
-
+par(op)
 
 # 2.4 Bayesian inference
 # ======================
@@ -64,7 +68,7 @@ theta.vals <- seq(0, 1, 0.001)
 like <- dbinom(20, 50, theta.vals)
 
 # Define four prior distributions
-prior0 <- dbeta(theta.vals, 1, 1) 
+prior0 <- dbeta(theta.vals, 1, 1)
 prior1 <- dbeta(theta.vals, 4, 6)
 prior2 <- dbeta(theta.vals, 40, 60)
 prior3 <- dbeta(theta.vals, 60, 40)
@@ -77,11 +81,11 @@ post3 <- dbeta(theta.vals, 20 + 60, 30 + 40)
 
 # ~~~~ additional code for plotting Fig 2.5 ~~~~
 sc.like <- like * (50 + 1)     # Scale likelihood. Multiplied by n + 1
-    # because the area under the curve for trial size 1 is 1/(n + 1). 
+    # because the area under the curve for trial size 1 is 1/(n + 1).
 library(scales)
 co <- viridis_pal(option="E")(20)[c(18, 11, 2)]
 lwd <- 3; cx <- 1.5
-par(mfrow=c(2, 2), mar=c(5, 5, 4, 2), cex.axis=cx, cex.lab=cx, cex.main=cx)
+op <- par(mfrow=c(2, 2), mar=c(5, 5, 4, 2), cex.axis=cx, cex.lab=cx, cex.main=cx)
 
 # Analysis 1 with vague prior
 plot(theta.vals, post0, type ="l", col=co[3], xlab="",
@@ -112,6 +116,7 @@ plot(theta.vals, post3, type="l", lwd=2, col=co[3], xlab= expression(theta),
 mtext("Informative prior 3", side=3, line=0.5, font=2)
 lines(theta.vals, sc.like, lwd=2, col=co[2])
 lines(theta.vals, prior3, lty=1, lwd= 2, col=co[1])
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ additional code  for Fig 2.6 ~~~~
@@ -136,7 +141,7 @@ legend(0.6, 0.9, c("Complete ignorance", "Improved state of knowledge",
 ltheta1 <- 1        # Initial value for tadpole detection prob.
 sigma_prop <- 1     # SD of Gaussian proposal distribution
 
-# Array to hold the MCMC samples 
+# Array to hold the MCMC samples
 ltheta <- numeric()
 
 # Initial value becomes first (and 'current') value in the chain
@@ -181,8 +186,8 @@ ltheta              # Our posterior sample up to now (not shown)
 # Iteration 4 to T of RW-MH algorithm
 T <- 60000            # Choose chain length
 for (t in 4:T){       # Continue where we left off
-  ltheta_star <- rnorm(1, ltheta[t-1], sigma_prop) 
-  pd_star <- dbinom(20, 50, plogis(ltheta_star)) * dbeta(plogis(ltheta_star), 1, 1) 
+  ltheta_star <- rnorm(1, ltheta[t-1], sigma_prop)
+  pd_star <- dbinom(20, 50, plogis(ltheta_star)) * dbeta(plogis(ltheta_star), 1, 1)
   pd_t <- dbinom(20, 50, plogis(ltheta[t-1])) * dbeta(plogis(ltheta[t-1]), 1, 1)
   R <- min(1, pd_star / pd_t)  # Note more general solution here
   keep.ltheta_star <- rbinom(1, 1, R)
@@ -190,9 +195,8 @@ for (t in 4:T){       # Continue where we left off
   # ltheta              # Our posterior sample up to now (not shown)
 }
 
-# ~~~~ bonus code ~~~~
-# Fig. 2.7 (left)
-par(mfrow=c(1, 3), mar=c(6, 7, 6, 3), cex.lab=2, cex.axis=2, cex.main=2, las=1)
+# ~~~~ code for Fig. 2.7 (left) ~~~~
+op <- par(mfrow=c(1, 3), mar=c(6, 7, 6, 3), cex.lab=2, cex.axis=2, cex.main=2, las=1)
 plot(1:10, plogis(ltheta[1:10]), xlab='Iteration', ylab=expression(theta),
     type='l', frame=FALSE, lwd=3, main='First ten iterations')
 abline(h=0.4, col='red', lwd=2) # The maximum likelihood estimate
@@ -210,6 +214,7 @@ hist(plogis(ltheta), breaks=50, col='lightgray', xlab=expression(theta),
     main=expression(bold(paste('Posterior distribution of ', theta))), border=NA)
 abline(v=0.4, col='red', lwd=3)    # The maximum likelihood estimate
 abline(v=mean(plogis(ltheta)), lty=2, col='blue', lwd=3) # Posterior mean
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~
 
 out <- demoMCMC(y=20, N=50, niter=25000, mu.ltheta=0, sd.ltheta=100, prop.sd=1, init=0)
@@ -267,18 +272,18 @@ median(plogis(out$ltheta))  # Posterior median
 # [1] 0.4001582               # Your result will differ
 
 posterior.mode(mcmc(plogis(out$ltheta))) # Posterior mode (ditto)
-#      var1 
+#      var1
 # 0.4152145
 
-# Measures of spread: 
+# Measures of spread:
 # - Bayesian 'variant' of standard error (= posterior SD)
 # - two Bayesian credible intervals (CRI and HPDI)
 sd(plogis(out$ltheta))      # Posterior SD
 # [1] 0.06950494              # Your result will differ
 
 quantile(plogis(out$ltheta), prob=c(0.025, 0.975)) # Symmetrical Bayesian CRI (your result will differ)
-#     2.5%     97.5% 
-# 0.2705029 0.5383629 
+#     2.5%     97.5%
+# 0.2705029 0.5383629
 
 HPDinterval(mcmc(plogis(out$ltheta)))  # Highest posterior density credible interval (HPDI); your result will differ
 #          lower     upper
@@ -289,7 +294,3 @@ HPDinterval(mcmc(plogis(out$ltheta)))  # Highest posterior density credible inte
 # Compute p(theta > 0.5)
 mean(plogis(out$ltheta) > 0.5)
 # [1] 0.07584
-
-
-
-

@@ -3,14 +3,13 @@
 # -----------------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 6 mins
+# Run time for test script 6 mins, full run 1 hr
 
 library(IPMbook) ; library(jagsUI)
 
 # 12.4 Component data likelihoods
 # =============================================
 
-library(IPMbook); library(jagsUI)
 data(peregrine)
 str(peregrine)
 
@@ -34,7 +33,7 @@ m.dead <- marrayDead(peregrine$recoveries)
 rel <- c(rowSums(m.dead),75)
 library(scales)
 co <- viridis_pal(option='E')(20)[2]
-par(mfrow=c(1, 3), las=1, mar=c(3,4,2,1))
+op <- par(mfrow=c(1, 3), las=1, mar=c(3,4,2,1))
 plot(peregrine$count[,2], xlab=NA, ylab='Number', axes=FALSE, type='l',
     lty=1, lwd=3, col=co, ylim=c(0, 250))
 mtext("Count of pairs", side=3, line=0.8)
@@ -63,6 +62,7 @@ u <- seq(1,43, by=10)
 axis(1, at=a[u], tcl=-0.5, labels=(1965:2007)[u])
 u <- seq(1,43, by=5)
 axis(1, at=a[u], tcl=-0.25, labels=NA)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 12.4.1 Population count data (no code)
@@ -101,116 +101,116 @@ str(jags.data)
 # Write JAGS model file
 cat(file = "model1.txt", "
 model {
-# Priors and linear models
-for (t in 1:(nyears-1)){
-  logit.s[1,t] ~ dnorm(l.mean.s[1], tau.s[1])
-  s[1,t] <- ilogit(logit.s[1,t])
-  logit.s[2,t] ~ dnorm(l.mean.s[2], tau.s[2])
-  s[2,t] <- ilogit(logit.s[2,t])
-  alpha[t] <- mean.alpha
-  logit(r[t]) <- beta[1] + beta[2] * t  # Linear trend in recovery
-}
-for (u in 1:2){
-  mean.s[u] ~ dunif(0, 1)    # Priors for mean age-dep. survival
-  l.mean.s[u] <- logit(mean.s[u])
-  sigma.s[u] ~ dunif(0, 5)
-  tau.s[u] <- pow(sigma.s[u], -2)
-}
-mean.alpha ~ dunif(0, 1)     # Prior for prob. start reproduction at age 2y
-for (i in 1:2){              # Priors for betas
-  beta[i] ~ dnorm(0, 0.001)
-}
-for (t in 1:nyears){
-  log.rho[t] ~ dnorm(l.mean.rho, tau.rho)
-  rho[t] <- exp(log.rho[t])
-}
-mean.rho ~ dunif(0, 5)        # Prior for mean productivity
-l.mean.rho <- log(mean.rho)
-sigma.rho ~ dunif(0, 5)
-tau.rho <- pow(sigma.rho, -2)
+  # Priors and linear models
+  for (t in 1:(nyears-1)){
+    logit.s[1,t] ~ dnorm(l.mean.s[1], tau.s[1])
+    s[1,t] <- ilogit(logit.s[1,t])
+    logit.s[2,t] ~ dnorm(l.mean.s[2], tau.s[2])
+    s[2,t] <- ilogit(logit.s[2,t])
+    alpha[t] <- mean.alpha
+    logit(r[t]) <- beta[1] + beta[2] * t  # Linear trend in recovery
+  }
+  for (u in 1:2){
+    mean.s[u] ~ dunif(0, 1)    # Priors for mean age-dep. survival
+    l.mean.s[u] <- logit(mean.s[u])
+    sigma.s[u] ~ dunif(0, 5)
+    tau.s[u] <- pow(sigma.s[u], -2)
+  }
+  mean.alpha ~ dunif(0, 1)     # Prior for prob. start reproduction at age 2y
+  for (i in 1:2){              # Priors for betas
+    beta[i] ~ dnorm(0, 0.001)
+  }
+  for (t in 1:nyears){
+    log.rho[t] ~ dnorm(l.mean.rho, tau.rho)
+    rho[t] <- exp(log.rho[t])
+  }
+  mean.rho ~ dunif(0, 5)        # Prior for mean productivity
+  l.mean.rho <- log(mean.rho)
+  sigma.rho ~ dunif(0, 5)
+  tau.rho <- pow(sigma.rho, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: discrete uniform priors
-for (a in 1:4){
-  N[a,1] ~ dcat(pNinit)
-}
+  # Population count data (state-space model)
+  # Model for the initial population size: discrete uniform priors
+  for (a in 1:4){
+    N[a,1] ~ dcat(pNinit)
+  }
 
-# Process model over time: our model of population dynamics
-for (t in 1:(nyears-1)){
-  N[1,t+1] ~ dpois(rho[t] / 2 * s[1,t] * (N[3,t] + N[4,t]))
-  N[2,t+1] ~ dbin(s[2,t] * (1-alpha[t]), N[1,t])
-  N[3,t+1] ~ dbin(s[2,t] * alpha[t], N[1,t])
-  N[4,t+1] ~ dbin(s[2,t], (N[2,t] + N[3,t] + N[4,t]))
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(nyears-1)){
+    N[1,t+1] ~ dpois(rho[t] / 2 * s[1,t] * (N[3,t] + N[4,t]))
+    N[2,t+1] ~ dbin(s[2,t] * (1-alpha[t]), N[1,t])
+    N[3,t+1] ~ dbin(s[2,t] * alpha[t], N[1,t])
+    N[4,t+1] ~ dbin(s[2,t], (N[2,t] + N[3,t] + N[4,t]))
+  }
 
-# Observation model
-for (t in 1:nyears){
-  NB[t] <- N[3,t] + N[4,t]
-  y[t] ~ dpois(NB[t])
+  # Observation model
+  for (t in 1:nyears){
+    NB[t] <- N[3,t] + N[4,t]
+    y[t] ~ dpois(NB[t])
 
-  # GOF for population count data: mean absolute percentage error
-  y.pred[t] ~ dpois(NB[t])
-  disc.y[t] <- pow(((y[t] - NB[t]) / y[t]) * ((y[t] - NB[t]) / (y[t] + 0.001)), 0.5)   # Add a small number to avoid potential division by 0
-  discN.y[t] <- pow(((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)) * ((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)), 0.5)
-}
-fit.y <- 100 / nyears * sum(disc.y)
-fitN.y <- 100 / nyears * sum(discN.y)
+    # GOF for population count data: mean absolute percentage error
+    y.pred[t] ~ dpois(NB[t])
+    disc.y[t] <- pow(((y[t] - NB[t]) / y[t]) * ((y[t] - NB[t]) / (y[t] + 0.001)), 0.5)   # Add a small number to avoid potential division by 0
+    discN.y[t] <- pow(((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)) * ((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)), 0.5)
+  }
+  fit.y <- 100 / nyears * sum(disc.y)
+  fitN.y <- 100 / nyears * sum(discN.y)
 
-# Dead-recovery data (multinomial model)
-# Define the multinomial likelihood
-for (t in 1:(nyears-1)){
-  marr[t,1:nyears] ~ dmulti(pr[t,], rel[t])
-}
-# Define the cell probabilities of the m-array
-# Main diagonal
-for (t in 1:(nyears-1)){
-  pr[t,t] <- (1-s[1,t])*r[t]
-  # Further above main diagonal
-  for (j in (t+2):(nyears-1)){
-    pr[t,j] <- s[1,t]*prod(s[2,(t+1):(j-1)])*(1-s[2,j])*r[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr[t,j] <- 0
-  } #j
-} #t
-for (t in 1:(nyears-2)){
-  # One above main diagonal
-  pr[t,t+1] <- s[1,t]*(1-s[2,t+1])*r[t+1]
-} #t
-# Last column: probability of non-recovery
-for (t in 1:(nyears-1)){
-  pr[t,nyears] <- 1-sum(pr[t,1:(nyears-1)])
-} #t
+  # Dead-recovery data (multinomial model)
+  # Define the multinomial likelihood
+  for (t in 1:(nyears-1)){
+    marr[t,1:nyears] ~ dmulti(pr[t,], rel[t])
+  }
+  # Define the cell probabilities of the m-array
+  # Main diagonal
+  for (t in 1:(nyears-1)){
+    pr[t,t] <- (1-s[1,t])*r[t]
+    # Further above main diagonal
+    for (j in (t+2):(nyears-1)){
+      pr[t,j] <- s[1,t]*prod(s[2,(t+1):(j-1)])*(1-s[2,j])*r[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr[t,j] <- 0
+    } #j
+  } #t
+  for (t in 1:(nyears-2)){
+    # One above main diagonal
+    pr[t,t+1] <- s[1,t]*(1-s[2,t+1])*r[t+1]
+  } #t
+  # Last column: probability of non-recovery
+  for (t in 1:(nyears-1)){
+    pr[t,nyears] <- 1-sum(pr[t,1:(nyears-1)])
+  } #t
 
-# GOF for dead-recovery data: Freeman-Tukey test statistics
-for (t in 1:(nyears-1)){
-  # Simulated m-arrays
-  marr.pred[t,1:nyears] ~ dmulti(pr[t,], rel[t])
+  # GOF for dead-recovery data: Freeman-Tukey test statistics
+  for (t in 1:(nyears-1)){
+    # Simulated m-arrays
+    marr.pred[t,1:nyears] ~ dmulti(pr[t,], rel[t])
 
-  # Expected values and test statistics
-  for (j in 1:nyears){
-    marr.E[t,j] <- pr[t,j] * rel[t]
-    E.org[t,j] <- pow((pow(marr[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
-    E.new[t,j] <- pow((pow(marr.pred[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
-  } #j
-} #t
+    # Expected values and test statistics
+    for (j in 1:nyears){
+      marr.E[t,j] <- pr[t,j] * rel[t]
+      E.org[t,j] <- pow((pow(marr[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
+      E.new[t,j] <- pow((pow(marr.pred[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
+    } #j
+  } #t
 
-fit.DR <- sum(E.org)
-fitN.DR <- sum(E.new)
+  fit.DR <- sum(E.org)
+  fitN.DR <- sum(E.new)
 
-# Productivity data (Poisson regression)
-for (t in 1:nyears){
-  J[t] ~ dpois(B[t] * rho[t])
+  # Productivity data (Poisson regression)
+  for (t in 1:nyears){
+    J[t] ~ dpois(B[t] * rho[t])
 
-  # GOF for productivity data: deviance
-  J.pred[t] ~ dpois(B[t] * rho[t])
-  J.exp[t] <- B[t] * rho[t]
-  dev[t] <- J[t] * log(J[t] / J.exp[t]) - (J[t] - J.exp[t])
-  devN[t] <- J.pred[t] * log(J.pred[t] / J.exp[t]) - (J.pred[t] - J.exp[t])
-}
-fit.J <- sum(dev)
-fitN.J <- sum(devN)
+    # GOF for productivity data: deviance
+    J.pred[t] ~ dpois(B[t] * rho[t])
+    J.exp[t] <- B[t] * rho[t]
+    dev[t] <- J[t] * log(J[t] / J.exp[t]) - (J[t] - J.exp[t])
+    devN[t] <- J.pred[t] * log(J.pred[t] / J.exp[t]) - (J.pred[t] - J.exp[t])
+  }
+  fit.J <- sum(dev)
+  fitN.J <- sum(devN)
 }
 ")
 
@@ -228,7 +228,8 @@ ni <- 10000; nb <- 2000; nc <- 3; nt <- 8; na <- 500  # ~~~ for testing
 # Call JAGS from R (ART 56 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 
 # IPM2: random-walk smoothers for all demographic rates
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -236,123 +237,123 @@ par(mfrow=c(3, 3)); traceplot(out1)
 # Write JAGS model file
 cat(file = "model2.txt", "
 model {
-# Priors and linear models
-s[1,1] ~ dunif(0, 1)           # Prior of first-year survival in year 1
-logit.s[1,1] <- logit(s[1,1])
-s[2,1] ~ dunif(0, 1)           # Prior of adult survival in year 1
-logit.s[2,1] <- logit(s[2,1])
-rho[1] ~ dunif(0, 5)           # Prior of productivity in year 1
-log.rho[1] <- log(rho[1])
+  # Priors and linear models
+  s[1,1] ~ dunif(0, 1)           # Prior of first-year survival in year 1
+  logit.s[1,1] <- logit(s[1,1])
+  s[2,1] ~ dunif(0, 1)           # Prior of adult survival in year 1
+  logit.s[2,1] <- logit(s[2,1])
+  rho[1] ~ dunif(0, 5)           # Prior of productivity in year 1
+  log.rho[1] <- log(rho[1])
 
-for (t in 2:(nyears-1)){       # Autoregressive models for s
-  logit.s[1,t] ~ dnorm(logit.s[1,t-1], tau.s[1])
-  s[1,t] <- ilogit(logit.s[1,t])
-  logit.s[2,t] ~ dnorm(logit.s[2,t-1], tau.s[2])
-  s[2,t] <- ilogit(logit.s[2,t])
-}
-for (u in 1:2){
-   sigma.s[u] ~ dunif(0, 5)
-   tau.s[u] <- pow(sigma.s[u], -2)
-}
-
-for (t in 2:nyears){            # Autoregressive models for rho
-  log.rho[t] ~ dnorm(log.rho[t-1], tau.rho)
-  rho[t] <- exp(log.rho[t])
+  for (t in 2:(nyears-1)){       # Autoregressive models for s
+    logit.s[1,t] ~ dnorm(logit.s[1,t-1], tau.s[1])
+    s[1,t] <- ilogit(logit.s[1,t])
+    logit.s[2,t] ~ dnorm(logit.s[2,t-1], tau.s[2])
+    s[2,t] <- ilogit(logit.s[2,t])
   }
-sigma.rho ~ dunif(0, 5)
-tau.rho <- pow(sigma.rho, -2)
+  for (u in 1:2){
+     sigma.s[u] ~ dunif(0, 5)
+     tau.s[u] <- pow(sigma.s[u], -2)
+  }
 
-for (t in 1:(nyears-1)){     # Models for alpha and r
-  alpha[t] <- mean.alpha
-  logit(r[t]) <- beta[1] + beta[2] * t
-}
-mean.alpha ~ dunif(0, 1)     # Prior for prob. start reproduction at age 2y
-for (i in 1:2){
-  beta[i] ~ dnorm(0, 0.001)
-}
+  for (t in 2:nyears){            # Autoregressive models for rho
+    log.rho[t] ~ dnorm(log.rho[t-1], tau.rho)
+    rho[t] <- exp(log.rho[t])
+    }
+  sigma.rho ~ dunif(0, 5)
+  tau.rho <- pow(sigma.rho, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: discrete uniform priors
-for (a in 1:4){
-  N[a,1] ~ dcat(pNinit)
-}
+  for (t in 1:(nyears-1)){     # Models for alpha and r
+    alpha[t] <- mean.alpha
+    logit(r[t]) <- beta[1] + beta[2] * t
+  }
+  mean.alpha ~ dunif(0, 1)     # Prior for prob. start reproduction at age 2y
+  for (i in 1:2){
+    beta[i] ~ dnorm(0, 0.001)
+  }
 
-# Process model over time: our model of population dynamics
-for (t in 1:(nyears-1)){
-  N[1,t+1] ~ dpois(rho[t] / 2 * s[1,t] * (N[3,t] + N[4,t]))
-  N[2,t+1] ~ dbin(s[2,t] * (1-alpha[t]), N[1,t])
-  N[3,t+1] ~ dbin(s[2,t] * alpha[t], N[1,t])
-  N[4,t+1] ~ dbin(s[2,t], (N[2,t] + N[3,t] + N[4,t]))
-}
+  # Population count data (state-space model)
+  # Model for the initial population size: discrete uniform priors
+  for (a in 1:4){
+    N[a,1] ~ dcat(pNinit)
+  }
 
-# Observation model
-for (t in 1:nyears){
-  NB[t] <- N[3,t] + N[4,t]
-  y[t] ~ dpois(NB[t])
+  # Process model over time: our model of population dynamics
+  for (t in 1:(nyears-1)){
+    N[1,t+1] ~ dpois(rho[t] / 2 * s[1,t] * (N[3,t] + N[4,t]))
+    N[2,t+1] ~ dbin(s[2,t] * (1-alpha[t]), N[1,t])
+    N[3,t+1] ~ dbin(s[2,t] * alpha[t], N[1,t])
+    N[4,t+1] ~ dbin(s[2,t], (N[2,t] + N[3,t] + N[4,t]))
+  }
 
-  # GOF for population count data: mean absolute percentage error
-  y.pred[t] ~ dpois(NB[t])
-  disc.y[t] <- pow(((y[t] - NB[t]) / y[t]) * ((y[t] - NB[t]) / (y[t] + 0.001)), 0.5)   # Add a small number to avoid potential division by 0
-  discN.y[t] <- pow(((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)) * ((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)), 0.5)
-}
-fit.y <- 100 / nyears * sum(disc.y)
-fitN.y <- 100 / nyears * sum(discN.y)
+  # Observation model
+  for (t in 1:nyears){
+    NB[t] <- N[3,t] + N[4,t]
+    y[t] ~ dpois(NB[t])
 
-# Dead-recovery data (multinomial model)
-# Define the multinomial likelihood
-for (t in 1:(nyears-1)){
-  marr[t,1:nyears] ~ dmulti(pr[t,], rel[t])
-}
-# Define the cell probabilities of the m-array
-# Main diagonal
-for (t in 1:(nyears-1)){
-  pr[t,t] <- (1-s[1,t])*r[t]
-  # Further above main diagonal
-  for (j in (t+2):(nyears-1)){
-    pr[t,j] <- s[1,t]*prod(s[2,(t+1):(j-1)])*(1-s[2,j])*r[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr[t,j] <- 0
-  } #j
-} #t
-for (t in 1:(nyears-2)){
-  # One above main diagonal
-  pr[t,t+1] <- s[1,t]*(1-s[2,t+1])*r[t+1]
-} #t
-# Last column: probability of non-recovery
-for (t in 1:(nyears-1)){
-  pr[t,nyears] <- 1-sum(pr[t,1:(nyears-1)])
-} #t
+    # GOF for population count data: mean absolute percentage error
+    y.pred[t] ~ dpois(NB[t])
+    disc.y[t] <- pow(((y[t] - NB[t]) / y[t]) * ((y[t] - NB[t]) / (y[t] + 0.001)), 0.5)   # Add a small number to avoid potential division by 0
+    discN.y[t] <- pow(((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)) * ((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)), 0.5)
+  }
+  fit.y <- 100 / nyears * sum(disc.y)
+  fitN.y <- 100 / nyears * sum(discN.y)
 
-# GOF for dead-recovery data: Freeman-Tukey test statistics
-for (t in 1:(nyears-1)){
-  # Simulated m-arrays
-  marr.pred[t,1:nyears] ~ dmulti(pr[t,], rel[t])
+  # Dead-recovery data (multinomial model)
+  # Define the multinomial likelihood
+  for (t in 1:(nyears-1)){
+    marr[t,1:nyears] ~ dmulti(pr[t,], rel[t])
+  }
+  # Define the cell probabilities of the m-array
+  # Main diagonal
+  for (t in 1:(nyears-1)){
+    pr[t,t] <- (1-s[1,t])*r[t]
+    # Further above main diagonal
+    for (j in (t+2):(nyears-1)){
+      pr[t,j] <- s[1,t]*prod(s[2,(t+1):(j-1)])*(1-s[2,j])*r[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr[t,j] <- 0
+    } #j
+  } #t
+  for (t in 1:(nyears-2)){
+    # One above main diagonal
+    pr[t,t+1] <- s[1,t]*(1-s[2,t+1])*r[t+1]
+  } #t
+  # Last column: probability of non-recovery
+  for (t in 1:(nyears-1)){
+    pr[t,nyears] <- 1-sum(pr[t,1:(nyears-1)])
+  } #t
 
-  # Expected values and test statistics
-  for (j in 1:nyears){
-    marr.E[t,j] <- pr[t,j] * rel[t]
-    E.org[t,j] <- pow((pow(marr[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
-    E.new[t,j] <- pow((pow(marr.pred[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
-  } #j
-} #t
+  # GOF for dead-recovery data: Freeman-Tukey test statistics
+  for (t in 1:(nyears-1)){
+    # Simulated m-arrays
+    marr.pred[t,1:nyears] ~ dmulti(pr[t,], rel[t])
 
-fit.DR <- sum(E.org)
-fitN.DR <- sum(E.new)
+    # Expected values and test statistics
+    for (j in 1:nyears){
+      marr.E[t,j] <- pr[t,j] * rel[t]
+      E.org[t,j] <- pow((pow(marr[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
+      E.new[t,j] <- pow((pow(marr.pred[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
+    } #j
+  } #t
 
-# Productivity data (Poisson regression)
+  fit.DR <- sum(E.org)
+  fitN.DR <- sum(E.new)
 
-for (t in 1:nyears){
-  J[t] ~ dpois(B[t] * rho[t])
-  # GOF for productivity data: deviance
-  J.pred[t] ~ dpois(B[t] * rho[t])
-  J.exp[t] <- B[t] * rho[t]
-  dev[t] <- J[t] * log(J[t] / J.exp[t]) - (J[t] - J.exp[t])
-  devN[t] <- J.pred[t] * log(J.pred[t] / J.exp[t]) - (J.pred[t] - J.exp[t])
-}
-fit.J <- sum(dev)
-fitN.J <- sum(devN)
+  # Productivity data (Poisson regression)
+
+  for (t in 1:nyears){
+    J[t] ~ dpois(B[t] * rho[t])
+    # GOF for productivity data: deviance
+    J.pred[t] ~ dpois(B[t] * rho[t])
+    J.exp[t] <- B[t] * rho[t]
+    dev[t] <- J[t] * log(J[t] / J.exp[t]) - (J[t] - J.exp[t])
+    devN[t] <- J.pred[t] * log(J.pred[t] / J.exp[t]) - (J.pred[t] - J.exp[t])
+  }
+  fit.J <- sum(dev)
+  fitN.J <- sum(devN)
 }
 ")
 
@@ -373,7 +374,8 @@ ni <- 20000; nb <- 5000; nc <- 3; nt <- 15; na <- 500  # ~~~ for testing
 # Call JAGS from R (ART 103 min) and check convergence
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out2)
+op <- par(mfrow=c(3, 3)); traceplot(out2)
+par(op)
 
 
 # 12.6 Results
@@ -481,7 +483,7 @@ mean(out2$sims.list$fit.J < out2$sims.list$fitN.J)
 
 library(scales)
 cl <- c('forestgreen', 'black')
-par(mfrow=c(2, 2), mar=c(3, 4.5, 2, 0.5), las=1)
+op <- par(mfrow=c(2, 2), mar=c(3, 4.5, 2, 0.5), las=1)
 
 time <- seq(1965, 2007, by=5)
 year <- 1965:2007
@@ -543,12 +545,13 @@ axis(1, at=seq(1, 41, by=5), label=time)
 axis(2)
 segments((1:(nyear-1))+0.5, out2$q2.5$r, (1:(nyear-1))+0.5, out2$q97.5$r, col=cl[2])
 points(x=(1:(nyear-1))+0.5, y=out2$mean$r, type="b", pch=16, col =cl[2], cex=0.9)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 12.5 ~~~~
 library(scales)
 cl <- c('forestgreen', 'black')
-par(las=1, mar=c(3,4,1,1))
+op <- par(las=1, mar=c(3,4,1,1))
 year <- 1965:2007
 nyear <- length(year)
 time <- seq(1965, 2007, by=5)
@@ -568,6 +571,7 @@ legend(x=1.5, y=250, pch=c(16, NA, 16), lwd=c(NA, 1, NA),
     legend=c('Breeding counts', expression(IPM[1]: 'Unstructured random'),
     expression(IPM[2]: 'Random walk')), col=c('red',cl),
     bty='n', pt.cex=c(1, 1, 1.25))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Estimate age/stage composition of population averaged over both models
@@ -600,7 +604,7 @@ year <- 1965:2007
 nyear <- length(year)
 time <- seq(1965, 2007, by = 5)
 
-par(las=1, mfrow=c(3, 1), mar=c(4,4,2,1))
+op <- par(las=1, mfrow=c(3, 1), mar=c(4,4,2,1))
 
 a <- barplot(stage.comp1[4:1,], axes=FALSE, col=co1, border=NA, ylab='Number')
 mtext("'Raw' stage composition of population", side=3, line=0.2)
@@ -627,4 +631,5 @@ u <- seq(1,43, by=10)
 axis(1, at=u, tcl=-0.5, labels=(1965:2007)[u])
 u <- seq(1,43, by=5)
 axis(1, at=u, tcl=-0.5, labels=NA)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

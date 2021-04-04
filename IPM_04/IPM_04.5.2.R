@@ -101,61 +101,61 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model18.txt", "
 model {
-# Priors and linear models
-for (t in 1:(nyears-1)){
-  phiA[t] <- mean.phi[1]
-  phiB[t] <- mean.phi[2]
-  psiAB[t] <- mean.psi[1]
-  psiBA[t] <- mean.psi[2]
-  pA[t] <- mean.p[1]
-  pB[t] <- mean.p[2]
-}
-for (u in 1:2){
-  mean.phi[u] ~ dunif(0, 1)    # Priors for mean state-spec. survival
-  mean.psi[u] ~ dunif(0, 1)    # Priors for mean transitions
-  mean.p[u] ~ dunif(0, 1)      # Priors for mean state-spec. recapture
-}
+  # Priors and linear models
+  for (t in 1:(nyears-1)){
+    phiA[t] <- mean.phi[1]
+    phiB[t] <- mean.phi[2]
+    psiAB[t] <- mean.psi[1]
+    psiBA[t] <- mean.psi[2]
+    pA[t] <- mean.p[1]
+    pB[t] <- mean.p[2]
+  }
+  for (u in 1:2){
+    mean.phi[u] ~ dunif(0, 1)    # Priors for mean state-spec. survival
+    mean.psi[u] ~ dunif(0, 1)    # Priors for mean transitions
+    mean.p[u] ~ dunif(0, 1)      # Priors for mean state-spec. recapture
+  }
 
-# Define state-transition and observation matrices
-for (i in 1:nind){
-  # Define probabilities of state S(t+1) given S(t)
-  #   (Transition probability matrix)
-  for (t in f[i]:(nyears-1)){
-    TPM[1,i,t,1] <- phiA[t] * (1-psiAB[t])
-    TPM[1,i,t,2] <- phiA[t] * psiAB[t]
-    TPM[1,i,t,3] <- 1-phiA[t]
-    TPM[2,i,t,1] <- phiB[t] * psiBA[t]
-    TPM[2,i,t,2] <- phiB[t] * (1-psiBA[t])
-    TPM[2,i,t,3] <- 1-phiB[t]
-    TPM[3,i,t,1] <- 0
-    TPM[3,i,t,2] <- 0
-    TPM[3,i,t,3] <- 1
+  # Define state-transition and observation matrices
+  for (i in 1:nind){
+    # Define probabilities of state S(t+1) given S(t)
+    #   (Transition probability matrix)
+    for (t in f[i]:(nyears-1)){
+      TPM[1,i,t,1] <- phiA[t] * (1-psiAB[t])
+      TPM[1,i,t,2] <- phiA[t] * psiAB[t]
+      TPM[1,i,t,3] <- 1-phiA[t]
+      TPM[2,i,t,1] <- phiB[t] * psiBA[t]
+      TPM[2,i,t,2] <- phiB[t] * (1-psiBA[t])
+      TPM[2,i,t,3] <- 1-phiB[t]
+      TPM[3,i,t,1] <- 0
+      TPM[3,i,t,2] <- 0
+      TPM[3,i,t,3] <- 1
 
-    # Define probabilities of O(t) given S(t)
-    #   (Observation probability matrix)
-    OPM[1,i,t,1] <- pA[t]
-    OPM[1,i,t,2] <- 0
-    OPM[1,i,t,3] <- 1-pA[t]
-    OPM[2,i,t,1] <- 0
-    OPM[2,i,t,2] <- pB[t]
-    OPM[2,i,t,3] <- 1-pB[t]
-    OPM[3,i,t,1] <- 0
-    OPM[3,i,t,2] <- 0
-    OPM[3,i,t,3] <- 1
-  } #t
-} #i
+      # Define probabilities of O(t) given S(t)
+      #   (Observation probability matrix)
+      OPM[1,i,t,1] <- pA[t]
+      OPM[1,i,t,2] <- 0
+      OPM[1,i,t,3] <- 1-pA[t]
+      OPM[2,i,t,1] <- 0
+      OPM[2,i,t,2] <- pB[t]
+      OPM[2,i,t,3] <- 1-pB[t]
+      OPM[3,i,t,1] <- 0
+      OPM[3,i,t,2] <- 0
+      OPM[3,i,t,3] <- 1
+    } #t
+  } #i
 
-# Likelihood
-for (i in 1:nind){
-  # Define latent state at first capture
-  z[i,f[i]] <- y[i,f[i]]
-  for (t in (f[i]+1):nyears){
-    # State process: draw S(t) given S(t-1)
-    z[i,t] ~ dcat(TPM[z[i,t-1], i, t-1,])
-    # Observation process: draw O(t) given S(t)
-    y[i,t] ~ dcat(OPM[z[i,t], i, t-1,])
-  } #t
-} #i
+  # Likelihood
+  for (i in 1:nind){
+    # Define latent state at first capture
+    z[i,f[i]] <- y[i,f[i]]
+    for (t in (f[i]+1):nyears){
+      # State process: draw S(t) given S(t-1)
+      z[i,t] ~ dcat(TPM[z[i,t-1], i, t-1,])
+      # Observation process: draw O(t) given S(t)
+      y[i,t] ~ dcat(OPM[z[i,t], i, t-1,])
+    } #t
+  } #i
 }
 ")
 
@@ -181,7 +181,8 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
 out21 <- jags(jags.data, inits, parameters, "model18.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out21)      # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out21)      # Not shown
+par(op)
 print(out21)
 
               # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
@@ -244,90 +245,90 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model19.txt", "
 model {
-# Priors and linear models
-for (t in 1:(nyears-1)){
-  phiA[t] <- mean.phi[1]
-  phiB[t] <- mean.phi[2]
-  psiAB[t] <- mean.psi[1]
-  psiBA[t] <- mean.psi[2]
-  pA[t] <- mean.p[1]
-  pB[t] <- mean.p[2]
-}
+  # Priors and linear models
+  for (t in 1:(nyears-1)){
+    phiA[t] <- mean.phi[1]
+    phiB[t] <- mean.phi[2]
+    psiAB[t] <- mean.psi[1]
+    psiBA[t] <- mean.psi[2]
+    pA[t] <- mean.p[1]
+    pB[t] <- mean.p[2]
+  }
 
-for (u in 1:2){
-  mean.phi[u] ~ dunif(0, 1)    # Priors for mean state-spec. survival
-  mean.psi[u] ~ dunif(0, 1)    # Priors for mean transitions
-  mean.p[u] ~ dunif(0, 1)      # Priors for mean state-spec. recapture
-}
+  for (u in 1:2){
+    mean.phi[u] ~ dunif(0, 1)    # Priors for mean state-spec. survival
+    mean.psi[u] ~ dunif(0, 1)    # Priors for mean transitions
+    mean.p[u] ~ dunif(0, 1)      # Priors for mean state-spec. recapture
+  }
 
-# Define state-transition and reencounter probabilities
-for (t in 1:(nyears-1)){
-  psi[1,t,1] <- phiA[t] * (1-psiAB[t])
-  psi[1,t,2] <- phiA[t] * psiAB[t]
-  psi[2,t,1] <- phiB[t] * psiBA[t]
-  psi[2,t,2] <- phiB[t] * (1-psiBA[t])
+  # Define state-transition and reencounter probabilities
+  for (t in 1:(nyears-1)){
+    psi[1,t,1] <- phiA[t] * (1-psiAB[t])
+    psi[1,t,2] <- phiA[t] * psiAB[t]
+    psi[2,t,1] <- phiB[t] * psiBA[t]
+    psi[2,t,2] <- phiB[t] * (1-psiBA[t])
 
-  po[1,t] <- pA[t]
-  po[2,t] <- pB[t]
-}
+    po[1,t] <- pA[t]
+    po[2,t] <- pB[t]
+  }
 
-# From here onwards, no changes needed regardless of which model is fitted
-# Calculate probability of non-encounter (dq) and reshape the array for the encounter probabilities
-for (t in 1:(nyears-1)){
-  for (s in 1:ns){
-    dp[s,t,s] <- po[s,t]
-    dq[s,t,s] <- 1-po[s,t]
-  } #s
-  for (s in 1:(ns-1)){
-    for (m in (s+1):ns){
-      dp[s,t,m] <- 0
-      dq[s,t,m] <- 0
+  # From here onwards, no changes needed regardless of which model is fitted
+  # Calculate probability of non-encounter (dq) and reshape the array for the encounter probabilities
+  for (t in 1:(nyears-1)){
+    for (s in 1:ns){
+      dp[s,t,s] <- po[s,t]
+      dq[s,t,s] <- 1-po[s,t]
     } #s
-  } #m
-  for (s in 2:ns){
-    for (m in 1:(s-1)){
-      dp[s,t,m] <- 0
-      dq[s,t,m] <- 0
-    } #s
-  } #m
-} #t
+    for (s in 1:(ns-1)){
+      for (m in (s+1):ns){
+        dp[s,t,m] <- 0
+        dq[s,t,m] <- 0
+      } #s
+    } #m
+    for (s in 2:ns){
+      for (m in 1:(s-1)){
+        dp[s,t,m] <- 0
+        dq[s,t,m] <- 0
+      } #s
+    } #m
+  } #t
 
-# Define the multinomial likelihood
-for (t in 1:((nyears-1)*ns)){
-  marr[t,1:(nyears *ns-(ns-1))] ~ dmulti(pi[t,], rel[t])
-}
+  # Define the multinomial likelihood
+  for (t in 1:((nyears-1)*ns)){
+    marr[t,1:(nyears *ns-(ns-1))] ~ dmulti(pi[t,], rel[t])
+  }
 
-# Define cell probabilities of the multistate m-array
-# Matrix U: product of probabilities of state-transition and non-encounter (needed because there is no product function for matrix multiplication in JAGS)
-for (t in 1:(nyears-2)){
-  U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- ones
-  for (j in (t+1):(nyears-1)){
-    U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-2)*ns+(1:ns)] %*% psi[,t,] %*% dq[,t,]
-  } #j
-} #t
-U[(nyears-2)*ns+(1:ns), (nyears-2)*ns+(1:ns)] <- ones
+  # Define cell probabilities of the multistate m-array
+  # Matrix U: product of probabilities of state-transition and non-encounter (needed because there is no product function for matrix multiplication in JAGS)
+  for (t in 1:(nyears-2)){
+    U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- ones
+    for (j in (t+1):(nyears-1)){
+      U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-2)*ns+(1:ns)] %*% psi[,t,] %*% dq[,t,]
+    } #j
+  } #t
+  U[(nyears-2)*ns+(1:ns), (nyears-2)*ns+(1:ns)] <- ones
 
-# Diagonal
-for (t in 1:(nyears-2)){
-  pi[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] %*% psi[,t,] %*% dp[,t,]
-  # Above main diagonal
-  for (j in (t+1):(nyears-1)){
-    pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] %*% psi[,j,] %*% dp[,j,]
-  } #j
- } #t
-pi[(nyears-2)*ns+(1:ns),(nyears-2)*ns+(1:ns)] <- psi[,nyears-1,] %*% dp[,nyears-1,]
+  # Diagonal
+  for (t in 1:(nyears-2)){
+    pi[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] %*% psi[,t,] %*% dp[,t,]
+    # Above main diagonal
+    for (j in (t+1):(nyears-1)){
+      pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] %*% psi[,j,] %*% dp[,j,]
+    } #j
+   } #t
+  pi[(nyears-2)*ns+(1:ns),(nyears-2)*ns+(1:ns)] <- psi[,nyears-1,] %*% dp[,nyears-1,]
 
-# Below main diagonal
-for (t in 2:(nyears-1)){
-  for (j in 1:(t-1)){
-    pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- zero
-  } #j
-} #t
+  # Below main diagonal
+  for (t in 2:(nyears-1)){
+    for (j in 1:(t-1)){
+      pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- zero
+    } #j
+  } #t
 
-# Last column: probability of non-recapture
-for (t in 1:((nyears-1)*ns)){
-  pi[t,(nyears*ns-(ns-1))] <- 1-sum(pi[t,1:((nyears-1)*ns)])
-} #t
+  # Last column: probability of non-recapture
+  for (t in 1:((nyears-1)*ns)){
+    pi[t,(nyears*ns-(ns-1))] <- 1-sum(pi[t,1:((nyears-1)*ns)])
+  } #t
 }
 ")
 
@@ -343,7 +344,8 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out22 <- jags(jags.data, inits, parameters, "model19.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 2)); traceplot(out22)      # Not shown
+op <- par(mfrow=c(2, 2)); traceplot(out22)      # Not shown
+par(op)
 print(out22)
 
                # mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff

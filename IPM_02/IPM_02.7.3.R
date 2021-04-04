@@ -44,7 +44,7 @@ C <- rbinom(nsites, N, p)
 # ~~~~ extra code for Figure 2.15 ~~~~
 # Plot abundance, detection, seasonal profile of counts
 #  and counts versus abundance
-par(mfrow = c(2, 2), mar=c(5, 5, 2, 2), cex.lab=1.5, cex.axis=1.5,
+op <- par(mfrow = c(2, 2), mar=c(5, 5, 2, 2), cex.lab=1.5, cex.axis=1.5,
     cex.main=1.5, las=1)
 plot(survey.date, N, pch=16, col=rgb(0, 0, 0, 0.4), cex=1.5, xlab="Survey date",
     ylab=expression(paste('Snake abundance (', italic(N), ')')), frame=FALSE,
@@ -60,6 +60,7 @@ plot(jitter(N), C, pch=16, col=rgb(0, 0, 0, 0.4), cex=1.5,
     ylab=expression(paste('Snake count (', italic(C), ')')), frame=FALSE,
     xlim=range(N), ylim=range(N))
 abline(0, 1, lwd=2, col="red")
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Bundle data
@@ -104,7 +105,8 @@ ni <- 20000; nb <- 10000; nc <- 3; nt <- 2; na <- 1000
 # Call JAGS from R (ART 1 min), check convergence and summarize posteriors
 out4 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out4)     # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out4)     # Not shown
+par(op)
 print(out4, 3)
 
 #             mean    sd     2.5%      50%    97.5% overlap0 f Rhat n.eff

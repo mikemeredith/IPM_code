@@ -49,103 +49,103 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model1.txt", "
 model {
-# Priors and linear models
-mean.logit.sj <- logit(mean.sj)
-mean.sj ~ dunif(0, 1)
-mean.logit.sa <- logit(mean.sa)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.log.f <- log(mean.f)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.logit.sj <- logit(mean.sj)
+  mean.sj ~ dunif(0, 1)
+  mean.logit.sa <- logit(mean.sa)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.log.f <- log(mean.f)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    p[t] <- mean.p
+  }
 
-for (t in 1:(n.occasions-1+K)){  # Here we extend the loop to K more years
-  logit.sj[t] <- mean.logit.sj + eps.sj[t]
-  eps.sj[t] ~ dnorm(0, tau.sj)
-  sj[t] <- ilogit(logit.sj[t])
-  logit.sa[t] <- mean.logit.sa + eps.sa[t]
-  eps.sa[t] ~ dnorm(0, tau.sa)
-  sa[t] <- ilogit(logit.sa[t])
-}
+  for (t in 1:(n.occasions-1+K)){  # Here we extend the loop to K more years
+    logit.sj[t] <- mean.logit.sj + eps.sj[t]
+    eps.sj[t] ~ dnorm(0, tau.sj)
+    sj[t] <- ilogit(logit.sj[t])
+    logit.sa[t] <- mean.logit.sa + eps.sa[t]
+    eps.sa[t] ~ dnorm(0, tau.sa)
+    sa[t] <- ilogit(logit.sa[t])
+  }
 
-for (t in 1:(n.occasions+K)){   # Extended loop also here
-  log.f[t] <- mean.log.f + eps.f[t]
-  eps.f[t] ~ dnorm(0, tau.f)
-  f[t] <- exp(log.f[t])
-}
+  for (t in 1:(n.occasions+K)){   # Extended loop also here
+    log.f[t] <- mean.log.f + eps.f[t]
+    eps.f[t] ~ dnorm(0, tau.f)
+    f[t] <- exp(log.f[t])
+  }
 
-sigma.sj ~ dunif(0, 10)
-tau.sj <- pow(sigma.sj, -2)
-sigma.sa ~ dunif(0, 10)
-tau.sa <- pow(sigma.sa, -2)
-sigma.f ~ dunif(0, 10)
-tau.f <- pow(sigma.f, -2)
+  sigma.sj ~ dunif(0, 10)
+  tau.sj <- pow(sigma.sj, -2)
+  sigma.sa ~ dunif(0, 10)
+  tau.sa <- pow(sigma.sa, -2)
+  sigma.f ~ dunif(0, 10)
+  tau.f <- pow(sigma.f, -2)
 
-sigma ~ dunif(0.5, 50)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 50)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1] ~ dcat(pNinit)
-N[2,1] ~ dcat(pNinit)
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1] ~ dcat(pNinit)
+  N[2,1] ~ dcat(pNinit)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1+K)){  # Note extended loop
-  N[1,t+1] ~ dpois(sj[t] * f[t] * (N[1,t] + N[2,t]))
-  N[2,t+1] ~ dbin(sa[t], (N[1,t] + N[2,t]))
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1+K)){  # Note extended loop
+    N[1,t+1] ~ dpois(sj[t] * f[t] * (N[1,t] + N[2,t]))
+    N[2,t+1] ~ dbin(sa[t], (N[1,t] + N[2,t]))
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  count[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    count[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
 
-# Productivity data (Poisson regression model)
-for (t in 1:n.occasions){
-  J[t] ~ dpois(f[t] * B[t])
-}
+  # Productivity data (Poisson regression model)
+  for (t in 1:n.occasions){
+    J[t] ~ dpois(f[t] * B[t])
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1-p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1-p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  }
 
-# Derived parameters
-# Total population size
-for (t in 1:(n.occasions+K)){
-  Ntot[t] <- N[1,t] + N[2,t]
-}
-# Check whether the population is extinct in the future
-for (t in 1:K){
-  extinct[t] <- equals(Ntot[n.occasions+t], 0)
-}
+  # Derived parameters
+  # Total population size
+  for (t in 1:(n.occasions+K)){
+    Ntot[t] <- N[1,t] + N[2,t]
+  }
+  # Check whether the population is extinct in the future
+  for (t in 1:K){
+    extinct[t] <- equals(Ntot[n.occasions+t], 0)
+  }
 }
 ")
 
@@ -163,7 +163,8 @@ ni <- 20000; nb <- 5000; nc <- 3; nt <- 3; na <- 1000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 print(out1, 3)
 
                # mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
@@ -203,7 +204,7 @@ save(out1, file="DataFig10.2.Rdata")
 
 n.years <- length(out1$mean$Ntot)
 
-par(mfrow=c(2, 2), mar=c(2, 4, 2.5, 1), cex=1.1)
+op <- par(mfrow=c(2, 2), mar=c(2, 4, 2.5, 1), cex=1.1)
 plot(0, 0, ylim=range(c(out1$q2.5$Ntot, out1$q97.5$Ntot)), xlim=c(0.5, n.years),
     ylab=expression('Total population size ('*italic(N)*')'), xlab=NA, las=1,
     col="black", type="l", axes=FALSE)
@@ -248,6 +249,7 @@ polygon(x=c(1:(n.years-1)+0.5, (n.years-1):1+0.5),
     y=c(out1$q2.5$sa, rev(out1$q97.5$sa)), col="gray90", border="gray90")
 lines(x=(1:(n.years-1))+0.5, y=out1$mean$sa, col="blue")
 abline(v=20, lty=2)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for figure 10.3 ~~~~
@@ -307,172 +309,172 @@ axis(2, las=1)
 # Write JAGS model file
 cat(file="model2.txt", "
 model {
-# Priors and linear models
-mean.logit.sj <- logit(mean.sj)
-mean.sj ~ dunif(0, 1)
-mean.logit.sa <- logit(mean.sa)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.log.f <- log(mean.f)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.logit.sj <- logit(mean.sj)
+  mean.sj ~ dunif(0, 1)
+  mean.logit.sa <- logit(mean.sa)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.log.f <- log(mean.f)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    p[t] <- mean.p
+  }
 
-sigma.sj ~ dunif(0, 10)
-tau.sj <- pow(sigma.sj, -2)
-sigma.sa ~ dunif(0, 10)
-tau.sa <- pow(sigma.sa, -2)
-sigma.f ~ dunif(0, 10)
-tau.f <- pow(sigma.f, -2)
+  sigma.sj ~ dunif(0, 10)
+  tau.sj <- pow(sigma.sj, -2)
+  sigma.sa ~ dunif(0, 10)
+  tau.sa <- pow(sigma.sa, -2)
+  sigma.f ~ dunif(0, 10)
+  tau.f <- pow(sigma.f, -2)
 
-sigma ~ dunif(0.5, 50)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 50)
+  tau <- pow(sigma, -2)
 
-# Models for demographic rates
-# Control, no change (option 4)
-for (t in 1:(n.occasions-1+K)){
-  logit.sj[t] <- mean.logit.sj + eps.sj[t]
-  eps.sj[t] ~ dnorm(0, tau.sj)
-  sj[t] <- ilogit(logit.sj[t])
-  logit.sa[t,1] <- mean.logit.sa + eps.sa[t,1]
-  eps.sa[t,1] ~ dnorm(0, tau.sa)
-  sa[t,1] <- ilogit(logit.sa[t,1])
-}
-for (t in 1:(n.occasions+K)){
-  log.f[t,1] <- mean.log.f + eps.f[t,1]
-  eps.f[t,1] ~ dnorm(0, tau.f)
-  f[t,1] <- exp(log.f[t,1])
-}
+  # Models for demographic rates
+  # Control, no change (option 4)
+  for (t in 1:(n.occasions-1+K)){
+    logit.sj[t] <- mean.logit.sj + eps.sj[t]
+    eps.sj[t] ~ dnorm(0, tau.sj)
+    sj[t] <- ilogit(logit.sj[t])
+    logit.sa[t,1] <- mean.logit.sa + eps.sa[t,1]
+    eps.sa[t,1] ~ dnorm(0, tau.sa)
+    sa[t,1] <- ilogit(logit.sa[t,1])
+  }
+  for (t in 1:(n.occasions+K)){
+    log.f[t,1] <- mean.log.f + eps.f[t,1]
+    eps.f[t,1] ~ dnorm(0, tau.f)
+    f[t,1] <- exp(log.f[t,1])
+  }
 
-# Option 1: increase of productivity
-# Past: identical to control
-for (t in 1:n.occasions){
-  log.f[t,2] <- log.f[t,1]
-  eps.f[t,2] <- eps.f[t,1]
-  f[t,2] <- f[t,1]
-}
-# Future: increase mean productivity by 20%
-for (t in (n.occasions+1):(n.occasions+K)){
-  log.f[t,2] <- mean.log.f + log(1.2) + eps.f[t,2]
-  eps.f[t,2] ~ dnorm(0, tau.f)
-  f[t,2] <- exp(log.f[t,2])
-}
+  # Option 1: increase of productivity
+  # Past: identical to control
+  for (t in 1:n.occasions){
+    log.f[t,2] <- log.f[t,1]
+    eps.f[t,2] <- eps.f[t,1]
+    f[t,2] <- f[t,1]
+  }
+  # Future: increase mean productivity by 20%
+  for (t in (n.occasions+1):(n.occasions+K)){
+    log.f[t,2] <- mean.log.f + log(1.2) + eps.f[t,2]
+    eps.f[t,2] ~ dnorm(0, tau.f)
+    f[t,2] <- exp(log.f[t,2])
+  }
 
-# Option 2: reduction of temporal variability in adult survival
-# Past: identical to control
-for (t in 1:(n.occasions-1)){
-  logit.sa[t,2] <- logit.sa[t,1]
-  eps.sa[t,2] <- eps.sa[t,1]
-  sa[t,2] <- sa[t,1]
-}
-# Future: reduction of temporal variability by half
-for (t in n.occasions:(n.occasions-1+K)){
-  logit.sa[t,2] <- mean.logit.sa + eps.sa[t,2]
-  eps.sa[t,2] ~ dnorm(0, tau.sa*2)     # Temporal precision increased
-  sa[t,2] <- ilogit(logit.sa[t,2])
-}
+  # Option 2: reduction of temporal variability in adult survival
+  # Past: identical to control
+  for (t in 1:(n.occasions-1)){
+    logit.sa[t,2] <- logit.sa[t,1]
+    eps.sa[t,2] <- eps.sa[t,1]
+    sa[t,2] <- sa[t,1]
+  }
+  # Future: reduction of temporal variability by half
+  for (t in n.occasions:(n.occasions-1+K)){
+    logit.sa[t,2] <- mean.logit.sa + eps.sa[t,2]
+    eps.sa[t,2] ~ dnorm(0, tau.sa*2)     # Temporal precision increased
+    sa[t,2] <- ilogit(logit.sa[t,2])
+  }
 
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1,1] ~ dcat(pNinit)
-N[2,1,1] ~ dcat(pNinit)
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1,1] ~ dcat(pNinit)
+  N[2,1,1] ~ dcat(pNinit)
 
-# Process model over time: our model of population dynamics
-# Control, no change (option 4)
-for (t in 1:(n.occasions-1+K)){
-  N[1,t+1,1] ~ dpois(f[t,1] * sj[t] * (N[1,t,1] + N[2,t,1]))
-  N[2,t+1,1] ~ dbin(sa[t,1], (N[1,t,1] + N[2,t,1]))
-}
+  # Process model over time: our model of population dynamics
+  # Control, no change (option 4)
+  for (t in 1:(n.occasions-1+K)){
+    N[1,t+1,1] ~ dpois(f[t,1] * sj[t] * (N[1,t,1] + N[2,t,1]))
+    N[2,t+1,1] ~ dbin(sa[t,1], (N[1,t,1] + N[2,t,1]))
+  }
 
-# Option 1: increase of productivity
-# Past
-for (t in 1:n.occasions){
-  N[1,t,2] <- N[1,t,1]
-  N[2,t,2] <- N[2,t,1]
-}
-# Future
-for (t in n.occasions:(n.occasions-1+K)){
-  N[1,t+1,2] ~ dpois(f[t,2] * sj[t] * (N[1,t,2] + N[2,t,2]))
-  N[2,t+1,2] ~ dbin(sa[t,1], (N[1,t,2] + N[2,t,2]))
-}
+  # Option 1: increase of productivity
+  # Past
+  for (t in 1:n.occasions){
+    N[1,t,2] <- N[1,t,1]
+    N[2,t,2] <- N[2,t,1]
+  }
+  # Future
+  for (t in n.occasions:(n.occasions-1+K)){
+    N[1,t+1,2] ~ dpois(f[t,2] * sj[t] * (N[1,t,2] + N[2,t,2]))
+    N[2,t+1,2] ~ dbin(sa[t,1], (N[1,t,2] + N[2,t,2]))
+  }
 
-# Option 2: decrease of temporal var. in adult survival
-# Past
-for (t in 1:n.occasions){
-  N[1,t,3] <- N[1,t,1]
-  N[2,t,3] <- N[2,t,1]
-}
-# Future
-for (t in n.occasions:(n.occasions-1+K)){
-  N[1,t+1,3] ~ dpois(f[t,1] * sj[t] * (N[1,t,3] + N[2,t,3]))
-  N[2,t+1,3] ~ dbin(sa[t,2], (N[1,t,3] + N[2,t,3]))
-}
+  # Option 2: decrease of temporal var. in adult survival
+  # Past
+  for (t in 1:n.occasions){
+    N[1,t,3] <- N[1,t,1]
+    N[2,t,3] <- N[2,t,1]
+  }
+  # Future
+  for (t in n.occasions:(n.occasions-1+K)){
+    N[1,t+1,3] ~ dpois(f[t,1] * sj[t] * (N[1,t,3] + N[2,t,3]))
+    N[2,t+1,3] ~ dbin(sa[t,2], (N[1,t,3] + N[2,t,3]))
+  }
 
-# Option 3: release of 3 females annually during 5 years
-# Past
-for (t in 1:n.occasions){
-  N[1,t,4] <- N[1,t,1]
-  N[2,t,4] <- N[2,t,1]
-}
-# Future, phase with releases
-for (t in n.occasions:(n.occasions+5)){
-  N[1,t+1,4] ~ dpois(f[t,1] * sj[t] * (N[1,t,4] + N[2,t,4] + 3))
-  N[2,t+1,4] ~ dbin(sa[t,1], (N[1,t,4] + N[2,t,4] + 3))
-}
-# Future, after the phase with releases
-for (t in (n.occasions+6):(n.occasions-1+K)){
-  N[1,t+1,4] ~ dpois(f[t,1] * sj[t] * (N[1,t,4] + N[2,t,4]))
-  N[2,t+1,4] ~ dbin(sa[t,1], (N[1,t,4] + N[2,t,4]))
-}
+  # Option 3: release of 3 females annually during 5 years
+  # Past
+  for (t in 1:n.occasions){
+    N[1,t,4] <- N[1,t,1]
+    N[2,t,4] <- N[2,t,1]
+  }
+  # Future, phase with releases
+  for (t in n.occasions:(n.occasions+5)){
+    N[1,t+1,4] ~ dpois(f[t,1] * sj[t] * (N[1,t,4] + N[2,t,4] + 3))
+    N[2,t+1,4] ~ dbin(sa[t,1], (N[1,t,4] + N[2,t,4] + 3))
+  }
+  # Future, after the phase with releases
+  for (t in (n.occasions+6):(n.occasions-1+K)){
+    N[1,t+1,4] ~ dpois(f[t,1] * sj[t] * (N[1,t,4] + N[2,t,4]))
+    N[2,t+1,4] ~ dbin(sa[t,1], (N[1,t,4] + N[2,t,4]))
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  count[t] ~ dnorm(N[1,t,1] + N[2,t,1], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    count[t] ~ dnorm(N[1,t,1] + N[2,t,1], tau)
+  }
 
-# Productivity data (Poisson regression model)
-for (t in 1:n.occasions){
-  J[t] ~ dpois(f[t,1]*B[t])
-}
+  # Productivity data (Poisson regression model)
+  for (t in 1:n.occasions){
+    J[t] ~ dpois(f[t,1]*B[t])
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1-p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t,1] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j,1]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j,1]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-} #t
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1-p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t,1] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j,1]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j,1]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  } #t
 
-# Derived parameters
-for (t in 1:(n.occasions+K)){
-  Ntot[t,1] <- N[1,t,1] + N[2,t,1]     # Total population sizes control
-  Ntot[t,2] <- N[1,t,2] + N[2,t,2]     # Total population sizes option 1
-  Ntot[t,3] <- N[1,t,3] + N[2,t,3]     # Total population sizes option 2
-  Ntot[t,4] <- N[1,t,4] + N[2,t,4]     # Total population sizes option 3
-}
+  # Derived parameters
+  for (t in 1:(n.occasions+K)){
+    Ntot[t,1] <- N[1,t,1] + N[2,t,1]     # Total population sizes control
+    Ntot[t,2] <- N[1,t,2] + N[2,t,2]     # Total population sizes option 1
+    Ntot[t,3] <- N[1,t,3] + N[2,t,3]     # Total population sizes option 2
+    Ntot[t,4] <- N[1,t,4] + N[2,t,4]     # Total population sizes option 3
+  }
 }
 ")
 
@@ -490,7 +492,8 @@ ni <- 20000; nb <- 5000; nc <- 3; nt <- 3; na <- 1000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out2)
+op <- par(mfrow=c(3, 3)); traceplot(out2)
+par(op)
 print(out2, 3)
 save(out2, file='DataFig10.6.Rdata')
 
@@ -501,7 +504,7 @@ extinct <- (out2$sims.list$Ntot[, (T+1):(T+K), ] <= D)
 ext.prob <- apply(extinct, 2:3, mean)
 
 color <- c("black", "skyblue", "seagreen", "orange")
-par(las=1)
+op <- par(las=1)
 matplot(ext.prob, type="l", ylab="Extinction probability", lwd=2, lty=1,
     xlab="Year of forecast", axes=FALSE, col=color)
 axis(1, at=1:K, tck=-0.0125, labels=FALSE)
@@ -510,6 +513,7 @@ axis(2, las=1)
 legend("topleft", lty=rep(1, 4), lwd=rep(2, 4), col=color,
     legend=c("Do nothing (control)", "Increase productivity", "Reduce variability",
     "Translocation"), bty="n")
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 last.year <- jags.data$n.occasions + jags.data$K
@@ -533,107 +537,107 @@ round(mean(out2$sims.list$Ntot[,last.year,4] > out2$sims.list$Ntot[,last.year,2]
 # Write JAGS model file
 cat(file="model3.txt", "
 model {
-# Priors and linear models
-mean.logit.sj <- logit(mean.sj)
-mean.sj ~ dunif(0, 1)
-mean.logit.sa <- logit(mean.sa)
-mean.sa ~ dunif(0, 1)
-mean.p ~ dunif(0, 1)
-mean.log.f <- log(mean.f)
-mean.f ~ dunif(0, 10)
+  # Priors and linear models
+  mean.logit.sj <- logit(mean.sj)
+  mean.sj ~ dunif(0, 1)
+  mean.logit.sa <- logit(mean.sa)
+  mean.sa ~ dunif(0, 1)
+  mean.p ~ dunif(0, 1)
+  mean.log.f <- log(mean.f)
+  mean.f ~ dunif(0, 10)
 
-for (t in 1:(n.occasions-1)){
-  p[t] <- mean.p
-}
+  for (t in 1:(n.occasions-1)){
+    p[t] <- mean.p
+  }
 
-for (t in 1:(n.occasions-1+K)){  # Extend the loop to K more years
-  logit.sj[t] <- mean.logit.sj + eps.sj[t]
-  eps.sj[t] ~ dnorm(0, tau.sj)
-  sj[t] <- ilogit(logit.sj[t])
-  logit.sa[t] <- mean.logit.sa + eps.sa[t]
-  eps.sa[t] ~ dnorm(0, tau.sa)
-  sa[t] <- ilogit(logit.sa[t])
-}
+  for (t in 1:(n.occasions-1+K)){  # Extend the loop to K more years
+    logit.sj[t] <- mean.logit.sj + eps.sj[t]
+    eps.sj[t] ~ dnorm(0, tau.sj)
+    sj[t] <- ilogit(logit.sj[t])
+    logit.sa[t] <- mean.logit.sa + eps.sa[t]
+    eps.sa[t] ~ dnorm(0, tau.sa)
+    sa[t] <- ilogit(logit.sa[t])
+  }
 
-# Productivity in the past
-for (t in 1:(n.occasions-1)){
-  log.f[t] <- mean.log.f + eps.f[t]
-  eps.f[t] ~ dnorm(0, tau.f)
-  f[t] <- exp(log.f[t])
-}
+  # Productivity in the past
+  for (t in 1:(n.occasions-1)){
+    log.f[t] <- mean.log.f + eps.f[t]
+    eps.f[t] ~ dnorm(0, tau.f)
+    f[t] <- exp(log.f[t])
+  }
 
-# Productivity in the future: increased by rep.inc
-for (t in n.occasions:(n.occasions+K)){
-  log.f[t] <- mean.log.f + eps.f[t] + log(rep.inc)
-  eps.f[t] ~ dnorm(0, tau.f)
-  f[t] <- exp(log.f[t])
-}
+  # Productivity in the future: increased by rep.inc
+  for (t in n.occasions:(n.occasions+K)){
+    log.f[t] <- mean.log.f + eps.f[t] + log(rep.inc)
+    eps.f[t] ~ dnorm(0, tau.f)
+    f[t] <- exp(log.f[t])
+  }
 
-sigma.sj ~ dunif(0, 10)
-tau.sj <- pow(sigma.sj, -2)
-sigma.sa ~ dunif(0, 10)
-tau.sa <- pow(sigma.sa, -2)
-sigma.f ~ dunif(0, 10)
-tau.f <- pow(sigma.f, -2)
+  sigma.sj ~ dunif(0, 10)
+  tau.sj <- pow(sigma.sj, -2)
+  sigma.sa ~ dunif(0, 10)
+  tau.sa <- pow(sigma.sa, -2)
+  sigma.f ~ dunif(0, 10)
+  tau.f <- pow(sigma.f, -2)
 
-sigma ~ dunif(0.5, 50)
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.5, 50)
+  tau <- pow(sigma, -2)
 
-# Population count data (state-space model)
-# Model for the initial population size: uniform priors
-N[1,1] ~ dcat(pNinit)
-N[2,1] ~ dcat(pNinit)
+  # Population count data (state-space model)
+  # Model for the initial population size: uniform priors
+  N[1,1] ~ dcat(pNinit)
+  N[2,1] ~ dcat(pNinit)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1+K)){  # Extend the loop to K more years
-  N[1,t+1] ~ dpois(sj[t] * f[t] * (N[1,t] + N[2,t]))
-  N[2,t+1] ~ dbin(sa[t], (N[1,t] + N[2,t]))
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1+K)){  # Extend the loop to K more years
+    N[1,t+1] ~ dpois(sj[t] * f[t] * (N[1,t] + N[2,t]))
+    N[2,t+1] ~ dbin(sa[t], (N[1,t] + N[2,t]))
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  count[t] ~ dnorm(N[1,t] + N[2,t], tau)
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    count[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  }
 
-# Productivity data (Poisson regression model)
-for (t in 1:n.occasions){
-  J[t] ~ dpois(f[t] * B[t])
-}
+  # Productivity data (Poisson regression model)
+  for (t in 1:n.occasions){
+    J[t] ~ dpois(f[t] * B[t])
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  q[t] <- 1-p[t]   # Probability of non-recapture
-  pr.j[t,t] <- sj[t] * p[t]
-  pr.a[t,t] <- sa[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
-} #t
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    q[t] <- 1-p[t]   # Probability of non-recapture
+    pr.j[t,t] <- sj[t] * p[t]
+    pr.a[t,t] <- sa[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- sj[t] * prod(sa[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pr.a[t,j] <- prod(sa[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1-sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1-sum(pr.a[t,1:(n.occasions-1)])
+  } #t
 
-# Derived parameters
-# Total population size
-for (t in 1:(n.occasions+K)){
-  Ntot[t] <- N[1,t] + N[2,t]
-}
+  # Derived parameters
+  # Total population size
+  for (t in 1:(n.occasions+K)){
+    Ntot[t] <- N[1,t] + N[2,t]
+  }
 }
 ")
 

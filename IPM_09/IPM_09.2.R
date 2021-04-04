@@ -3,13 +3,14 @@
 # ---------------------------------------------
 # Code from MS submitted to publisher.
 
+# Run time approx. 1 min
+
 library(IPMbook) ; library(jagsUI)
 
 # 9.2 Correlations between demographic rates and population growth
 # ================================================================
 
 # Load the hoopoe data and produce data overview
-library(IPMbook); library(jagsUI)
 data(hoopoe)
 str(hoopoe)
 
@@ -44,114 +45,114 @@ str(jags.data)    # Remind ourselves of how the data look like
 
 # Write JAGS model file
 cat(file="model1.txt", "
-model { 
-# Priors and linear models
-# For mean and variance parameters
-mean.logit.phij <- logit(mean.phij)
-mean.phij ~ dunif(0, 1) 
-mean.logit.phia <- logit(mean.phia)
-mean.phia ~ dunif(0, 1) 
-mean.log.f1 <- log(mean.f1)
-mean.f1 ~ dunif(0, 10)
-mean.log.f2 <- log(mean.f2)
-mean.f2 ~ dunif(0, 10)
-mean.log.omega <- log(mean.omega)
-mean.omega ~ dunif(0, 3)
-mean.p ~ dunif(0, 1)
-mean.pj ~ dunif(0, 1)
+model {
+  # Priors and linear models
+  # For mean and variance parameters
+  mean.logit.phij <- logit(mean.phij)
+  mean.phij ~ dunif(0, 1)
+  mean.logit.phia <- logit(mean.phia)
+  mean.phia ~ dunif(0, 1)
+  mean.log.f1 <- log(mean.f1)
+  mean.f1 ~ dunif(0, 10)
+  mean.log.f2 <- log(mean.f2)
+  mean.f2 ~ dunif(0, 10)
+  mean.log.omega <- log(mean.omega)
+  mean.omega ~ dunif(0, 3)
+  mean.p ~ dunif(0, 1)
+  mean.pj ~ dunif(0, 1)
 
-sigma.phij ~ dunif(0, 3)
-tau.phij <- pow(sigma.phij, -2)
-sigma.phia ~ dunif(0, 3)
-tau.phia <- pow(sigma.phia, -2)
-sigma.omega ~ dunif(0, 3)
-tau.omega <- pow(sigma.omega, -2)
-sigma.f1 ~ dunif(0, 3)
-tau.f1 <- pow(sigma.f1, -2)
-sigma.f2 ~ dunif(0, 3)
-tau.f2 <- pow(sigma.f2, -2)
+  sigma.phij ~ dunif(0, 3)
+  tau.phij <- pow(sigma.phij, -2)
+  sigma.phia ~ dunif(0, 3)
+  tau.phia <- pow(sigma.phia, -2)
+  sigma.omega ~ dunif(0, 3)
+  tau.omega <- pow(sigma.omega, -2)
+  sigma.f1 ~ dunif(0, 3)
+  tau.f1 <- pow(sigma.f1, -2)
+  sigma.f2 ~ dunif(0, 3)
+  tau.f2 <- pow(sigma.f2, -2)
 
-sigma ~ dunif(0.4, 20)      # lower bound >0
-tau <- pow(sigma, -2)
+  sigma ~ dunif(0.4, 20)      # lower bound >0
+  tau <- pow(sigma, -2)
 
-# Linear models for demographic parameters
-for (t in 1:(n.occasions-1)){
-  logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
-  phij[t] <- ilogit(logit.phij[t])
-  logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
-  phia[t] <- ilogit(logit.phia[t])
-  log.omega[t] ~ dnorm(mean.log.omega, tau.omega)   
-  omega[t] <- exp(log.omega[t])
-  p[t] <- mean.p
-  pj[t] <- mean.pj
-}
-for (t in 1:n.occasions){
-  log.f1[t] ~ dnorm(mean.log.f1, tau.f1) 
-  f1[t] <- exp(log.f1[t])
-  log.f2[t] ~ dnorm(mean.log.f2, tau.f2) 
-  f2[t] <- exp(log.f2[t])
-}
+  # Linear models for demographic parameters
+  for (t in 1:(n.occasions-1)){
+    logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
+    phij[t] <- ilogit(logit.phij[t])
+    logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
+    phia[t] <- ilogit(logit.phia[t])
+    log.omega[t] ~ dnorm(mean.log.omega, tau.omega)
+    omega[t] <- exp(log.omega[t])
+    p[t] <- mean.p
+    pj[t] <- mean.pj
+  }
+  for (t in 1:n.occasions){
+    log.f1[t] ~ dnorm(mean.log.f1, tau.f1)
+    f1[t] <- exp(log.f1[t])
+    log.f2[t] ~ dnorm(mean.log.f2, tau.f2)
+    f2[t] <- exp(log.f2[t])
+  }
 
-# Population count data (state-space model)
-# Model for initial stage-spec. population sizes: discrete uniform priors
-N[1,1] ~ dcat(pNinit)
-N[2,1] ~ dcat(pNinit)
-N[3,1] ~ dcat(pNinit)
+  # Population count data (state-space model)
+  # Model for initial stage-spec. population sizes: discrete uniform priors
+  N[1,1] ~ dcat(pNinit)
+  N[2,1] ~ dcat(pNinit)
+  N[3,1] ~ dcat(pNinit)
 
-# Process model over time: our model of population dynamics
-for (t in 1:(n.occasions-1)){
-  N[1,t+1] ~ dpois(f1[t] / 2 * phij[t] * (N[1,t] + N[3,t]) + f2[t] / 2 * phij[t] * N[2,t])
-  N[2,t+1] ~ dbin(phia[t], (N[1,t] + N[2,t] + N[3,t]))
-  N[3,t+1] ~ dpois((N[1,t] + N[2,t] + N[3,t]) * omega[t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.occasions-1)){
+    N[1,t+1] ~ dpois(f1[t] / 2 * phij[t] * (N[1,t] + N[3,t]) + f2[t] / 2 * phij[t] * N[2,t])
+    N[2,t+1] ~ dbin(phia[t], (N[1,t] + N[2,t] + N[3,t]))
+    N[3,t+1] ~ dpois((N[1,t] + N[2,t] + N[3,t]) * omega[t])
+  }
 
-# Observation model
-for (t in 1:n.occasions){
-  count[t] ~ dnorm(Ntot[t], tau)
-  Ntot[t] <- N[1,t] + N[2,t] + N[3,t]    # total population size
-}
+  # Observation model
+  for (t in 1:n.occasions){
+    count[t] ~ dnorm(Ntot[t], tau)
+    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]    # total population size
+  }
 
-# Productivity data (Poisson regression model) 
-for (t in 1:n.occasions){
-  J1[t] ~ dpois(f1[t] * B1[t])
-  J2[t] ~ dpois(f2[t] * B2[t])
-}
+  # Productivity data (Poisson regression model)
+  for (t in 1:n.occasions){
+    J1[t] ~ dpois(f1[t] * B1[t])
+    J2[t] ~ dpois(f2[t] * B2[t])
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(n.occasions-1)){
-  marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
-  marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(n.occasions-1)){
-  qj[t] <- 1 - pj[t]   
-  q[t] <- 1 - p[t]     
-  pr.j[t,t] <- phij[t] * pj[t]
-  pr.a[t,t] <- phia[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(n.occasions-1)){
-    pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(q[t:(j-1)]) * p[j] / q[t]
-    pr.a[t,j] <- prod(phia[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pr.j[t,j] <- 0
-    pr.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(n.occasions-1)){
-  pr.j[t,n.occasions] <- 1 - sum(pr.j[t,1:(n.occasions-1)])
-  pr.a[t,n.occasions] <- 1 - sum(pr.a[t,1:(n.occasions-1)])
-} #t
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(n.occasions-1)){
+    marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
+    marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(n.occasions-1)){
+    qj[t] <- 1 - pj[t]
+    q[t] <- 1 - p[t]
+    pr.j[t,t] <- phij[t] * pj[t]
+    pr.a[t,t] <- phia[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(n.occasions-1)){
+      pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(q[t:(j-1)]) * p[j] / q[t]
+      pr.a[t,j] <- prod(phia[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pr.j[t,j] <- 0
+      pr.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(n.occasions-1)){
+    pr.j[t,n.occasions] <- 1 - sum(pr.j[t,1:(n.occasions-1)])
+    pr.a[t,n.occasions] <- 1 - sum(pr.a[t,1:(n.occasions-1)])
+  } #t
 
-# Derived parameters
-# Annual population growth rate 
-for (t in 1:(n.occasions-1)){
-  lambda[t] <- Ntot[t+1] / Ntot[t]
-}
+  # Derived parameters
+  # Annual population growth rate
+  for (t in 1:(n.occasions-1)){
+    lambda[t] <- Ntot[t+1] / Ntot[t]
+  }
 }
 ")
 
@@ -169,7 +170,8 @@ ni <- 20000; nb <- 10000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 print(out1, 3); save(out1, file="ResultsHoopoe.Rdata")
 
                # mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
@@ -227,7 +229,7 @@ for (s in 1:n.draws){     # Loop over all MCMC draws and get correlations
   corr[s,5] <- cor(draws$f2[s,1:15], draws$lambda[s,])
 }
 
-# Calculate posterior summaries for the correlation coefficients 
+# Calculate posterior summaries for the correlation coefficients
 # Posterior means
 apply(corr, 2, mean)
 # 95% credible intervals
@@ -246,9 +248,10 @@ cor(out1$mean$f2[1:15], out1$mean$lambda)
 # ~~~~ code for Figure 9.2 ~~~~
 cri <- function(x) quantile(x, c(0.025, 0.975))
 cri.lambda <- apply(out1$sims.list$lambda, 2, cri)
+
+op <- par(mfrow=c(2, 3))
 layout(matrix(1:6, 2, 3, byrow=TRUE), widths=c(1.05, 1, 1), heights=c(1, 1), TRUE)
 
-par(mfrow=c(2, 3))
 cri.rate <- apply(out1$sims.list$phij, 2, cri)
 plot(NA, ylim=range(cri.lambda), xlim=range(cri.rate),
     ylab=expression('Population growth rate ('*lambda*')'),
@@ -270,7 +273,7 @@ segments(cri.rate[1,], out1$mean$lambda, cri.rate[2,], out1$mean$lambda, col="gr
 points(y=out1$mean$lambda, x=out1$mean$phia, pch=16)
 
 cri.rate <- apply(out1$sims.list$omega, 2, cri)
-plot(NA, ylim=range(cri.lambda), xlim=range(cri.rate), 
+plot(NA, ylim=range(cri.lambda), xlim=range(cri.rate),
     ylab=NA, xlab=expression('Immigration rate ('*omega*')'), axes=FALSE)
 axis(1)
 axis(2, las=1)
@@ -279,7 +282,7 @@ segments(cri.rate[1,], out1$mean$lambda, cri.rate[2,], out1$mean$lambda, col="gr
 points(y=out1$mean$lambda, x=out1$mean$omega, pch=16)
 
 cri.rate <- apply(out1$sims.list$f1, 2, cri)
-plot(NA, ylim=range(cri.lambda), xlim=range(cri.rate), 
+plot(NA, ylim=range(cri.lambda), xlim=range(cri.rate),
     ylab=expression('Population growth rate ('*lambda*')'),
     xlab=expression('Productivity 1y ('*italic(f)[1]*')'), axes=FALSE)
 axis(1)
@@ -296,4 +299,5 @@ axis(2, las=1)
 segments(out1$mean$f2[1:15], cri.lambda[1,], out1$mean$f2[1:15], cri.lambda[2,], col="grey60")
 segments(cri.rate[1,1:15], out1$mean$lambda, cri.rate[2,1:15], out1$mean$lambda, col="grey60")
 points(y=out1$mean$lambda, x=out1$mean$f2[1:15], pch=16)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

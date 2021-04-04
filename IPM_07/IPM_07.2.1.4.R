@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 # Code from MS submitted to publisher.
 
-# Run time approx. 3 mins
+# Run time approx. 4 mins
 
 library(IPMbook) ; library(jagsUI)
 
@@ -179,7 +179,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out9 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out9)
+op <- par(mfrow=c(3, 3)); traceplot(out9)
+par(op)
 print(out9, 3)
 
 
@@ -305,7 +306,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out10 <- jags(jags.data, inits, parameters, "model6.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out10)
+op <- par(mfrow=c(3, 3)); traceplot(out10)
+par(op)
 print(out10, 3)
 
 # IPM6: no reproduction of 1y shrikes
@@ -429,7 +431,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out11 <- jags(jags.data, inits, parameters, "model7.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out11)
+op <- par(mfrow=c(3, 3)); traceplot(out11)
+par(op)
 print(out11, 3)
 
 # 2. Large sample size
@@ -458,7 +461,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out12 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out12)
+op <- par(mfrow=c(3, 3)); traceplot(out12)
+par(op)
 print(out12, 3)
 
 # Fit IPM5
@@ -475,7 +479,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out13 <- jags(jags.data, inits, parameters, "model6.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out13)
+op <- par(mfrow=c(3, 3)); traceplot(out13)
+par(op)
 print(out13, 3)
 
 # Fit IPM6
@@ -492,7 +497,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out14 <- jags(jags.data, inits, parameters, "model7.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out14)
+op <- par(mfrow=c(3, 3)); traceplot(out14)
+par(op)
 print(out14, 3)
 
 save(out9, out10, out11, out12, out13, out14,
@@ -507,7 +513,7 @@ library(scales)
 library(plotrix)
 co <- viridis_pal(option='E')(20)[c(5, 11, 16)]
 
-par(mfrow=c(3,2), las=1, mar=c(3,7,3,1))
+op <- par(mfrow=c(3,2), las=1, mar=c(3,7,3,1))
 plotGOF(out9, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co[1], 0.3))
 mtext(expression(bold(IPM[4])), side=2, las=0, line=5, font=2)
 corner.label('A', font=2, cex=1.25)
@@ -533,6 +539,7 @@ corner.label('E', font=2, cex=1.25)
 par(mar=c(5,4,3,1))
 plotGOF(out11, "DFT.obs", "DFT.rep", ylab=NA, col=alpha(co[3], 0.3))
 corner.label('F', font=2, cex=1.25)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for Fig. 7.7 ~~~~
@@ -542,7 +549,7 @@ load("ResultsChapter7.2.1.4.Rdata")
 library(scales)
 co <- viridis_pal(option='E')(20)[c(5, 11, 16)]
 
-par(mfrow=c(3,2), las=1, mar=c(3,7,3,1))
+op <- par(mfrow=c(3,2), las=1, mar=c(3,7,3,1))
 plotGOF(out12, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co[1], 0.3))
 mtext(expression(bold(IPM[4])), side=2, las=0, line=5, font=2)
 corner.label('A', font=2, cex=1.25)
@@ -568,6 +575,7 @@ corner.label('E', font=2, cex=1.25)
 par(mar=c(5,4,3,1))
 plotGOF(out14, "DFT.obs", "DFT.rep", ylab=NA, col=alpha(co[3], 0.3))
 corner.label('F', font=2, cex=1.25)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for Fig. 7.8 ~~~~
@@ -594,7 +602,7 @@ qu <- function(x) quantile(x, c(0.025, 0.975))
 T <- length(woodchat5$count)
 d <- 0.2
 
-par(mfrow=c(2,1), las=1, mar=c(3,5,3,1))
+op <- par(mfrow=c(2,1), las=1, mar=c(3,5,3,1))
 plot(y=apply(Ntot[,1,], 2, mean), x=(1:T)-d, type="b", ylim=c(80, 180), ylab="Number",
     xlab=NA, las=1, pch=16, axes=FALSE, col=co[1], main="Small sample size")
 axis(2)
@@ -624,6 +632,7 @@ points(woodchat7$count, type="b", pch=1, lty=3)
 legend("topleft", legend=c("Observed counts", expression("Estimates from IPM"[4]),
     expression("Estimates from IPM"[5]), expression("Estimates from IPM"[6])),
     pch=c(1, rep(16, 3)), col=c("black", co), lty=c(3, 1, 1, 1), bty="n")
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for Fig. 7.9 ~~~~
@@ -633,7 +642,7 @@ load("ResultsChapter7.2.1.4.Rdata")
 library(denstrip)
 library(scales)
 co <- viridis_pal(option='E')(20)[c(5, 11, 16)]
-par(las=1)
+op <- par(las=1)
 plot(0, ylim=c(2, 7.3), xlim=c(0.7,7.3), axes=FALSE, pch=NA, xlab=NA, ylab="Productivity")
 plotDS("out9", "mean.f", at=1, colmax=co[1])
 plotDS("out10", "mean.f", at=2, colmax=co[2])
@@ -647,4 +656,5 @@ labs <- c(expression(IPM[4]), expression(IPM[5]), expression(IPM[6]),
 axis(1, at=c(1:3, 5:7), labels=labs)
 mtext("Small sample size", side=1, at=2, line=3)
 mtext("Large sample size", side=1, at=6, line=3)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -16,10 +16,10 @@ nsites2 <- 500      # Sample size for detection/nondetection data
 mean.lam <- 2       # Average expected abundance (lambda) per site
 beta <- -2          # Coefficient of elevation covariate on lambda
 
-# Simulate elevation covariate for both and standardize to mean of 1000 and 
+# Simulate elevation covariate for both and standardize to mean of 1000 and
 # standard deviation also of 1000 m
 set.seed(2016)
-elev1 <- sort(runif(nsites1, 200, 2000))   # Imagine 200-2000 m a.s.l. 
+elev1 <- sort(runif(nsites1, 200, 2000))   # Imagine 200-2000 m a.s.l.
 elev2 <- sort(runif(nsites2, 200, 2000))
 selev1 <- (elev1 - 1000) / 1000
 selev2 <- (elev2 - 1000) / 1000
@@ -35,7 +35,7 @@ y[y > 1] <- 1       # Squash to binary
 # ~~~~ extra code for Fig 2.19 ~~~~
 # Plot counts in both data sets and detection-nondetection data
 library(scales)
-par(mfrow=c(1, 2), mar=c(5, 5, 4, 1), cex=1.2, cex.lab=1.5, cex.axis=1.5, las=1)
+op <- par(mfrow=c(1, 2), mar=c(5, 5, 4, 1), cex=1.2, cex.lab=1.5, cex.axis=1.5, las=1)
 plot(elev2, jitter(C2), pch=16, xlab='Elevation (m)', ylab='Counts',
     frame=FALSE, ylim = range(c(C1, C2)), col=alpha('grey80', 1))
 points(elev1, jitter(C1), pch=16)
@@ -46,6 +46,7 @@ plot(elev2, y, xlab='Elevation (m)', ylab='Detection-Nondetection',
 axis(1)
 axis(1, at=c(250, 750, 1250, 1750), tcl=-0.25, labels=NA)
 axis(2, at=c(0, 1), labels=c(0, 1))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Get MLEs for individual data sets
@@ -54,12 +55,12 @@ summary(fm1 <- glm(C1 ~ selev1, family=poisson(link="log")))
 exp(coef(fm1)[1])   # Estimate of lambda on natural scale from counts
 
 # Coefficients:
-            # Estimate Std. Error z value Pr(>|z|)    
+            # Estimate Std. Error z value Pr(>|z|)
 # (Intercept)  0.62035    0.06213   9.985   <2e-16 ***
-# selev1      -2.19121    0.11691 -18.742   <2e-16 *** 
+# selev1      -2.19121    0.11691 -18.742   <2e-16 ***
 # [  .... truncated  .....]
 
-# (Intercept) 
+# (Intercept)
     # 1.85958
 
 # Data set 2: Bernoulli GLM with cloglog link for detection-nondetection
@@ -67,12 +68,12 @@ summary(fm2 <- glm(y ~ selev2, family=binomial(link="cloglog")))
 exp(coef(fm2)[1])   # Estimate of lambda on natural scale from binary data
 
 # Coefficients:
-            # Estimate Std. Error z value Pr(>|z|)    
+            # Estimate Std. Error z value Pr(>|z|)
 # (Intercept)  0.59805    0.07968   7.506  6.1e-14 ***
 # selev2      -1.95305    0.17628 -11.079  < 2e-16 ***
 # [  .... truncated  .....]
 
-# (Intercept) 
+# (Intercept)
    # 1.818574
 
 # Bundle data
@@ -127,7 +128,8 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out10 <- jags(jags.data, inits, parameters, "model9.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 2)); traceplot(out10)  # Not shown
+op <- par(mfrow=c(2, 2)); traceplot(out10)  # Not shown
+par(op)
 print(out10, 3)
 
 #               mean    sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
@@ -160,7 +162,7 @@ print(cbind(mle1, ASE1), 3)      # Print MLEs and asymptotic SEs
 summary(glm(C1 ~ selev1, family=poisson(link="log")))
 
 # Coefficients:
-            # Estimate Std. Error z value Pr(>|z|)    
+            # Estimate Std. Error z value Pr(>|z|)
 # (Intercept)  0.62035    0.06213   9.985   <2e-16 ***
 # selev1      -2.19121    0.11691 -18.742   <2e-16 ***
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -191,7 +193,7 @@ print(cbind(mle2, ASE2), 3)      # Print MLEs and asymptotic SEs
 summary(glm(y ~ selev2, family=binomial(link="cloglog")))
 
 # Coefficients:
-            # Estimate Std. Error z value Pr(>|z|)    
+            # Estimate Std. Error z value Pr(>|z|)
 # (Intercept)  0.59805    0.07968   7.506  6.1e-14 ***
 # selev2      -1.95305    0.17628 -11.079  < 2e-16 ***
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

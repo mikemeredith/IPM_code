@@ -3,14 +3,13 @@
 # --------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 2 hrs, full run several days!
+# Run time for test script 2 hrs, full run 3.5 days!
 
 library(IPMbook) ; library(jagsUI)
 
 # 20.4 Component data likelihoods
 # ===============================
 
-library(IPMbook); library(jagsUI)
 data(kestrel)
 str(kestrel)
 
@@ -129,7 +128,7 @@ coordgrid <- cbind(kestrel$landData$x, kestrel$landData$y)
 # Run a knot design
 nknots <- 50      # This is K in the algebra above
 set.seed(50)
-knots <- cover.design(R=coordgrid, nd=nknots, nruns=10, num.nn=200, max.loop=20)      # Takes about 25 min
+knots <- cover.design(R=coordgrid, nd=nknots, nruns=10, num.nn=200, max.loop=20) # Takes about 25 min
 
 # Plot the knot design (Fig. 20.4)
 library(raster)
@@ -147,13 +146,15 @@ Zmat <- t(solve(sqrt.omega, t(Zk)))
 
 # Visualize basis vectors
 head(Zmat)       # Look at first couple of values
-par(mfrow=c(3, 3), mar=c(2, 2, 3, 8), cex.main=1.5, ask=dev.interactive(orNone=TRUE))
+op <- par(mfrow=c(3, 3), mar=c(2, 2, 3, 8), cex.main=1.5, ask=dev.interactive(orNone=TRUE))
 # for (i in 1:nknots){
 for (i in 10:18){    # Execute this line for Fig. 20.5
   r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=Zmat[,i]))
-  plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, main=paste("Basis vector", i), legend=TRUE,axis.args=list(cex.axis=1.5), legend.width=1.5)
+  plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, main=paste("Basis vector", i),
+      legend=TRUE,axis.args=list(cex.axis=1.5), legend.width=1.5)
   points(knots$design[i,1], knots$design[i,2], col='black', pch=16, cex=1.5)
 }
+par(op)
 
 # Get values of the Zmat for the atlas data (n = 574 sites)
 str(Zmat.at <- Zmat[atlas.positions,])
@@ -170,7 +171,11 @@ land.quad <- which(kestrel$landData$lakes < 0.5)
 # ====================================
 
 # Bundle data and produce data overview
-jags.data <- list(nsites.region=nrow(C.mhb), nyears.mhb=ncol(C.mhb), C.mhb=C.mhb, nknots=nknots, Zmat=Zmat, land.quad=land.quad, nsites.atlas=nrow(C.atlas), nsurveys.atlas=ncol(C.atlas), C.atlas=C.atlas, year.atlas=kestrel$atlasData$year, Zmat.at=Zmat.at, nsites.dr=nsites.dr, nyears.dr=ncol(kestrel$drData$deadrecovery), mj=mj, rel.j=rel.j, ma=ma, rel.a=rel.a, Zmat.dr=Zmat.dr)
+jags.data <- list(nsites.region=nrow(C.mhb), nyears.mhb=ncol(C.mhb), C.mhb=C.mhb,
+    nknots=nknots, Zmat=Zmat, land.quad=land.quad, nsites.atlas=nrow(C.atlas),
+    nsurveys.atlas=ncol(C.atlas), C.atlas=C.atlas, year.atlas=kestrel$atlasData$year,
+    Zmat.at=Zmat.at, nsites.dr=nsites.dr, nyears.dr=ncol(kestrel$drData$deadrecovery),
+    mj=mj, rel.j=rel.j, ma=ma, rel.a=rel.a, Zmat.dr=Zmat.dr)
 str(jags.data)
 
 # List of 18
@@ -194,7 +199,7 @@ str(jags.data)
  # $ Zmat.dr       : num [1:7, 1:50] 0.37579 0.42542 0.01412 -0.00927...
 
 # Explore shape and location of some distributions for priors
-par(mfrow=c(2, 2), mar=c(6, 6, 5, 2), cex.axis=1.5, cex.lab=1.5, cex.main=1.5, las=1)
+op <- par(mfrow=c(2, 2), mar=c(6, 6, 5, 2), cex.axis=1.5, cex.lab=1.5, cex.main=1.5, las=1)
 curve(dnorm(x, mean=0, sd=sqrt(1 / 0.1)), 0, 10, col="blue", lwd=3, xlab="", ylab="Density", frame=FALSE)
 mtext(expression(paste("Prior for intercept of ", lambda)), side=3, line=0)
 curve(dbeta(x, shape1=6, shape2=4), 0, 1, col="blue", lwd=3, xlab="", ylab="Density", frame=FALSE)
@@ -203,183 +208,184 @@ curve(dnorm(x, mean=0, sd=sqrt(1 / 1)), 0, 3, col="blue", lwd=3, xlab="", ylab="
 mtext(expression(paste("Prior for intercept of ", gamma)), side=3, line=0)
 curve(dbeta(x, shape1=1, shape2=1), 0, 1, col="blue", lwd=3, xlab="", ylab="Density", frame=FALSE)
 mtext(expression(paste("Prior for constant ", italic(p))), side=3, line=0)
+par(op)
 
 # Write JAGS model file
 cat(file = "model1.txt","
 model {
-# Priors and linear models
-lambda.int ~ dnorm(0, 0.1)I(0,) # Intercept of initial site-specific abundance
-alpha.lam <- log(lambda.int)
-phi.int ~ dbeta(6, 4)           # Intercept of survival
-alpha.phi <- logit(phi.int)
-gamma.int ~ dnorm(0, 1)I(0,)    # Intercept of recruitment
-alpha.gam <- log(gamma.int)
-p ~ dunif(0, 1)                 # Constant detection prob. (per survey)
+  # Priors and linear models
+  lambda.int ~ dnorm(0, 0.1)I(0,) # Intercept of initial site-specific abundance
+  alpha.lam <- log(lambda.int)
+  phi.int ~ dbeta(6, 4)           # Intercept of survival
+  alpha.phi <- logit(phi.int)
+  gamma.int ~ dnorm(0, 1)I(0,)    # Intercept of recruitment
+  alpha.gam <- log(gamma.int)
+  p ~ dunif(0, 1)                 # Constant detection prob. (per survey)
 
-# Fixed parameter for effective survey quadrat size (in km2)
-# with uniform prior for automatic sensitivity analysis/error propagation
-A ~ dunif(0.8, 4)       # Effective sampling area of survey
+  # Fixed parameter for effective survey quadrat size (in km2)
+  # with uniform prior for automatic sensitivity analysis/error propagation
+  A ~ dunif(0.8, 4)       # Effective sampling area of survey
 
-# Priors on random effects parameters representing the splines
-for (k in 1:nknots){
-  b.lam[k] ~ dnorm(0, tau.b.lam)
-  b.phi[k] ~ dnorm(0, tau.b.phi)
-  b.gam[k] ~ dnorm(0, tau.b.gam)
-}
+  # Priors on random effects parameters representing the splines
+  for (k in 1:nknots){
+    b.lam[k] ~ dnorm(0, tau.b.lam)
+    b.phi[k] ~ dnorm(0, tau.b.phi)
+    b.gam[k] ~ dnorm(0, tau.b.gam)
+  }
 
-# Priors on random effects dispersion (variance among values at knots)
-tau.b.lam <- pow(sd.b.lam, -2)
-tau.b.phi <- pow(sd.b.phi, -2)
-tau.b.gam <- pow(sd.b.gam, -2)
-sd.b.lam ~ dnorm(0, 0.01)I(0,)
-sd.b.phi ~ dnorm(0, 0.01)I(0,)
-sd.b.gam ~ dnorm(0, 0.1)I(0,)
+  # Priors on random effects dispersion (variance among values at knots)
+  tau.b.lam <- pow(sd.b.lam, -2)
+  tau.b.phi <- pow(sd.b.phi, -2)
+  tau.b.gam <- pow(sd.b.gam, -2)
+  sd.b.lam ~ dnorm(0, 0.01)I(0,)
+  sd.b.phi ~ dnorm(0, 0.01)I(0,)
+  sd.b.gam ~ dnorm(0, 0.1)I(0,)
 
-# Linear models for lambda, phi and gamma for MHB sites
-for (i in 1:nsites.region){ # Loop over all sites in the modeled domain,
-                            # including the 102 sites with MHB counts
-  lambda[i] <- exp(alpha.lam + smooth.lam[i])
-  phi[i] <- ilogit(alpha.phi + smooth.phi[i])
-  gamma[i] <- exp(alpha.gam + smooth.gam[i])
-  smooth.lam[i] <- inprod(Zmat[i,], b.lam[]) # Random field in lambda
-  smooth.phi[i] <- inprod(Zmat[i,], b.phi[]) # Random field in phi
-  smooth.gam[i] <- inprod(Zmat[i,], b.gam[]) # Random field in gamma
-}
+  # Linear models for lambda, phi and gamma for MHB sites
+  for (i in 1:nsites.region){ # Loop over all sites in the modeled domain,
+                              # including the 102 sites with MHB counts
+    lambda[i] <- exp(alpha.lam + smooth.lam[i])
+    phi[i] <- ilogit(alpha.phi + smooth.phi[i])
+    gamma[i] <- exp(alpha.gam + smooth.gam[i])
+    smooth.lam[i] <- inprod(Zmat[i,], b.lam[]) # Random field in lambda
+    smooth.phi[i] <- inprod(Zmat[i,], b.phi[]) # Random field in phi
+    smooth.gam[i] <- inprod(Zmat[i,], b.gam[]) # Random field in gamma
+  }
 
-# Calculate lambda, phi and gamma for atlas sites
-for (i in 1:nsites.atlas){   # Loop over 574 sites in the atlas data set
-  lamA[i] <- exp(alpha.lam + inprod(Zmat.at[i,], b.lam[]))
-  phiA[i] <- ilogit(alpha.phi + inprod(Zmat.at[i,], b.phi[]))
-  gamA[i] <- exp(alpha.gam + inprod(Zmat.at[i,], b.gam[]))
-}
+  # Calculate lambda, phi and gamma for atlas sites
+  for (i in 1:nsites.atlas){   # Loop over 574 sites in the atlas data set
+    lamA[i] <- exp(alpha.lam + inprod(Zmat.at[i,], b.lam[]))
+    phiA[i] <- ilogit(alpha.phi + inprod(Zmat.at[i,], b.phi[]))
+    gamA[i] <- exp(alpha.gam + inprod(Zmat.at[i,], b.gam[]))
+  }
 
-# Linear models for parameters of the dead-recovery model
-for (t in 1:(nyears.dr-1)){
+  # Linear models for parameters of the dead-recovery model
+  for (t in 1:(nyears.dr-1)){
+    for (i in 1:nsites.dr){
+      logit(sj[i,t]) <- mu.sj + eta.sj[i]
+      sa[i,t] <- mean.sa[i]
+    } #i
+    r[t] <- mean.r
+  } #t
   for (i in 1:nsites.dr){
-    logit(sj[i,t]) <- mu.sj + eta.sj[i]
-    sa[i,t] <- mean.sa[i]
+    eta.sj[i] ~ dnorm(0, tau.sj)
+    site.sj[i] <- ilogit(mu.sj + eta.sj[i])
+    mean.sa[i] <- ilogit(alpha.phi + smooth.lsa[i]) # alpha.phi shared
+    smooth.lsa[i] <- inprod(Zmat.dr[i,], b.phi[])   # b.phi also shared
+  }
+
+  # Priors for juvenile survival and dead-recovery probability
+  mean.sj ~ dunif(0, 1)
+  mu.sj <- logit(mean.sj)
+  sigma.sj ~ dunif(0, 5)
+  tau.sj <- pow(sigma.sj, -2)
+  mean.r ~ dunif(0, 1)
+
+  # Longitudinal population count data (MHB, demogr. state-space model)
+  for (i in 1:nsites.region){       # Loop over entire region
+    # Model for initial condition for MHB data
+    N[i,1] ~ dpois(A * lambda[i])
+
+    # Process model over time: our model for population dynamics
+    for (t in 1:(nyears.mhb-1)){
+      S[i,t+1] ~ dbin(phi[i], N[i,t])  # Survival process
+      R[i,t+1] ~ dpois(gamma[i])       # 'absolute' recruitment
+      N[i,t+1] <- S[i,t+1] + R[i,t+1]
+    } #t
   } #i
-  r[t] <- mean.r
-} #t
-for (i in 1:nsites.dr){
-  eta.sj[i] ~ dnorm(0, tau.sj)
-  site.sj[i] <- ilogit(mu.sj + eta.sj[i])
-  mean.sa[i] <- ilogit(alpha.phi + smooth.lsa[i]) # alpha.phi shared
-  smooth.lsa[i] <- inprod(Zmat.dr[i,], b.phi[])   # b.phi also shared
-}
 
-# Priors for juvenile survival and dead-recovery probability
-mean.sj ~ dunif(0, 1)
-mu.sj <- logit(mean.sj)
-sigma.sj ~ dunif(0, 5)
-tau.sj <- pow(sigma.sj, -2)
-mean.r ~ dunif(0, 1)
+  # Observation model for the MHB data
+  for (i in 1:nsites.region){
+    for (t in 1:nyears.mhb){
+      C.mhb[i,t] ~ dbin(1 - (1-p)^3, N[i,t]) # Reconcile temporal mismatch
+    } #t
+  } #i
 
-# Longitudinal population count data (MHB, demogr. state-space model)
-for (i in 1:nsites.region){       # Loop over entire region
-  # Model for initial condition for MHB data
-  N[i,1] ~ dpois(A * lambda[i])
+  # Cross-sectional population count data (atlas, static N-mixture model)
+  # Define expected abundance for each year
+  for (i in 1:nsites.atlas){   # Loop over 574 sites in the atlas data set
+    # Project expected abundance from 1999 to 2013/2014/2015 (part of calcs)
+    for (t in 1:16){
+      su[i,t] <- pow(phiA[i], t-1)
+    } #t
+  } #i
 
-  # Process model over time: our model for population dynamics
-  for (t in 1:(nyears.mhb-1)){
-    S[i,t+1] ~ dbin(phi[i], N[i,t])  # Survival process
-    R[i,t+1] ~ dpois(gamma[i])       # 'absolute' recruitment
-    N[i,t+1] <- S[i,t+1] + R[i,t+1]
-  } #t
-} #i
+  # Reconcile temporal mismatch between atlas and MHB data
+  for (i in 1:182){            # Quadrats surveyed in 2013
+    lambdaAtlas[i] <- lamA[i] * phiA[i]^14 + gamA[i] * sum(su[i,1:14])
+    N.atlas[i] ~ dpois(A * lambdaAtlas[i])
+  }
+  for (i in 183:387){          # Quadrats surveyed in 2014
+    lambdaAtlas[i] <- lamA[i] * phiA[i]^15 + gamA[i] * sum(su[i,1:15])
+    N.atlas[i] ~ dpois(A * lambdaAtlas[i])
+  }
+  for (i in 388:574){          # Quadrats surveyed in 2015
+    lambdaAtlas[i] <- lamA[i] * phiA[i]^16 + gamA[i] * sum(su[i,1:16])
+    N.atlas[i] ~ dpois(A * lambdaAtlas[i])
+  }
 
-# Observation model for the MHB data
-for (i in 1:nsites.region){
-  for (t in 1:nyears.mhb){
-    C.mhb[i,t] ~ dbin(1 - (1-p)^3, N[i,t]) # Reconcile temporal mismatch
-  } #t
-} #i
+  # Observation model for the atlas data
+  for (i in 1:nsites.atlas){ # Loop over all 574 sites in the atlas data set
+    for (j in 1:nsurveys.atlas){  # Loop over 2-3 occasions
+      C.atlas[i,j] ~ dbin(p, N.atlas[i])   # Assume constant p
+    } #j
+  } #i
 
-# Cross-sectional population count data (atlas, static N-mixture model)
-# Define expected abundance for each year
-for (i in 1:nsites.atlas){   # Loop over 574 sites in the atlas data set
-  # Project expected abundance from 1999 to 2013/2014/2015 (part of calcs)
-  for (t in 1:16){
-    su[i,t] <- pow(phiA[i], t-1)
-  } #t
-} #i
-
-# Reconcile temporal mismatch between atlas and MHB data
-for (i in 1:182){            # Quadrats surveyed in 2013
-  lambdaAtlas[i] <- lamA[i] * phiA[i]^14 + gamA[i] * sum(su[i,1:14])
-  N.atlas[i] ~ dpois(A * lambdaAtlas[i])
-}
-for (i in 183:387){          # Quadrats surveyed in 2014
-  lambdaAtlas[i] <- lamA[i] * phiA[i]^15 + gamA[i] * sum(su[i,1:15])
-  N.atlas[i] ~ dpois(A * lambdaAtlas[i])
-}
-for (i in 388:574){          # Quadrats surveyed in 2015
-  lambdaAtlas[i] <- lamA[i] * phiA[i]^16 + gamA[i] * sum(su[i,1:16])
-  N.atlas[i] ~ dpois(A * lambdaAtlas[i])
-}
-
-# Observation model for the atlas data
-for (i in 1:nsites.atlas){ # Loop over all 574 sites in the atlas data set
-  for (j in 1:nsurveys.atlas){  # Loop over 2-3 occasions
-    C.atlas[i,j] ~ dbin(p, N.atlas[i])   # Assume constant p
-  } #j
-} #i
-
-# Dead-recovery data (dead-recovery model with multinomial likelihood)
-# m-array for adults
-for (t in 1:(nyears.dr-1)){
-  ma[t,1:nyears.dr] ~ dmulti(pr.a[t,], rel.a[t])
-}
-for (t in 1:(nyears.dr-1)){
-  pr.a[t,t] <- (1-sa[3,t])*r[t]
-  for (j in (t+1):(nyears.dr-1)){
-    pr.a[t,j] <- prod(sa[3,t:(j-1)]) * (1-sa[3,j]) * r[j]
-  } #j
-  for (j in 1:(t-1)){
-    pr.a[t,j] <- 0
-  } #j
-} #t
-for (t in 1:(nyears.dr-1)){
-  pr.a[t,nyears.dr] <- 1-sum(pr.a[t,1:(nyears.dr-1)])
-} #t
-
-# m-array for juveniles (7 sites)
-for (k in 1:nsites.dr){
+  # Dead-recovery data (dead-recovery model with multinomial likelihood)
+  # m-array for adults
   for (t in 1:(nyears.dr-1)){
-    mj[k,t,1:nyears.dr] ~ dmulti(pr.j[k,t,], rel.j[t,k])
-  } #t
+    ma[t,1:nyears.dr] ~ dmulti(pr.a[t,], rel.a[t])
+  }
   for (t in 1:(nyears.dr-1)){
-    pr.j[k,t,t] <- (1-sj[k,t])*r[t]
-    for (j in (t+2):(nyears.dr -1)){
-      pr.j[k,t,j] <- sj[k,t] * prod(sa[k,(t+1):(j-1)]) * (1-sa[k,j]) * r[j]
+    pr.a[t,t] <- (1-sa[3,t])*r[t]
+    for (j in (t+1):(nyears.dr-1)){
+      pr.a[t,j] <- prod(sa[3,t:(j-1)]) * (1-sa[3,j]) * r[j]
     } #j
     for (j in 1:(t-1)){
-      pr.j[k,t,j] <- 0
+      pr.a[t,j] <- 0
     } #j
   } #t
-  for (t in 1:(nyears.dr-2)){
-    pr.j[k,t,t+1] <- sj[k,t] * (1-sa[k,t+1]) * r[t+1]
-  } #t
   for (t in 1:(nyears.dr-1)){
-    pr.j[k,t,nyears.dr] <- 1-sum(pr.j[k,t,1:(nyears.dr-1)])
+    pr.a[t,nyears.dr] <- 1-sum(pr.a[t,1:(nyears.dr-1)])
   } #t
-} #k
 
-# Derived quantities
-# Estimate population growth rate for each quadrat based on
-# expected abundances rather than on N (to avoid division by zero)
-for (i in 1:nsites.region){
-  for (t in 1:(nyears.mhb-1)){
-    g[i,t] <- pow(phi[i], t-1)
-  } #t
-  gr[i] <- pow((lambda[i] * phi[i]^(nyears.mhb-1) + gamma[i] * sum(g[i,]) / lambda[i]), 1 / (nyears.mhb-1))
-}
+  # m-array for juveniles (7 sites)
+  for (k in 1:nsites.dr){
+    for (t in 1:(nyears.dr-1)){
+      mj[k,t,1:nyears.dr] ~ dmulti(pr.j[k,t,], rel.j[t,k])
+    } #t
+    for (t in 1:(nyears.dr-1)){
+      pr.j[k,t,t] <- (1-sj[k,t])*r[t]
+      for (j in (t+2):(nyears.dr -1)){
+        pr.j[k,t,j] <- sj[k,t] * prod(sa[k,(t+1):(j-1)]) * (1-sa[k,j]) * r[j]
+      } #j
+      for (j in 1:(t-1)){
+        pr.j[k,t,j] <- 0
+      } #j
+    } #t
+    for (t in 1:(nyears.dr-2)){
+      pr.j[k,t,t+1] <- sj[k,t] * (1-sa[k,t+1]) * r[t+1]
+    } #t
+    for (t in 1:(nyears.dr-1)){
+      pr.j[k,t,nyears.dr] <- 1-sum(pr.j[k,t,1:(nyears.dr-1)])
+    } #t
+  } #k
 
-# Estimate annual abundance in the entire region (excluding lakes)
-Ntot[1] <- sum(lambda[land.quad]) # Total population size in NW quarter
-for (t in 2:nyears.mhb){
-  Ntot[t] <- sum(N[land.quad,t] / A)
-}
+  # Derived quantities
+  # Estimate population growth rate for each quadrat based on
+  # expected abundances rather than on N (to avoid division by zero)
+  for (i in 1:nsites.region){
+    for (t in 1:(nyears.mhb-1)){
+      g[i,t] <- pow(phi[i], t-1)
+    } #t
+    gr[i] <- pow((lambda[i] * phi[i]^(nyears.mhb-1) + gamma[i] * sum(g[i,]) / lambda[i]), 1 / (nyears.mhb-1))
+  }
+
+  # Estimate annual abundance in the entire region (excluding lakes)
+  Ntot[1] <- sum(lambda[land.quad]) # Total population size in NW quarter
+  for (t in 2:nyears.mhb){
+    Ntot[t] <- sum(N[land.quad,t] / A)
+  }
 }
 ")
 
@@ -389,10 +395,16 @@ Nst.mhb <- C.mhb + 5
 Nst.mhb[, 2:19] <- NA # cols 2:19 of N are deterministic, N <- S + R.
 R1 <- C.mhb
 R1[,1] <- NA
-inits <- function(){list(lambda.int=runif(1, 0.4, 0.6), phi.int=runif(1, 0.8, 0.9), gamma.int=runif(1, 0.5, 0.9), p=runif(1, 0.6, 0.8), N=Nst.mhb, R=R1 + 1, b.lam=runif(jags.data$nknots, -0.5, 0.5), b.phi=runif(jags.data$nknots, -0.5, 0.5), b.gam=runif(jags.data$nknots, -0.5, 0.5), mean.r=runif(1, 0, 0.2), N.atlas=Nst.atlas)}
+inits <- function(){list(lambda.int=runif(1, 0.4, 0.6), phi.int=runif(1, 0.8, 0.9),
+    gamma.int=runif(1, 0.5, 0.9), p=runif(1, 0.6, 0.8), N=Nst.mhb, R=R1 + 1,
+    b.lam=runif(jags.data$nknots, -0.5, 0.5), b.phi=runif(jags.data$nknots, -0.5, 0.5),
+    b.gam=runif(jags.data$nknots, -0.5, 0.5), mean.r=runif(1, 0, 0.2), N.atlas=Nst.atlas)}
 
 # Parameters monitored
-parameters <- c("lambda.int", "alpha.lam", "phi.int", "alpha.phi", "gamma.int", "alpha.gam", "p", "sd.b.lam", "sd.b.phi", "sd.b.gam", "mean.sj", "site.sj", "sigma.sj", "mean.sa", "mean.r", "Ntot", "b.lam", "b.phi", "b.gam", "lambda", "phi", "gamma", "gr")
+parameters <- c("lambda.int", "alpha.lam", "phi.int", "alpha.phi", "gamma.int",
+    "alpha.gam", "p", "sd.b.lam", "sd.b.phi", "sd.b.gam", "mean.sj", "site.sj",
+    "sigma.sj", "mean.sa", "mean.r", "Ntot", "b.lam", "b.phi", "b.gam", "lambda",
+    "phi", "gamma", "gr")
 
 # MCMC settings
 # ni <- 150000; nb <- 50000; nc <- 3; nt <- 200; na <- 10000
@@ -401,10 +413,14 @@ ni <- 1500; nb <- 500; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing
 # Call JAGS from R (ART 88 h!) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow = c(3, 3)); traceplot(out1)
+op <- par(mfrow = c(3, 3)); traceplot(out1)
+par(op)
 
 # Fig. 20.7
-par(mfrow=c(3, 3)); traceplot(out1, c("lambda.int", "alpha.lam", "phi.int", "alpha.phi", "gamma.int", "alpha.gam", "sd.b.lam", "sd.b.phi", "sd.b.gam"))
+op <- par(mfrow=c(3, 3))
+traceplot(out1, c("lambda.int", "alpha.lam", "phi.int", "alpha.phi", "gamma.int",
+    "alpha.gam", "sd.b.lam", "sd.b.phi", "sd.b.gam"))
+par(op)
 print(out1$summary[1:300,], 3)
 print(out1$summary[1:47,-c(4,6)], 3)
 
@@ -463,49 +479,64 @@ print(out1$summary[1:46,-c(4,6)], 3)
 # Ntot[19]   9135.8852 1696.37655 6220.5593 8989.3095 13014.6297 1.00  1500        0 1.000
 
 # Produce Fig. 20.8
-par(mfrow=c(2, 3), mar=c(4, 4, 6, 9), cex.main=1.6)
+op <- par(mfrow=c(2, 3), mar=c(4, 4, 6, 9), cex.main=1.6)
 # Random field of initial abundance
 r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=out1$mean$lambda))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Initial density", axis.args=list(cex.axis=2), legend.width=3)
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Initial density",
+    axis.args=list(cex.axis=2), legend.width=3)
 
 # Random field of apparent survival
 r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=out1$mean$phi))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Survival", axis.args=list(cex.axis=2), legend.width=3)
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Survival",
+    axis.args=list(cex.axis=2), legend.width=3)
 
 # Random field of (absolute) recruitment
 r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=out1$mean$gamma))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Recruitment", axis.args=list(cex.axis=2), legend.width=3)
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Recruitment",
+    axis.args=list(cex.axis=2), legend.width=3)
 
 # Uncertainty in the random field of initial abundance (% CV)
-r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=100 * out1$sd$lambda / out1$mean$lambda))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of density (% CV)", axis.args=list(cex.axis=2), legend.width=3)
+r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2],
+    z=100 * out1$sd$lambda / out1$mean$lambda))
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of density (% CV)",
+    axis.args=list(cex.axis=2), legend.width=3)
 
 # Uncertainty in the random field of survival (% CV)
-r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=100 * out1$sd$phi /out1$mean$phi))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of survival (% CV)", axis.args=list(cex.axis=2), legend.width=3)
+r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2],
+    z=100 * out1$sd$phi /out1$mean$phi))
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of survival (% CV)",
+    axis.args=list(cex.axis=2), legend.width=3)
 
 # Uncertainty in the random field of recruitment (% CV)
-r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=100 * out1$sd$gamma / out1$mean$gamma))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of recruitment (% CV)", axis.args=list(cex.axis=2), legend.width=3)
+r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2],
+    z=100 * out1$sd$gamma / out1$mean$gamma))
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of recruitment (% CV)",
+    axis.args=list(cex.axis=2), legend.width=3)
+par(op)
 
 # ~~~~ Produce Fig. 20.9 ~~~~
-par(mfrow=c(1, 2), mar=c(4, 4, 6, 9), cex.main=1.6)
+op <- par(mfrow=c(1, 2), mar=c(4, 4, 6, 9), cex.main=1.6)
 # Random field of population growth rate
 r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=out1$mean$gr))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, main="Annual population growth rate", asp=1, axis.args=list(cex.axis=2), legend.width=2)
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, main="Annual population growth rate",
+    asp=1, axis.args=list(cex.axis=2), legend.width=2)
 
 # Uncertainty in the random field of population growth rate (% CV)
-r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2], z=100 * (out1$sd$gr / out1$mean$gr)))
-plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, main="Uncertainty of growth rate (% CV)", asp=1, axis.args=list(cex.axis=2), legend.width=2)
+r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2],
+    z=100 * (out1$sd$gr / out1$mean$gr)))
+plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, main="Uncertainty of growth rate (% CV)",
+    asp=1, axis.args=list(cex.axis=2), legend.width=2)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Produce Fig. 20.10 ~~~~
 library(scales)
-par(mfrow=c(1, 2), mar=c(6, 8, 4, 2), cex.lab=1.5, cex.axis=1.5, las=1)
+op <- par(mfrow=c(1, 2), mar=c(6, 8, 4, 2), cex.lab=1.5, cex.axis=1.5, las=1)
 # Plot of estimated trajectory of the total population size
 plot(1999:2017, out1$mean$Ntot, xlab="Year", ylab=NA, pch=16, cex=1.5, axes=FALSE, ylim=c(0, 13000))
 mtext("Population size", side=2, line=5, las=0, cex=1.5)
-polygon(c(1999:2017, 2017:1999), c(out1$q2.5$Ntot, rev(out1$q97.5$Ntot)), border=NA, col=alpha("grey", 0.5))
+polygon(c(1999:2017, 2017:1999), c(out1$q2.5$Ntot, rev(out1$q97.5$Ntot)),
+    border=NA, col=alpha("grey", 0.5))
 points(1999:2017, out1$mean$Ntot, pch = 16, type="p", cex=1.5)
 axis(1, at=1999:2017, tcl=-0.25, labels=NA)
 axis(1, at=c(2000, 2005, 2010, 2015), tcl=-0.5, labels=c(2000, 2005, 2010, 2015))
@@ -514,11 +545,5 @@ axis(2)
 # Estimate the increase in the population between 1999 and 2017
 increase <- out1$sims.list$Ntot[,19] / out1$sims.list$Ntot[,1]
 hist(increase, breaks=30, col=alpha("grey", 0.5), main="", xlab="Increase 1999-2017")
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
-
-
-
-

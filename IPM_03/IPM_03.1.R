@@ -18,7 +18,7 @@ for (t in 1:T){                     # Loop over years
     N[t+1,k] <- lambda[k] * N[t,k]  # Project pop. one time step forward
   } #k
 } #t
-par(cex=1.4)
+op <- par(cex=1.4)
 plot(N[,1], type="l", ylim=range(N), ylab="Population size", xlab="Year", axes=FALSE, lwd=2.5)
 lines(N[,2], lwd=2.5)
 lines(N[,3], lwd=2.5)
@@ -27,4 +27,5 @@ axis(2, las=1)
 text(x=T, y=N[5,1], expression(paste(lambda, "=0.8")))
 text(x=T, y=N[10,2] + 3, expression(paste(lambda, "=1.0")))
 text(x=T, y=N[8,3], expression(paste(lambda, "=1.2")))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

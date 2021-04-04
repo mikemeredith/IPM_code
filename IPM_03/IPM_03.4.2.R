@@ -26,18 +26,18 @@ se.fa.e <- 0.1       # Uncertainty of productivity as SE on natural scale
 jags.data <- list(alpha.sj=getBeta2Par(mean.sj, se.sj.e)[1],
     beta.sj=getBeta2Par(mean.sj, se.sj.e)[2],
     alpha.sa=getBeta2Par(mean.sa, se.sa.e)[1],
-    beta.sa=getBeta2Par(mean.sa, se.sa.e)[2], 
-    mean.f1=mean.f1, tau.f1=1/se.f1.e^2, mean.fa=mean.fa, 
+    beta.sa=getBeta2Par(mean.sa, se.sa.e)[2],
+    mean.f1=mean.f1, tau.f1=1/se.f1.e^2, mean.fa=mean.fa,
     tau.fa=1/se.fa.e^2, T=50)
 
 # Write JAGS model file
 cat(file="model3.txt", "
-model { 
+model {
   # Random number generators (RNGs)
   sj ~ dbeta(alpha.sj, beta.sj) # These only *look* like priors
   sa ~ dbeta(alpha.sa, beta.sa) # ... but they are not
   f1 ~ dnorm(mean.f1, tau.f1)   # ... as there is no estimation in this model
-  fa ~ dnorm(mean.fa, tau.fa)   
+  fa ~ dnorm(mean.fa, tau.fa)
 
   # Initialize the population size nodes
   N[1,1] <- 1
@@ -48,13 +48,13 @@ model {
     # Population model
     N[1,t+1] <- sj * (f1 * N[1,t] + fa * N[2,t])
     N[2,t+1] <- sa * (N[1,t] + N[2,t])
-     
+
     # Annual (realized) growth rate
-    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t]) 
-     
+    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
+
     # Scaled stage distributions
-    stage.distr[1,t] <- N[1,t+1] / (N[1,t+1] + N[2,t+1])    
-    stage.distr[2,t] <- N[2,t+1] / (N[1,t+1] + N[2,t+1])    
+    stage.distr[1,t] <- N[1,t+1] / (N[1,t+1] + N[2,t+1])
+    stage.distr[2,t] <- N[2,t+1] / (N[1,t+1] + N[2,t+1])
   }
   lambda <- ann.growth.rate[T]
   stable.stage.distr <- stage.distr[,T]
@@ -68,7 +68,7 @@ model {
     N.star[2,t+1] <- sa * (N.star[1,t] + N.star[2,t])
     ann.growth.rate.star[t] <- (N.star[1,t+1] + N.star[2,t+1]) / (N.star[1,t] + N.star[2,t])
   }
-  s.sj <- (ann.growth.rate.star[T] - ann.growth.rate[T]) / delta   
+  s.sj <- (ann.growth.rate.star[T] - ann.growth.rate[T]) / delta
   e.sj <- s.sj * sj / lambda
 
   # Calculation of net reproductive rate (R0)
@@ -89,7 +89,7 @@ parameters <- c("lambda", "stable.stage.distr", "s.sj", "e.sj", "R0", "GT")
 ni <- 100000; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out3 <- jags(jags.data, NULL, parameters, "model3.txt", n.adapt=na, 
+out3 <- jags(jags.data, NULL, parameters, "model3.txt", n.adapt=na,
     n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out3, 4)
 
@@ -103,8 +103,8 @@ print(out3, 4)
 # GT                    2.3842 0.1910 2.0426 2.3727 2.7911    FALSE 1
 
 # ~~~~ Produce figure 3.17 ~~~~
+op <- par(mar=c(4, 4, 3, 0), las=1, cex=1.1, "mfrow")
 layout(matrix(1:4, 2, 2, byrow=TRUE), widths=c(1.1, 1), heights=c(1, 1), TRUE)
-par(mar=c(4, 4, 3, 0), las=1, cex=1.1)
 a <- hist(out3$sims.list$lambda, nclass=50, col="dodgerblue", main="",
     xlab=expression(paste("Asymptotic population growth rate (", lambda, ")")), prob=TRUE)
 mtext("A", at=a$mids[2], cex=1.5)
@@ -113,28 +113,30 @@ a <- hist(out3$sims.list$stable.stage[,1], nclass=50, col="dodgerblue", main="",
     xlab="Proportion of 1-year old individuals", prob=TRUE)
 mtext("B", at=a$mids[2], cex=1.5)
 par(mar=c(4, 4, 3, 0))
-a <- hist(out3$sims.list$s.sj, nclass=50, col="dodgerblue", main="", 
+a <- hist(out3$sims.list$s.sj, nclass=50, col="dodgerblue", main="",
     xlab=expression('Sensitivity of '*lambda*' to variation of '*italic(s)[italic(j)]),
     prob=TRUE)
 mtext("C", at=a$mids[2], cex=1.5)
 par(mar=c(4, 2, 3, 2))
-a <- hist(out3$sims.list$GT, nclass=40, col="dodgerblue", main="", 
+a <- hist(out3$sims.list$GT, nclass=40, col="dodgerblue", main="",
     xlab="Generation time", prob=TRUE)
 mtext("D", at=a$mids[2], cex=1.5)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 # ~~~~ Produce figure 3.18 ~~~~
 # Load output from section 3.3.2
 load("IPM_03.3.2_output.RData")
+op <- par(mar=c(4, 4, 3, 0), las=1, cex=1.1, "mfrow")
 layout(matrix(1:4, 2, 2, byrow=TRUE), widths=c(1.1, 1), heights=c(1, 1), TRUE)
-par(mar=c(4, 4, 3, 0), las=1, cex=1.1)
-plot(density(lambda), main="", 
+plot(density(lambda), main="",
     xlab=expression(paste("Asymptotic population growth rate (", lambda, ")")),
     col="blue", lwd=2, axes=FALSE)
 lines(density(out3$sims.list$lambda), col="red", lwd=2, lty=2)
 axis(1); axis(2)
-#legend("topright", legend=c("classical MC", "Bayesian MCMC"), lwd=c(2,2), col=c("blue","red"), bty="n")
+# legend("topright", legend=c("classical MC", "Bayesian MCMC"),
+#    lwd=c(2,2), col=c("blue","red"), bty="n")
 mtext("A", at=0.8, cex=1.5)
 
 par(mar=c(4, 2, 3, 2))
@@ -145,7 +147,7 @@ lines(density(out3$sims.list$stable.stage[,1]), col="red", lwd=2, lty=2)
 mtext("B", at=0.35, cex=1.5)
 
 par(mar=c(4, 4, 3, 0))
-plot(density(sensitivity[,1]), main="", 
+plot(density(sensitivity[,1]), main="",
     xlab=expression('Sensitivity of '*lambda*' to variation of '*italic(s)[italic(j)]),
     col="blue", lwd=2, axes=FALSE)
 axis(1); axis(2)
@@ -158,4 +160,5 @@ plot(density(GT), main="", xlab="Generation time", ylab="", col="blue",
 axis(1); axis(2)
 lines(density(out3$sims.list$GT), col="red", lwd=2, lty=2)
 mtext("D", at=1.9, cex=1.5)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

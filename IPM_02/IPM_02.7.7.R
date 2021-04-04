@@ -17,13 +17,14 @@ npop <- 10           # Number of populations
 grand.mean <- 200    # Grand mean of mass
 sigma.pop <- 10      # SD of population variability in snake mass
 beta <- -30          # Slope of mass on elevation
-sigma.snake <- 50    # SD of individual variability of snake mass 
+sigma.snake <- 50    # SD of individual variability of snake mass
 
 # Simulate new snake mass data
 set.seed(39)
 
 # Simulate population-level data
-mean.mass <- round(rnorm(npop, grand.mean, sigma.pop)) # Average mass (g) in each population at average elevation
+mean.mass <- round(rnorm(npop, grand.mean, sigma.pop))
+    # Average mass (g) in each population at average elevation
 elevPop <- sort(runif(npop, 200, 2000)) # 200 m to 2000 m elevation
 elevPopSc <- as.numeric(scale(elevPop))
 mean.pop.mass <- mean.mass + beta * elevPopSc
@@ -43,7 +44,7 @@ pop <- rep(1:npop, nsnakes)
 head(cbind(pop, elev, mass))
 
 # ~~~~ code to plot mass (Fig. 2.18) ~~~~
-par(las=1, mar=c(4.1, 4.5, 2, 2), cex=1.5)
+op <- par(las=1, mar=c(4.1, 4.5, 2, 2), cex=1.5)
 plot(mass ~ rep(elevPop, nsnakes), axes=FALSE, pch=16, col=rgb(0,0,0,0.4), xlab='Elevation (m)', ylab="Mass (g)", xlim=c(200, 1800), ylim=c(0, 350))
 axis(1)
 axis(1, at=seq(200, 1700, by=100), tcl=-0.25, labels=NA)
@@ -51,6 +52,7 @@ axis(2)
 for (i in 1:10){
    segments(elevPop[i]-30, mean.pop.mass[i], elevPop[i]+30, mean.pop.mass[i], col='red', lwd= 2)
 }
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Bundle data
@@ -102,7 +104,8 @@ ni <- 110000; nb <- 10000; nc <- 3; nt <- 2; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out9 <- jags(jags.data, inits, parameters, "model8.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 2)); traceplot(out9)     # Not shown
+op <- par(mfrow=c(2, 2)); traceplot(out9)     # Not shown
+par(op)
 print(out9, 2)
 
 #              mean    sd    2.5%     50%   97.5% overlap0 f Rhat  n.eff
@@ -133,14 +136,14 @@ ranef(fm)   # Give estimates of population mean deviations (not shown)
 
 # REML criterion at convergence: 1872.3
 
-# Scaled residuals: 
-    # Min      1Q  Median      3Q     Max 
-# -2.4950 -0.7496  0.0293  0.6420  2.6016 
+# Scaled residuals:
+    # Min      1Q  Median      3Q     Max
+# -2.4950 -0.7496  0.0293  0.6420  2.6016
 
 # Random effects:
  # Groups         Name        Variance Std.Dev.
- # as.factor(Pop) (Intercept)   99.15   9.958  
- # Residual                   2242.97  47.360  
+ # as.factor(Pop) (Intercept)   99.15   9.958
+ # Residual                   2242.97  47.360
 # Number of obs: 178, groups:  as.factor(Pop), 10
 
 # Fixed effects:

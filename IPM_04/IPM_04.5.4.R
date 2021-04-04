@@ -156,7 +156,8 @@ ni <- 10000; nb <- 5000; nc <- 3; nt <- 1; na <- 5000
 # Call JAGS from R (ART 1 min) and check convergence
 out25 <- jags(jags.data, inits, parameters, "model22.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out25)          # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out25)          # Not shown
+par(op)
 print(out25)
 
             # mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff

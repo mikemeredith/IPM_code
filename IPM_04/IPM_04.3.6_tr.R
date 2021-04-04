@@ -3,7 +3,7 @@
 # ------------------------------------------------------
 # Code from MS submitted to publisher.
 
-# Run time testing 3 mins, full run 30 mins
+# Run time testing 3 mins, full run 40 mins
 
 library(IPMbook) ; library(jagsUI)
 
@@ -129,7 +129,8 @@ ni <- 10000; nb <- 5000; nc <- 3; nt <- 5; na <- 500  #  # ~~~ for testing
 # Call JAGS from R (ART 45 min), check convergence and summarize posteriors
 out10 <- jags(jags.data, inits, parameters, "model7.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 2)); traceplot(out10, c("gamma", "phi", "rho", "p", "ntot"))
+op <- par(mfrow=c(2, 2)); traceplot(out10, c("gamma", "phi", "rho", "p", "ntot"))
+par(op)
 print(out10)         # Not shown
 
               # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff

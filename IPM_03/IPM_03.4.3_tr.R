@@ -3,6 +3,8 @@
 # ----------------------------------------------------
 # Code from MS submitted to publisher.
 
+# Time of test run 33 secs, full run 3 mins
+
 library(IPMbook) ; library(jagsUI)
 
 # 3.4 Analysis of matrix population models with Markov Chain
@@ -29,7 +31,7 @@ jags.data <- list(mean.sj=mean.sj, mean.sa=mean.sa, mean.f1=mean.f1,
 
 # Write JAGS model file
 cat(file="model4.txt", "
-model { 
+model {
   # Calculate precision for temporal variability of demographic rates
   tau.logit.sj <- pow(sd.sj.t, -2)
   tau.logit.sa <- pow(sd.sa.t, -2)
@@ -55,9 +57,9 @@ model {
     # Population model
     N[1,t+1] <- sj[t] * (f1[t] * N[1,t] + fa[t] * N[2,t])
     N[2,t+1] <- sa[t] * (N[1,t] + N[2,t])
-     
+
     # Annual growth rate on log scale
-    r.annual[t] <- log(N[1,t+1] + N[2,t+1]) - log(N[1,t] + N[2,t])    
+    r.annual[t] <- log(N[1,t+1] + N[2,t+1]) - log(N[1,t] + N[2,t])
   }
   r <- mean(r.annual[u:T])
   lambda <- exp(r)
@@ -72,7 +74,7 @@ model {
     r.annual.star[t] <- log(N.star[1,t+1] + N.star[2,t+1]) - log(N.star[1,t] + N.star[2,t])
   }
   r.star <- mean(r.annual.star[u:T])
-  s.sj <- (exp(r.star) - lambda) / delta   
+  s.sj <- (exp(r.star) - lambda) / delta
   e.sj <- s.sj * mean.sj / lambda
 }
 ")
@@ -84,7 +86,7 @@ parameters <- c("r", "lambda", "s.sj", "e.sj")
 ni <- 1; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out4 <- jags(jags.data, NULL, parameters, "model4.txt", n.adapt=na, 
+out4 <- jags(jags.data, NULL, parameters, "model4.txt", n.adapt=na,
     n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out4, 4)
 
@@ -112,7 +114,7 @@ jags.data <- list(sj=sj, sa=sa, f1=f1, fa=fa, T=21000, u=1000)
 
 # Write JAGS model file
 cat(file="model5.txt", "
-model { 
+model {
   # Model for initial state
   N[1,1] <- 1
   N[2,1] <- 1
@@ -122,9 +124,9 @@ model {
     # Population model
     N[1,t+1] <- sj[t] * (f1[t] * N[1,t] + fa[t] * N[2,t])
     N[2,t+1] <- sa[t] * (N[1,t] + N[2,t])
-     
+
     # Annual (realized) growth rate on log scale
-    r.annual[t] <- log(N[1,t+1] + N[2,t+1]) - log(N[1,t] + N[2,t])    
+    r.annual[t] <- log(N[1,t+1] + N[2,t+1]) - log(N[1,t] + N[2,t])
   }
   r <- mean(r.annual[u:T])
   lambda <- exp(r)
@@ -139,7 +141,7 @@ model {
     r.annual.star[t] <- log(N.star[1,t+1] + N.star[2,t+1]) - log(N.star[1,t] + N.star[2,t])
   }
   r.star <- mean(r.annual.star[u:T])
-  s.sj <- (exp(r.star) - lambda) / delta   
+  s.sj <- (exp(r.star) - lambda) / delta
   e.sj <- s.sj * mean(sj) / lambda
 }
 ")
@@ -151,7 +153,7 @@ parameters <- c("r", "lambda", "s.sj", "e.sj")
 ni <- 1; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out5 <- jags(jags.data, NULL, parameters, "model5.txt", n.adapt=na, 
+out5 <- jags(jags.data, NULL, parameters, "model5.txt", n.adapt=na,
     n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out5, 4)
 

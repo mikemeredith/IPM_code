@@ -312,45 +312,45 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model17.txt", "
 model {
-# Priors and linear models
-phij.const ~ dunif(0, 1)
-phia.const ~ dunif(0, 1)
-p.const ~ dunif(0, 1)
+  # Priors and linear models
+  phij.const ~ dunif(0, 1)
+  phia.const ~ dunif(0, 1)
+  p.const ~ dunif(0, 1)
 
-for (t in 1:(nyears-1)){
-  phij[t] <- phij.const
-  phia[t] <- phia.const
-  p[t] <- p.const
-}
+  for (t in 1:(nyears-1)){
+    phij[t] <- phij.const
+    phia[t] <- phia.const
+    p[t] <- p.const
+  }
 
-# Capture-recapture data (CJS model with multinomial likelihood)
-# Define the multinomial likelihood
-for (t in 1:(nyears-1)){
-  marr.j[t,1:nyears] ~ dmulti(pi.j[t,], rel.j[t])
-  marr.a[t,1:nyears] ~ dmulti(pi.a[t,], rel.a[t])
-}
-# Define the cell probabilities of the m-arrays
-# Main diagonal
-for (t in 1:(nyears-1)){
-  q[t] <- 1 - p[t]            # Probability of non-recapture
-  pi.j[t,t] <- phij[t] * p[t]
-  pi.a[t,t] <- phia[t] * p[t]
-  # Above main diagonal
-  for (j in (t+1):(nyears-1)){
-    pi.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
-    pi.a[t,j] <- prod(phia[t:j]) * prod(q[t:(j-1)]) * p[j]
-  } #j
-  # Below main diagonal
-  for (j in 1:(t-1)){
-    pi.j[t,j] <- 0
-    pi.a[t,j] <- 0
-  } #j
-} #t
-# Last column: probability of non-recapture
-for (t in 1:(nyears-1)){
-  pi.j[t,nyears] <- 1-sum(pi.j[t,1:(nyears-1)])
-  pi.a[t,nyears] <- 1-sum(pi.a[t,1:(nyears-1)])
-}
+  # Capture-recapture data (CJS model with multinomial likelihood)
+  # Define the multinomial likelihood
+  for (t in 1:(nyears-1)){
+    marr.j[t,1:nyears] ~ dmulti(pi.j[t,], rel.j[t])
+    marr.a[t,1:nyears] ~ dmulti(pi.a[t,], rel.a[t])
+  }
+  # Define the cell probabilities of the m-arrays
+  # Main diagonal
+  for (t in 1:(nyears-1)){
+    q[t] <- 1 - p[t]            # Probability of non-recapture
+    pi.j[t,t] <- phij[t] * p[t]
+    pi.a[t,t] <- phia[t] * p[t]
+    # Above main diagonal
+    for (j in (t+1):(nyears-1)){
+      pi.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * prod(q[t:(j-1)]) * p[j]
+      pi.a[t,j] <- prod(phia[t:j]) * prod(q[t:(j-1)]) * p[j]
+    } #j
+    # Below main diagonal
+    for (j in 1:(t-1)){
+      pi.j[t,j] <- 0
+      pi.a[t,j] <- 0
+    } #j
+  } #t
+  # Last column: probability of non-recapture
+  for (t in 1:(nyears-1)){
+    pi.j[t,nyears] <- 1-sum(pi.j[t,1:(nyears-1)])
+    pi.a[t,nyears] <- 1-sum(pi.a[t,1:(nyears-1)])
+  }
 }
 ")
 

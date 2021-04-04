@@ -3,14 +3,13 @@
 # -------------------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 3 mins
+# Run time 3 mins
 
 library(IPMbook) ; library(jagsUI)
 
 # 15.4 Component data likelihoods
 # =============================================
 
-library(IPMbook); library(jagsUI)
 data(grouse)
 str(grouse)
 
@@ -77,100 +76,100 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model1.txt", "
 model {
-# Priors and linear models
-# Survival
-for (a in 1:2){                     # age
-  for (j in 1:2){                   # sex
-    for (m in 1:4){                 # season
-      s[a,j,m] ~ dbeta(1, 1)
-    } #m
-  } #j
-} #a
-
-# Productivity
-for (t in 1:ny){
-  log.rho[t] ~ dnorm(log.mean.rho, tau.rho)
-  rho[t] <- exp(log.rho[t])
-}
-mean.rho ~ dunif(0, 5)
-log.mean.rho <- log(mean.rho)
-sigma.rho ~ dunif(0, 1)
-tau.rho <- pow(sigma.rho, -2)
-
-# Sex ratio of the 5 weeks old chicks
-gamma ~ dbeta(1, 1)
-
-# Resighting probabilities for the late summer counts
-for (t in 1:ny){
-  logit.p[t] ~ dnorm(lmean.p, tau.p)
-  p[t] <- ilogit(logit.p[t])
-}
-mean.p ~ dbeta(1, 1)
-lmean.p <- logit(mean.p)
-sigma.p ~ dunif(0, 5)
-tau.p <- pow(sigma.p, -2)
-
-# Population count data (state-space model)
-# Model for the initial population size in spring: uniform priors
-Nsp[1,1,1] ~ dcat(pinit[])
-Nsp[2,1,1] ~ dcat(pinit[])
-Nsp[1,2,1] ~ dcat(pinit[])
-Nsp[2,2,1] ~ dcat(pinit[])
-
-# Process model: population sizes in spring
-for (t in 1:(ny-1)){
-  # Females
-  Nsp[1,1,t+1] ~ dbin(s[1,1,2]^0.5 * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1], Nls[1,1,t])  # 1y
-  Nsp[2,1,t+1] ~ dbin(s[2,1,2]^0.5 * s[2,1,3]^2 * s[2,1,4]^5 * s[2,1,1], Nls[2,1,t])  # >1y
-
-  # Males
-  Nsp[1,2,t+1] ~ dbin(s[1,2,2]^0.5 * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1], Nls[1,2,t])  # 1y
-  Nsp[2,2,t+1] ~ dbin(s[2,2,2]^0.5 * s[2,2,3]^2 * s[2,2,4]^5 * s[2,2,1], Nls[2,2,t])  # >1y
-}
-
-# Process model: population sizes in late summer
-for (t in 1:ny){
-  # Total number of chicks
-  F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t])
-  # Allocate chicks to a sex
-  Nls[1,1,t] ~ dbin(gamma, F[t])            # Female chicks
-  Nls[1,2,t] <- F[t] - Nls[1,1,t]           # Male chicks
+  # Priors and linear models
   # Survival
-  Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t]))    # ≥1y females
-  Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t]))    # ≥1y males
-}
+  for (a in 1:2){                     # age
+    for (j in 1:2){                   # sex
+      for (m in 1:4){                 # season
+        s[a,j,m] ~ dbeta(1, 1)
+      } #m
+    } #j
+  } #a
 
-# Observation models
-for (t in 1:ny){
-  # Spring counts of 1y and >1y males
-  C.sp[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]))
-  # Late summer counts of ≥1y females and of ≥1y males
-  C.lsF[t] ~ dbin(p[t], Nls[2,1,t])
-  C.lsM[t] ~ dbin(p[t], Nls[2,2,t])
-}
+  # Productivity
+  for (t in 1:ny){
+    log.rho[t] ~ dnorm(log.mean.rho, tau.rho)
+    rho[t] <- exp(log.rho[t])
+  }
+  mean.rho ~ dunif(0, 5)
+  log.mean.rho <- log(mean.rho)
+  sigma.rho ~ dunif(0, 1)
+  tau.rho <- pow(sigma.rho, -2)
 
-# Radio tracking data (Bernoulli model)
-for (i in 1:nind){
-  for (t in (f[i]+1):k[i]){
-    ch[i,t] ~ dbern(s[age[i,t-1], sex[i], season[t-1]])
-  } #t
-} #i
+  # Sex ratio of the 5 weeks old chicks
+  gamma ~ dbeta(1, 1)
 
-# Productivity data (Poisson model)
-for (t in 1:ny){
-  C.lsC[t] ~ dpois(C.lsF[t] * rho[t])
-}
+  # Resighting probabilities for the late summer counts
+  for (t in 1:ny){
+    logit.p[t] ~ dnorm(lmean.p, tau.p)
+    p[t] <- ilogit(logit.p[t])
+  }
+  mean.p ~ dbeta(1, 1)
+  lmean.p <- logit(mean.p)
+  sigma.p ~ dunif(0, 5)
+  tau.p <- pow(sigma.p, -2)
 
-# Chick sex ratio data (binomial model)
-for (t in 1:ny){
-  u[t] ~ dbin(gamma, v[t])
-}
+  # Population count data (state-space model)
+  # Model for the initial population size in spring: uniform priors
+  Nsp[1,1,1] ~ dcat(pinit[])
+  Nsp[2,1,1] ~ dcat(pinit[])
+  Nsp[1,2,1] ~ dcat(pinit[])
+  Nsp[2,2,1] ~ dcat(pinit[])
 
-# Derived quantities: annual survival
-ann.s[1,1] <- s[1,1,2] * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1]      # juv females
-ann.s[2,1] <- s[2,1,1]^2 * s[2,1,2]^3 * s[2,1,3]^2 * s[2,1,4]^5  # ad females
-ann.s[1,2] <- s[1,2,2] * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1]      # juv males
-ann.s[2,2] <- s[2,2,1]^2 * s[2,2,2]^3 * s[2,2,3]^2 * s[2,2,4]^5  # ad males
+  # Process model: population sizes in spring
+  for (t in 1:(ny-1)){
+    # Females
+    Nsp[1,1,t+1] ~ dbin(s[1,1,2]^0.5 * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1], Nls[1,1,t])  # 1y
+    Nsp[2,1,t+1] ~ dbin(s[2,1,2]^0.5 * s[2,1,3]^2 * s[2,1,4]^5 * s[2,1,1], Nls[2,1,t])  # >1y
+
+    # Males
+    Nsp[1,2,t+1] ~ dbin(s[1,2,2]^0.5 * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1], Nls[1,2,t])  # 1y
+    Nsp[2,2,t+1] ~ dbin(s[2,2,2]^0.5 * s[2,2,3]^2 * s[2,2,4]^5 * s[2,2,1], Nls[2,2,t])  # >1y
+  }
+
+  # Process model: population sizes in late summer
+  for (t in 1:ny){
+    # Total number of chicks
+    F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t])
+    # Allocate chicks to a sex
+    Nls[1,1,t] ~ dbin(gamma, F[t])            # Female chicks
+    Nls[1,2,t] <- F[t] - Nls[1,1,t]           # Male chicks
+    # Survival
+    Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t]))    # ≥1y females
+    Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t]))    # ≥1y males
+  }
+
+  # Observation models
+  for (t in 1:ny){
+    # Spring counts of 1y and >1y males
+    C.sp[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]))
+    # Late summer counts of ≥1y females and of ≥1y males
+    C.lsF[t] ~ dbin(p[t], Nls[2,1,t])
+    C.lsM[t] ~ dbin(p[t], Nls[2,2,t])
+  }
+
+  # Radio tracking data (Bernoulli model)
+  for (i in 1:nind){
+    for (t in (f[i]+1):k[i]){
+      ch[i,t] ~ dbern(s[age[i,t-1], sex[i], season[t-1]])
+    } #t
+  } #i
+
+  # Productivity data (Poisson model)
+  for (t in 1:ny){
+    C.lsC[t] ~ dpois(C.lsF[t] * rho[t])
+  }
+
+  # Chick sex ratio data (binomial model)
+  for (t in 1:ny){
+    u[t] ~ dbin(gamma, v[t])
+  }
+
+  # Derived quantities: annual survival
+  ann.s[1,1] <- s[1,1,2] * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1]      # juv females
+  ann.s[2,1] <- s[2,1,1]^2 * s[2,1,2]^3 * s[2,1,3]^2 * s[2,1,4]^5  # ad females
+  ann.s[1,2] <- s[1,2,2] * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1]      # juv males
+  ann.s[2,2] <- s[2,2,1]^2 * s[2,2,2]^3 * s[2,2,3]^2 * s[2,2,4]^5  # ad males
 }
 ")
 
@@ -192,141 +191,142 @@ ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
 # Call JAGS (ART 5 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out1)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 
 # ~~~~ model 1 plus posterior predictive checks ~~~~
 # Write JAGS model file
 cat(file="model2.txt", "
 model {
-# Priors and linear models
-# Survival
-for (a in 1:2){                          # age
-  for (j in 1:2){                       # sex
-    for (m in 1:4){                    # season
-      s[a,j,m] ~ dbeta(1, 1)
-    } #m
-  } #j
-} #a
-
-# Productivity
-for (t in 1:ny){
-  log.rho[t] ~ dnorm(log.mean.rho, tau.rho)
-  rho[t] <- exp(log.rho[t])
-}
-mean.rho ~ dunif(0, 5)
-log.mean.rho <- log(mean.rho)
-sigma.rho ~ dunif(0, 1)
-tau.rho <- pow(sigma.rho, -2)
-
-# Sex ratio of the 5 weeks old chicks
-gamma ~ dbeta(1, 1)
-
-# Resighting probabilities for the late summer counts
-for (t in 1:ny){
-  logit.p[t] ~ dnorm(lmean.p, tau.p)
-  p[t] <- ilogit(logit.p[t])
-}
-mean.p ~ dbeta(1, 1)
-lmean.p <- logit(mean.p)
-sigma.p ~ dunif(0, 5)
-tau.p <- pow(sigma.p, -2)
-
-# Population count data (state-space model)
-# Model for the initial population size in spring: uniform priors
-Nsp[1,1,1] ~ dcat(pinit[])
-Nsp[2,1,1] ~ dcat(pinit[])
-Nsp[1,2,1] ~ dcat(pinit[])
-Nsp[2,2,1] ~ dcat(pinit[])
-
-# Process model: population sizes in spring
-for (t in 1:(ny-1)){
-  # Females
-  Nsp[1,1,t+1] ~ dbin(s[1,1,2]^0.5 * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1], Nls[1,1,t])  # 1y
-  Nsp[2,1,t+1] ~ dbin(s[2,1,2]^0.5 * s[2,1,3]^2 * s[2,1,4]^5 * s[2,1,1], Nls[2,1,t])  # >1y
-
-  # Males
-  Nsp[1,2,t+1] ~ dbin(s[1,2,2]^0.5 * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1], Nls[1,2,t])  # 1y
-  Nsp[2,2,t+1] ~ dbin(s[2,2,2]^0.5 * s[2,2,3]^2 * s[2,2,4]^5 * s[2,2,1], Nls[2,2,t])  # >1y
-}
-
-# Process model: population sizes in late summer
-for (t in 1:ny){
-  # Total number of chicks
-  F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t])
-  # Allocate chicks to a sex
-  Nls[1,1,t] ~ dbin(gamma, F[t])            # Female chicks
-  Nls[1,2,t] <- F[t] - Nls[1,1,t]           # Male chicks
+  # Priors and linear models
   # Survival
-  Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t]))    # ≥1y females
-  Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t]))    # ≥1y males
-}
+  for (a in 1:2){                          # age
+    for (j in 1:2){                       # sex
+      for (m in 1:4){                    # season
+        s[a,j,m] ~ dbeta(1, 1)
+      } #m
+    } #j
+  } #a
 
-# Observation models
-for (t in 1:ny){
-  # Spring counts of 1y and >1y males
-  C.sp[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]))
-  # Late summer counts of ≥1y females and of ≥1y males
-  C.lsF[t] ~ dbin(p[t], Nls[2,1,t])
-  C.lsM[t] ~ dbin(p[t], Nls[2,2,t])
-  # Elements for GOF
-  C.sp.pred[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]))
-  C.ls.pred[1,t] ~ dbin(p[t], Nls[2,1,t])
-  C.ls.pred[2,t] ~ dbin(p[t], Nls[2,2,t])
-  # Discrepancy measures: absolute percentage error
-  d.Csp.org[t] <- (C.sp[t] - (Nsp[1,2,t] + Nsp[2,2,t])) / (C.sp[t] + 0.001)
-  d.Cls.org[1,t] <- (C.lsF[t] - p[t] * Nls[2,1,t]) / (C.lsF[t] + 0.001)
-  d.Cls.org[2,t] <- (C.lsM[t] - p[t] * Nls[2,2,t]) / (C.lsM[t] + 0.001)
-  d.Csp.new[t] <- (C.sp.pred[t] - (Nsp[1,2,t] + Nsp[2,2,t])) / (C.sp.pred[t] + 0.001)
-  d.Cls.new[1,t] <- (C.ls.pred[1,t] - p[t] * Nls[2,1,t]) / (C.ls.pred[1,t] + 0.001)
-  d.Cls.new[2,t] <- (C.ls.pred[2,t] - p[t] * Nls[2,2,t]) / (C.ls.pred[2,t] + 0.001)
-}
-fit1[1] <- 100 / ny * sum(d.Csp.org)
-fit1[2] <- 100 / ny * sum(d.Csp.new)
-fit2[1] <- 100 / ny * sum(d.Cls.org[1,])
-fit2[2] <- 100 / ny * sum(d.Cls.new[1,])
-fit3[1] <- 100 / ny * sum(d.Cls.org[2,])
-fit3[2] <- 100 / ny * sum(d.Cls.new[2,])
+  # Productivity
+  for (t in 1:ny){
+    log.rho[t] ~ dnorm(log.mean.rho, tau.rho)
+    rho[t] <- exp(log.rho[t])
+  }
+  mean.rho ~ dunif(0, 5)
+  log.mean.rho <- log(mean.rho)
+  sigma.rho ~ dunif(0, 1)
+  tau.rho <- pow(sigma.rho, -2)
 
-# Radio tracking data (Bernoulli model)
-for (i in 1:nind){
-  for (t in (f[i]+1):k[i]){
-    ch[i,t] ~ dbern(s[age[i,t-1], sex[i], season[t-1]])
-  } #t
-} #i
+  # Sex ratio of the 5 weeks old chicks
+  gamma ~ dbeta(1, 1)
 
-# Productivity data (Poisson model)
-for (t in 1:ny){
-  C.lsC[t] ~ dpois(C.lsF[t] * rho[t])
+  # Resighting probabilities for the late summer counts
+  for (t in 1:ny){
+    logit.p[t] ~ dnorm(lmean.p, tau.p)
+    p[t] <- ilogit(logit.p[t])
+  }
+  mean.p ~ dbeta(1, 1)
+  lmean.p <- logit(mean.p)
+  sigma.p ~ dunif(0, 5)
+  tau.p <- pow(sigma.p, -2)
 
-  # Elements for GOF
-  C.lsC.pred[t] ~ dpois(C.lsF[t] * rho[t])
-  C.lsC.exp[t] <- C.lsF[t] * rho[t]
-  # Discrepancy measure: deviance
-  dev.org[t] <- C.lsC[t] * log(C.lsC[t] / C.lsC.exp[t])
-  dev.new[t] <- C.lsC.pred[t] * log(C.lsC.pred[t] / C.lsC.exp[t])
-}
-fit4[1] <- 2*sum(dev.org)
-fit4[2] <- 2*sum(dev.new)
+  # Population count data (state-space model)
+  # Model for the initial population size in spring: uniform priors
+  Nsp[1,1,1] ~ dcat(pinit[])
+  Nsp[2,1,1] ~ dcat(pinit[])
+  Nsp[1,2,1] ~ dcat(pinit[])
+  Nsp[2,2,1] ~ dcat(pinit[])
 
-# Chick sex ratio data (binomial model)
-for (t in 1:ny){
-  u[t] ~ dbin(gamma, v[t])
+  # Process model: population sizes in spring
+  for (t in 1:(ny-1)){
+    # Females
+    Nsp[1,1,t+1] ~ dbin(s[1,1,2]^0.5 * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1], Nls[1,1,t])  # 1y
+    Nsp[2,1,t+1] ~ dbin(s[2,1,2]^0.5 * s[2,1,3]^2 * s[2,1,4]^5 * s[2,1,1], Nls[2,1,t])  # >1y
 
-  # Elements for GOF
-  u.pred[t] ~ dbin(gamma, v[t])
-  u.exp[t] <- gamma * v[t]
-  # Discrepancy measure: Freeman-Tukey statistics
-  Chi2.org[t] <- pow((pow(u[t], 0.5) - pow(u.exp[t], 0.5)), 2)
-  Chi2.new[t] <- pow((pow(u.pred[t], 0.5) - pow(u.exp[t], 0.5)), 2)
-}
-fit5[1] <- sum(Chi2.org)
-fit5[2] <- sum(Chi2.new)
+    # Males
+    Nsp[1,2,t+1] ~ dbin(s[1,2,2]^0.5 * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1], Nls[1,2,t])  # 1y
+    Nsp[2,2,t+1] ~ dbin(s[2,2,2]^0.5 * s[2,2,3]^2 * s[2,2,4]^5 * s[2,2,1], Nls[2,2,t])  # >1y
+  }
 
-# Derived quantities: annual survival
-ann.s[1,1] <- s[1,1,2] * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1]      # juv females
-ann.s[2,1] <- s[2,1,1]^2 * s[2,1,2]^3 * s[2,1,3]^2 * s[2,1,4]^5  # ad females
-ann.s[1,2] <- s[1,2,2] * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1]      # juv males
-ann.s[2,2] <- s[2,2,1]^2 * s[2,2,2]^3 * s[2,2,3]^2 * s[2,2,4]^5  # ad males
+  # Process model: population sizes in late summer
+  for (t in 1:ny){
+    # Total number of chicks
+    F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t])
+    # Allocate chicks to a sex
+    Nls[1,1,t] ~ dbin(gamma, F[t])            # Female chicks
+    Nls[1,2,t] <- F[t] - Nls[1,1,t]           # Male chicks
+    # Survival
+    Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t]))    # ≥1y females
+    Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t]))    # ≥1y males
+  }
+
+  # Observation models
+  for (t in 1:ny){
+    # Spring counts of 1y and >1y males
+    C.sp[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]))
+    # Late summer counts of ≥1y females and of ≥1y males
+    C.lsF[t] ~ dbin(p[t], Nls[2,1,t])
+    C.lsM[t] ~ dbin(p[t], Nls[2,2,t])
+    # Elements for GOF
+    C.sp.pred[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]))
+    C.ls.pred[1,t] ~ dbin(p[t], Nls[2,1,t])
+    C.ls.pred[2,t] ~ dbin(p[t], Nls[2,2,t])
+    # Discrepancy measures: absolute percentage error
+    d.Csp.org[t] <- (C.sp[t] - (Nsp[1,2,t] + Nsp[2,2,t])) / (C.sp[t] + 0.001)
+    d.Cls.org[1,t] <- (C.lsF[t] - p[t] * Nls[2,1,t]) / (C.lsF[t] + 0.001)
+    d.Cls.org[2,t] <- (C.lsM[t] - p[t] * Nls[2,2,t]) / (C.lsM[t] + 0.001)
+    d.Csp.new[t] <- (C.sp.pred[t] - (Nsp[1,2,t] + Nsp[2,2,t])) / (C.sp.pred[t] + 0.001)
+    d.Cls.new[1,t] <- (C.ls.pred[1,t] - p[t] * Nls[2,1,t]) / (C.ls.pred[1,t] + 0.001)
+    d.Cls.new[2,t] <- (C.ls.pred[2,t] - p[t] * Nls[2,2,t]) / (C.ls.pred[2,t] + 0.001)
+  }
+  fit1[1] <- 100 / ny * sum(d.Csp.org)
+  fit1[2] <- 100 / ny * sum(d.Csp.new)
+  fit2[1] <- 100 / ny * sum(d.Cls.org[1,])
+  fit2[2] <- 100 / ny * sum(d.Cls.new[1,])
+  fit3[1] <- 100 / ny * sum(d.Cls.org[2,])
+  fit3[2] <- 100 / ny * sum(d.Cls.new[2,])
+
+  # Radio tracking data (Bernoulli model)
+  for (i in 1:nind){
+    for (t in (f[i]+1):k[i]){
+      ch[i,t] ~ dbern(s[age[i,t-1], sex[i], season[t-1]])
+    } #t
+  } #i
+
+  # Productivity data (Poisson model)
+  for (t in 1:ny){
+    C.lsC[t] ~ dpois(C.lsF[t] * rho[t])
+
+    # Elements for GOF
+    C.lsC.pred[t] ~ dpois(C.lsF[t] * rho[t])
+    C.lsC.exp[t] <- C.lsF[t] * rho[t]
+    # Discrepancy measure: deviance
+    dev.org[t] <- C.lsC[t] * log(C.lsC[t] / C.lsC.exp[t])
+    dev.new[t] <- C.lsC.pred[t] * log(C.lsC.pred[t] / C.lsC.exp[t])
+  }
+  fit4[1] <- 2*sum(dev.org)
+  fit4[2] <- 2*sum(dev.new)
+
+  # Chick sex ratio data (binomial model)
+  for (t in 1:ny){
+    u[t] ~ dbin(gamma, v[t])
+
+    # Elements for GOF
+    u.pred[t] ~ dbin(gamma, v[t])
+    u.exp[t] <- gamma * v[t]
+    # Discrepancy measure: Freeman-Tukey statistics
+    Chi2.org[t] <- pow((pow(u[t], 0.5) - pow(u.exp[t], 0.5)), 2)
+    Chi2.new[t] <- pow((pow(u.pred[t], 0.5) - pow(u.exp[t], 0.5)), 2)
+  }
+  fit5[1] <- sum(Chi2.org)
+  fit5[2] <- sum(Chi2.new)
+
+  # Derived quantities: annual survival
+  ann.s[1,1] <- s[1,1,2] * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1]      # juv females
+  ann.s[2,1] <- s[2,1,1]^2 * s[2,1,2]^3 * s[2,1,3]^2 * s[2,1,4]^5  # ad females
+  ann.s[1,2] <- s[1,2,2] * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1]      # juv males
+  ann.s[2,2] <- s[2,2,1]^2 * s[2,2,2]^3 * s[2,2,3]^2 * s[2,2,4]^5  # ad males
 }
 ")
 
@@ -412,8 +412,8 @@ print(out1, 3)
 # ~~~~ posterior predictive checks ~~~~
 # (only works if you ran model 2)
 # Fig. 15.3
+op <- par(mar=c(4, 4.5, 4, 0.5), las=1, "mfrow")
 layout(matrix(1:6, 2, 3, byrow=TRUE), widths=c(1, 1, 1), heights=c(1, 1), TRUE)
-par(mar=c(4, 4.5, 4, 0.5), las=1)
 
 z <- range(c(out2$sims.list$fit1[,1], out2$sims.list$fit1[,2]))
 plot(x=out2$sims.list$fit1[,1], y=out2$sims.list$fit1[,2], pch=16,
@@ -465,6 +465,7 @@ segments(z[1], z[1], z[2], z[2])
 pb <- round(mean(out2$sims.list$fit5[,1] < out2$sims.list$fit5[,2]), 2)
 legend('bottomright', legend = bquote(p[B]==.(pb)), bty = "n")
 axis(1); axis(2)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -481,12 +482,12 @@ NlsF <- out1$sims.list$Nls[,1,1,] + out1$sims.list$Nls[,2,1,]
 NlsM <- out1$sims.list$Nls[,1,2,] + out1$sims.list$Nls[,2,2,]
 year <- c(1997, 2000, 2003, 2006, 2009, 2012, 2015)
 
-par(mfrow=c(1,2), las=1, mar=c(4.5,4,2,1))
+op <- par(mfrow=c(1,2), las=1, mar=c(4.5,4,2,1))
 
 d <- 0.1
 plot(y=apply(NspM, 2, mean), x=(1:20)-d, type="b", pch=16,
     ylab="Population size", xlab=NA, ylim=c(0, 180), col="blue",
-    axes=F, main="Spring")
+    axes=FALSE, main="Spring")
 polygon(c((1:20)-d, (20:1)-d), c(apply(NspM, 2, qu)[1,], rev(apply(NspM, 2, qu)[2,])),
     col=alpha(co[1], alpha=0.25), border=NA)
 polygon(c((1:20)+d, (20:1)+d), c(apply(NspF, 2, qu)[1,], rev(apply(NspF, 2, qu)[2,])),
@@ -501,7 +502,7 @@ legend("topright", pch=c(18,16,1), col=c(rev(co), "black"),
     legend=c("Females", "Males", "Males count"), bty="n")
 
 plot(y=apply(NlsM, 2, mean), x=(1:20)-d, type="b", pch=16, ylab=NA, xlab=NA,
-    ylim=c(0, 180), col=co[1], axes=F, main="Late summer")
+    ylim=c(0, 180), col=co[1], axes=FALSE, main="Late summer")
 polygon(c((1:20)-d, (20:1)-d), c(apply(NlsM, 2, qu)[1,], rev(apply(NlsM, 2, qu)[2,])),
     col=alpha(co[1], alpha=0.25), border=NA)
 polygon(c((1:20)+d, (20:1)+d), c(apply(NlsF, 2, qu)[1,], rev(apply(NlsF, 2, qu)[2,])),
@@ -511,6 +512,7 @@ points(y=apply(NlsF, 2, mean), x=(1:20)+d, type="b", pch=18, col=co[2])
 axis(2, labels=NA)
 axis(1, at=1:20, labels=NA, tcl=-0.25)
 axis(1, at=c(1, 4, 7, 10, 13, 16, 19), labels=year)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 15.5 ~~~~
@@ -527,9 +529,9 @@ NF <- cbind(NspF[,1], NlsF[,1], NspF[,2], NlsF[,2], NspF[,3], NlsF[,3],  #### FI
     NspF[,19], NlsF[,19], NspF[,20], NlsF[,20])
 year <- c(1997, 2000, 2003, 2006, 2009, 2012, 2015)
 
-par(mar=c(3, 4.2, 1, 1), las=1)
+op <- par(mar=c(3, 4.2, 1, 1), las=1)
 plot(apply(NF, 2, mean), type="b", pch=rep(c(18,16),20),
-    ylab="Female population size", xlab=NA, ylim=c(40, 180), col=co, axes=F)
+    ylab="Female population size", xlab=NA, ylim=c(40, 180), col=co, axes=FALSE)
 polygon(x=c(1:40, 40:1), y=c(apply(NF, 2, quant)[1,], rev(apply(NF, 2, quant)[2,])),
     col=alpha(co, alpha=0.25), border=NA)
 points(apply(NF, 2, mean), type="b", pch=rep(c(18,16),20), col=co)
@@ -538,6 +540,7 @@ axis(1, at=seq(1, 40, 2), labels=NA, tcl=-0.25)
 axis(1, at=c(1, 7, 13, 19, 25, 31, 37), labels=year)
 legend("topleft", pch=c(18,16), col=c(co, co),
     legend=c("Spring", "Late summer"), bty="n")
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 15.6 ~~~~
@@ -545,9 +548,9 @@ library(RColorBrewer)
 co <- brewer.pal(9, "Reds")[7]
 year <- c(1997, 2000, 2003, 2006, 2009, 2012, 2015)
 
-par(las=1, mar=c(3, 4.2, 1, 1))
+op <- par(las=1, mar=c(3, 4.2, 1, 1))
 plot(y=out1$mean$rho, x=1:20, type="b", pch=16, ylab="Productivity",
-    ylim=c(0.5,4), axes=F, xlab=NA)
+    ylim=c(0.5,4), axes=FALSE, xlab=NA)
 segments(1:20, out1$q2.5$rho, 1:20, out1$q97.5$rho)
 lines(x=c(0.5, 20.5), y=rep(out1$mean$mean.rho, 2), col=co)
 polygon(x=c(0.5,20.5,20.5,0.5),
@@ -556,13 +559,14 @@ polygon(x=c(0.5,20.5,20.5,0.5),
 axis(2)
 axis(1, at=1:20, labels=NA, tcl=-0.25)
 axis(1, at=c(1, 4, 7, 10, 13, 16, 19), labels=year)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 15.7 ~~~~
 library(denstrip)
-par(mar=c(4.5, 6, 1, 1))
+op <- par(mar=c(4.5, 6, 1, 1))
 
-plot(0, ylim=c(0.8, 4.2), xlim=c(0,1), axes=F, pch=NA,
+plot(0, ylim=c(0.8, 4.2), xlim=c(0,1), axes=FALSE, pch=NA,
     xlab="Annual survival", ylab=NA)
 denstrip(out1$sims.list$ann.s[,1,1], at=4,
     ticks=c(out1$mean$ann.s[1,1], out1$q2.5$ann.s[1,1], out1$q97.5$ann.s[1,1]),
@@ -580,4 +584,5 @@ axis(1)
 axis(2, las=1, at=c(4,3,2,1),
     labels=c("Juvenile\n females", "Adult\n females", "Juvenile\n males",
         "Adult\n males"))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

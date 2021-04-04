@@ -48,11 +48,12 @@ str(D)                              # Shows a 100 x 25 matrix
 # Plot realization of spatial point process: ACs and trapping grid
 # and variability in the distance between AC and traps (Fig. 4.15)
 
-par(las=1, mar=c(4, 4, 3, 1))
+op <- par(las=1, mar=c(4, 4, 3, 1))
 plot(traplocs, xlim=c(Xl, Xu), ylim=c(Yl, Yu), pch=16, axes=FALSE,
     xlab='x-coordinate', ylab='y-coordinate', cex=1)
 points(S, col="red", pch=1, cex=0.8)
 axis(2); axis(1)
+par(op)
 
 # ~~~~ histogram of distances ~~~~
 hist(D, breaks=50, col="grey", main="", xlab='Distance between trap and AC',
@@ -63,7 +64,7 @@ axis(2); axis(1)
 # ~~~~ Fig. 4.16 left: relationship between p and scale parameter sigma ~~~~
 alpha0 <- -2.5
 sigma <- 0.5
-par(mfrow=c(1, 2), mar=c(5, 5, 4, 3), cex.lab=1.5, cex.axis=1.5)
+op <- par(mfrow=c(1, 2), mar=c(5, 5, 4, 3), cex.lab=1.5, cex.axis=1.5)
 SIGMA <- round(seq(0.1, 10, , 8), 2)  # Choose 8 values of sigma between 0.1 and 10
 xd <- seq(0, 8, , 1000)
 plot(xd, plogis(alpha0) * exp(-(1/(2 * SIGMA[1]^2)) * xd^2),
@@ -83,6 +84,7 @@ text(6.5, 0.044, labels=round(SIGMA[5],1), cex=1, col="grey")
 text(7.2, 0.05, labels=round(SIGMA[6],1), cex=1, col="grey")
 text(7.6, 0.054, labels=round(SIGMA[7],1), cex=1, col="grey")
 text(7.8, 0.059, labels=round(SIGMA[8],1), cex=1, col="grey")
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Define parameters of detection probability
@@ -212,32 +214,32 @@ str(jags.data)
 # Write JAGS model file
 cat(file="model23.txt", "
 model {
-# Priors and linear models
-p0 ~ dunif(0, 1)                # Baseline detection probability
-alpha0 <- logit(p0)
-alpha1 ~ dnorm(0, 0.1)          # 1 / (2*sigma^2) (coef of distance)
-sigma <- sqrt(1 / (2 * alpha1)) # Half-normal scale
-psi ~ dunif(0, 1)               # Data augmentation
+  # Priors and linear models
+  p0 ~ dunif(0, 1)                # Baseline detection probability
+  alpha0 <- logit(p0)
+  alpha1 ~ dnorm(0, 0.1)          # 1 / (2*sigma^2) (coef of distance)
+  sigma <- sqrt(1 / (2 * alpha1)) # Half-normal scale
+  psi ~ dunif(0, 1)               # Data augmentation
 
-# Likelihood
-for (i in 1:M){                      # Loop over all M=200 individuals
-  z[i] ~ dbern(psi)                  # Data augmentation variable
-  # State model: point process model
-  s[i,1] ~ dunif(xlim[1], xlim[2])   # x-coord of activity centers
-  s[i,2] ~ dunif(ylim[1], ylim[2])   # y coord of activity centers
-  # Observation model: p ~ distance between trap and estimated AC
-  for (j in 1:J){                    # Loop over all traps
-    d2[i,j] <- pow(s[i,1] - traplocs[j,1], 2) + pow(s[i,2] - traplocs[j,2], 2) # Distance squared
-    p[i,j] <- z[i] * p0 * exp(-alpha1 * d2[i,j]) # Detection prob.
-    y[i,j] ~ dbin(p[i,j],K)          # Observed detection frequencies
-  } #j
-} #i
+  # Likelihood
+  for (i in 1:M){                      # Loop over all M=200 individuals
+    z[i] ~ dbern(psi)                  # Data augmentation variable
+    # State model: point process model
+    s[i,1] ~ dunif(xlim[1], xlim[2])   # x-coord of activity centers
+    s[i,2] ~ dunif(ylim[1], ylim[2])   # y coord of activity centers
+    # Observation model: p ~ distance between trap and estimated AC
+    for (j in 1:J){                    # Loop over all traps
+      d2[i,j] <- pow(s[i,1] - traplocs[j,1], 2) + pow(s[i,2] - traplocs[j,2], 2) # Distance squared
+      p[i,j] <- z[i] * p0 * exp(-alpha1 * d2[i,j]) # Detection prob.
+      y[i,j] ~ dbin(p[i,j],K)          # Observed detection frequencies
+    } #j
+  } #i
 
-# Derived quantities
-N <- sum(z[])                 # Population size in state-space
-D <- N / A                    # Density over state-space
-# r.95 <- sigma * sqrt(5.99)    # 95% activity range radius
-# A.95 <- 3.14 * pow(r.95, 2)   # 95% activity range area
+  # Derived quantities
+  N <- sum(z[])                 # Population size in state-space
+  D <- N / A                    # Density over state-space
+  # r.95 <- sigma * sqrt(5.99)    # 95% activity range radius
+  # A.95 <- 3.14 * pow(r.95, 2)   # 95% activity range area
 }
 ")
 
@@ -262,7 +264,8 @@ ni <- 15000; nb <- 5000; nc <- 3; nt <- 5; na <- 1000
 # Call JAGS (ART 7 min), check convergence and summarize posteriors
 out26 <- jags(jags.data, inits, parameters, "model23.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out26)    # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out26)    # Not shown
+par(op)
 print(out26, 3)
 
             # mean     sd    2.5%     50%   97.5% overlap0     f  Rhat n.eff
@@ -277,7 +280,7 @@ print(out26, 3)
 # [... output truncated ...]
 
 # ~~~~ Plot posteriors of population size and density parameters ~~~~
-par(mfrow=c(1, 2), mar=c(5,5,4,3), cex.axis=1.25, cex.lab=1.25, las=1)
+op <- par(mfrow=c(1, 2), mar=c(5,5,4,3), cex.axis=1.25, cex.lab=1.25, las=1)
 hist(out26$sims.list$N, breaks=40, col="grey",
     xlab=expression(paste("Population size (", italic(N), ")")),
     xlim=range(c(20, nobs, max(out26$sims.list$N))),
@@ -292,10 +295,11 @@ hist(out26$sims.list$D, breaks=40, col="grey",
 abline(v=nobs/16, col="black", lwd=3)
 abline(v=out26$mean$D, col="blue", lwd=3)
 abline(v=100/A, col="red", lwd=3)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for figure 4.19 ~~~~
-par(mfrow=c(1, 2), mar= c(5, 5, 4, 3), cex.lab=1.5, cex.axis=1.5)
+op <- par(mfrow=c(1, 2), mar= c(5, 5, 4, 3), cex.lab=1.5, cex.axis=1.5)
 # Fig. 4.19 (left): ACs of the 35 animals detected at least once
 plot(traplocs, xlim=c(Xl, Xu), ylim=c(Yl, Yu), pch=16, cex=1,
     frame=FALSE, xlab='x-coordinate', ylab='y-coordinate', asp=1)
@@ -316,10 +320,11 @@ for (i in (nobs+1):M){
   points(out26$sims.list$s[real.ind,i,], col=i, pch='.')
 }
 points(traplocs, pch=16, cex.main=1)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Produce a density map based on the estimated ACs (Fig. 4.20 left)
-par(mfrow=c(1, 2))
+op <- par(mfrow=c(1, 2))
 cl <- terrain.colors(20, rev=TRUE)
 # Extract posterior samples for s and z
 z <- out26$sims.list$z
@@ -377,3 +382,4 @@ image(xg, yg, D.hat2, col=cl, xlab='x-coordinate', ylab='y-coordinate',
 points(Sobs, col='red', pch=16)
 points(traplocs, pch=16)
 points(S, col='red')
+par(op)

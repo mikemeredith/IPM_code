@@ -3,14 +3,13 @@
 # ----------------
 # Code from MS submitted to publisher.
 
-# Run time for test script 26 mins
+# Run time for test script 26 mins, full run 65 mins
 
 library(IPMbook) ; library(jagsUI)
 
 # 17.4 Component data likelihoods
 # =============================================
 
-library(IPMbook); library(jagsUI)
 data(elk)
 str(elk)
 
@@ -87,54 +86,54 @@ str(jags.data)
 # Write JAGS model file
 cat(file = "model1.txt", "
 model {
-# Priors and linear models
-for (t in 1:(n.years-1)){
-  f[t] ~ dunif(0, 1)
-}
-for (t in 1:n.years){
-  s[t] ~ dunif(0, 1)
-  h[t] ~ dunif(0, 1)
-  r[t] ~ dunif(0, 1)
-}
+  # Priors and linear models
+  for (t in 1:(n.years-1)){
+    f[t] ~ dunif(0, 1)
+  }
+  for (t in 1:n.years){
+    s[t] ~ dunif(0, 1)
+    h[t] ~ dunif(0, 1)
+    r[t] ~ dunif(0, 1)
+  }
 
-# Age-at-harvest data (state-space model)
-# Model for the initial population size: Poisson priors
-for (a in 1:n.age){
-  N[a,1] ~ dpois(n[a])
-}
-
-# Process model over time: our model of population dynamics
-for (t in 1:(n.years-1)){
-  N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
-  for (a in 2:n.age){
-    N[a,t+1] ~ dbin((1-h[t]) * s[t], N[a-1,t])
-  } #a
-} #t
-
-# Derived quantity: total year-specific population size
-for (t in 1:n.years){
-  Ntot[t] <- sum(N[,t])
-}
-
-# Observation model
-for (t in 1:n.years){
+  # Age-at-harvest data (state-space model)
+  # Model for the initial population size: Poisson priors
   for (a in 1:n.age){
-    C[a,t] ~ dbin(h[t] * r[t], N[a,t])
-  } #a
-} #t
+    N[a,1] ~ dpois(n[a])
+  }
 
-# Hunter survey data (logistic regression model)
-for (t in 1:n.years){
-  b[t] ~ dbin(r[t], a[t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.years-1)){
+    N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
+    for (a in 2:n.age){
+      N[a,t+1] ~ dbin((1-h[t]) * s[t], N[a-1,t])
+    } #a
+  } #t
 
-# Radio tracking data (multinomial model)
-for (t in 1:n.years){
-  R[,t] ~ dmulti(prt[,t], total[t])
-  prt[1,t] <- h[t]
-  prt[2,t] <- (1-h[t]) * (1-s[t])
-  prt[3,t] <- (1-h[t]) * s[t]
-}
+  # Derived quantity: total year-specific population size
+  for (t in 1:n.years){
+    Ntot[t] <- sum(N[,t])
+  }
+
+  # Observation model
+  for (t in 1:n.years){
+    for (a in 1:n.age){
+      C[a,t] ~ dbin(h[t] * r[t], N[a,t])
+    } #a
+  } #t
+
+  # Hunter survey data (logistic regression model)
+  for (t in 1:n.years){
+    b[t] ~ dbin(r[t], a[t])
+  }
+
+  # Radio tracking data (multinomial model)
+  for (t in 1:n.years){
+    R[,t] ~ dmulti(prt[,t], total[t])
+    prt[1,t] <- h[t]
+    prt[2,t] <- (1-h[t]) * (1-s[t])
+    prt[3,t] <- (1-h[t]) * s[t]
+  }
 }
 ")
 
@@ -151,8 +150,9 @@ ni <- 250000; nt <- 20; nb <- 50000; nc <- 3; na <- 5000
 
 # Call JAGS from R (ART 4 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
-par(mfrow=c(3, 3)); traceplot(out1)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
+op <- par(mfrow=c(3, 3)); traceplot(out1)
+par(op)
 
 
 # 17.6 Results on elk population dynamics
@@ -204,10 +204,10 @@ s.star <- (1-out1$sims.list$h) * out1$sims.list$s
 library(scales)
 cl <- viridis_pal(option='E')(20)[c(18,2)]
 qu <- function(x) quantile(x, c(0.025, 0.975))
-par(mfrow=c(2,1), mar=c(3.5, 5, 1, 1))
+op <- par(mfrow=c(2,1), mar=c(3.5, 5, 1, 1))
 d <- 0.1
 plot(y=out1$mean$h, x=(1:6)+d, ylim=c(0,0.4), xlim=c(1-d, 6+d), type="b",
-    pch=16, axes=F, ylab="Probability", xlab=NA, col=cl[2])
+    pch=16, axes=FALSE, ylab="Probability", xlab=NA, col=cl[2])
 segments((1:6)+d, out1$q2.5$h, (1:6)+d, out1$q97.5$h, col=cl[2])
 axis(1, at=1:6, labels = 1988:1993)
 axis(2, las=1)
@@ -218,7 +218,7 @@ legend('topleft', pch=rep(16,2), col=rev(cl),
     legend=c('Hunting mortality', 'Background mortality'), bty='n')
 
 plot(out1$mean$f, x=2:6, ylim=c(0,1.2), xlim=c(1-d, 6+d), type="b",
-    pch=16, axes=F, ylab="Probability", xlab=NA, col=cl[1])
+    pch=16, axes=FALSE, ylab="Probability", xlab=NA, col=cl[1])
 segments(2:6, out1$q2.5$f, 2:6, out1$q97.5$f, col=cl[1])
 axis(1, at=1:6, labels = 1988:1993)
 axis(2, las=1, at=c(0, 0.2, 0.4, 0.6, 0.8, 1), labels = c(0, 0.2, 0.4, 0.6, 0.8, 1))
@@ -226,6 +226,7 @@ points(y=apply(s.star, 2, mean), x=1:6, type="b", pch=16, col=cl[2])
 segments(1:6, apply(s.star, 2, qu)[1,], 1:6, apply(s.star, 2, qu)[2,], col=cl[2])
 legend('topleft', pch=c(16,16), col=rev(cl),
     legend=c('Annual survival', 'Recruitment'), bty='n')
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 17.4 ~~~~
@@ -236,8 +237,8 @@ qu <- function(x) quantile(x, c(0.025, 0.975))
 # Calculate the number of harvested elk
 H <- out1$sims.list$Ntot * out1$sims.list$h
 
-par(mar=c(3.5, 5, 1, 1), las=1)
-z <- cbind(out1$sims.list$Ntot[,1], H[,1], out1$sims.list$Ntot[,2], H[,2],  ### FIXME
+op <- par(mar=c(3.5, 5, 1, 1), las=1)
+z <- cbind(out1$sims.list$Ntot[,1], H[,1], out1$sims.list$Ntot[,2], H[,2],  # ~~~ FIXME
     out1$sims.list$Ntot[,3], H[,3], out1$sims.list$Ntot[,4], H[,4],
     out1$sims.list$Ntot[,5], H[,5], out1$sims.list$Ntot[,6], H[,6])
 a <- barplot(apply(z, 2, mean), space = rep(c(0.5,0.1), 6), ylim = c(0, 3000),
@@ -248,6 +249,7 @@ segments(a, apply(z, 2, qu)[1,], a, apply(z, 2, qu)[2,], col='black')
 legend('topleft', pch=c(15,15), legend=c('Pre-hunting population', 'Harvested'),
     bty='n', col=cl, pt.cex=1.75)
 segments(a[1]-0.55, 0, a[12]+0.55, 0)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 17.7 Prior sensitivity analysis
@@ -293,7 +295,7 @@ ni <- 250000; nt <- 20; nb <- 50000; nc <- 3; na <- 5000
 
 # Call JAGS from R (ART 4 min) and check convergence
 out2 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
 
 
 # Prior Poisson 3 (P3): h = 0.125
@@ -333,7 +335,7 @@ ni <- 250000; nt <- 20; nb <- 50000; nc <- 3; na <- 5000
 
 # Call JAGS from R (ART 4 min) and check convergence
 out3 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
 
 
 # Discrete uniform prior (U)
@@ -365,64 +367,66 @@ up <- 1.5 * n
 pinit <- dUnif(lower=lo, upper=up)
 
 # Bundle data
-jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R), n.years=ncol(C), n.age=nrow(C), p=pinit, up=round(up)))
+jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R),
+    n.years=ncol(C), n.age=nrow(C), p=pinit, up=round(up)))
 
 
 # Write JAGS model file
 cat(file = "model2.txt", "
 model {
-# Priors and linear models
-for (t in 1:(n.years-1)){
-  f[t] ~ dunif(0, 1)
-}
-for (t in 1:n.years){
-  s[t] ~ dunif(0, 1)
-  h[t] ~ dunif(0, 1)
-  r[t] ~ dunif(0, 1)
-}
+  # Priors and linear models
+  for (t in 1:(n.years-1)){
+    f[t] ~ dunif(0, 1)
+  }
+  for (t in 1:n.years){
+    s[t] ~ dunif(0, 1)
+    h[t] ~ dunif(0, 1)
+    r[t] ~ dunif(0, 1)
+  }
 
-# Age-at-harvest data (state-space model)
-# Model for the initial population size: discrete uniform priors
-for (i in 1:17) {
-  N[i,1] ~ dcat(p[i, 1:up[i]])
-}
-# Process model over time: our model of population dynamics
-for (t in 1:(n.years-1)){
-  N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
-  for (a in 2:n.age){
-    N[a,t+1] ~ dbin((1-h[t]) * s[t], N[a-1,t])
-  } #a
-} #t
+  # Age-at-harvest data (state-space model)
+  # Model for the initial population size: discrete uniform priors
+  for (i in 1:17) {
+    N[i,1] ~ dcat(p[i, 1:up[i]])
+  }
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.years-1)){
+    N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
+    for (a in 2:n.age){
+      N[a,t+1] ~ dbin((1-h[t]) * s[t], N[a-1,t])
+    } #a
+  } #t
 
-# Derived quantity: total year-specific population size
-for (t in 1:n.years){
-  Ntot[t] <- sum(N[,t])
-}
+  # Derived quantity: total year-specific population size
+  for (t in 1:n.years){
+    Ntot[t] <- sum(N[,t])
+  }
 
-# Observation model
-for (t in 1:n.years){
-  for (a in 1:n.age){
-    C[a,t] ~ dbin(h[t] * r[t], N[a,t])
-  } #a
-} #t
+  # Observation model
+  for (t in 1:n.years){
+    for (a in 1:n.age){
+      C[a,t] ~ dbin(h[t] * r[t], N[a,t])
+    } #a
+  } #t
 
-# Hunter survey data (logistic regression model)
-for (t in 1:n.years){
-  b[t] ~ dbin(r[t], a[t])
-}
+  # Hunter survey data (logistic regression model)
+  for (t in 1:n.years){
+    b[t] ~ dbin(r[t], a[t])
+  }
 
-# Radio tracking data (multinomial model)
-for (t in 1:n.years){
-  R[,t] ~ dmulti(prt[,t], total[t])
-  prt[1,t] <- h[t]
-  prt[2,t] <- (1-h[t]) * (1-s[t])
-  prt[3,t] <- (1-h[t]) * s[t]
-}
+  # Radio tracking data (multinomial model)
+  for (t in 1:n.years){
+    R[,t] ~ dmulti(prt[,t], total[t])
+    prt[1,t] <- h[t]
+    prt[2,t] <- (1-h[t]) * (1-s[t])
+    prt[3,t] <- (1-h[t]) * s[t]
+  }
 }
 ")
 
 # Initial values
-inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), h=runif(jags.data$n.years, 0.05, 0.15))}
+inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1),
+    h=runif(jags.data$n.years, 0.05, 0.15))}
 
 # Parameters monitored
 parameters <- c("h", "s", "f", "r", "Ntot", "N")
@@ -433,15 +437,16 @@ ni <- 25000; nt <- 2; nb <- 5000; nc <- 3; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 16 min) and check convergence
 out4 <- jags(jags.data, inits, parameters, "model2.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Fig. 17.6 ~~~~
 library(scales)
 cl <- viridis_pal(option='E')(20)[c(18,11,5,1)]
-par(mfrow=c(2,1), las=1, mar=c(3,4,1,1))
+op <- par(mfrow=c(2,1), las=1, mar=c(3,4,1,1))
 d <- 0.1
-plot(x=(1:6)-1.5*d, y=out1$mean$Ntot, ylim = c(0, 4000), xlim=c(1-1.5*d, 6+1.5*d), pch=16, axes=F, xlab=NA, ylab=expression(paste("Population size (", italic(N)[tot],")")), col=cl[1])
+plot(x=(1:6)-1.5*d, y=out1$mean$Ntot, ylim = c(0, 4000), xlim=c(1-1.5*d, 6+1.5*d), pch=16,
+    axes=FALSE, xlab=NA, ylab=expression(paste("Population size (", italic(N)[tot],")")), col=cl[1])
 segments((1:6)-1.5*d, out1$q2.5$Ntot, (1:6)-1.5*d, out1$q97.5$Ntot, col=cl[1])
 points(x=(1:6)-0.5*d, y=out2$mean$Ntot, pch=16, col=cl[2])
 segments((1:6)-0.5*d, out2$q2.5$Ntot, (1:6)-0.5*d, out2$q97.5$Ntot, col=cl[2])
@@ -452,7 +457,8 @@ segments((1:6)+1.5*d, out4$q2.5$Ntot, (1:6)+1.5*d, out4$q97.5$Ntot, col=cl[4])
 axis(1, at=1:6, labels=1988:1993)
 axis(2)
 
-plot(x=(1:6)-1.5*d, y=out1$mean$h, ylim = c(0, 0.31), xlim=c(1-1.5*d, 6+1.5*d), pch=16, axes=F, xlab=NA, ylab=expression(paste("Hunting mortality (", italic(h), ")")), col=cl[1])
+plot(x=(1:6)-1.5*d, y=out1$mean$h, ylim = c(0, 0.31), xlim=c(1-1.5*d, 6+1.5*d), pch=16,
+    axes=FALSE, xlab=NA, ylab=expression(paste("Hunting mortality (", italic(h), ")")), col=cl[1])
 segments((1:6)-1.5*d, out1$q2.5$h, (1:6)-1.5*d, out1$q97.5$h, col=cl[1])
 points(x=(1:6)-0.5*d, y=out2$mean$h, pch=16, col=cl[2])
 segments((1:6)-0.5*d, out2$q2.5$h, (1:6)-0.5*d, out2$q97.5$h, col=cl[2])
@@ -462,8 +468,11 @@ points(x=(1:6)+1.5*d, y=out4$mean$h, pch=16, col=cl[4])
 segments((1:6)+1.5*d, out4$q2.5$h, (1:6)+1.5*d, out4$q97.5$h, col=cl[4])
 axis(1, at=1:6, labels=1988:1993)
 axis(2)
-legend(x=0.75, y=0.33, pch=rep(16,2), col=cl[1:2], legend=c(expression('P'[1]),expression('P'[2])), bty='n')
-legend(x=1.5, y=0.33, , inset = 0.1, pch=rep(16,2), col=cl[3:4], legend=c(expression('P'[3]), 'U'), bty='n')
+legend(x=0.75, y=0.33, pch=rep(16,2), col=cl[1:2],
+    legend=c(expression('P'[1]),expression('P'[2])), bty='n')
+legend(x=1.5, y=0.33, , inset = 0.1, pch=rep(16,2), col=cl[3:4],
+    legend=c(expression('P'[3]), 'U'), bty='n')
+par(op)
 
 # Fig. 17.6
 library(scales)
@@ -471,7 +480,8 @@ cl <- viridis_pal(option='E')(20)[c(18,11,5,1)]
 qu <- function(x) quantile(x, c(0.025, 0.975))
 
 # Calculate annual population growth rates
-lam1 <- lam2 <- lam3 <- lam4 <- matrix(NA, ncol=ncol(out1$sims.list$Ntot)-1, nrow=nrow(out1$sims.list$Ntot))
+lam1 <- lam2 <- lam3 <- lam4 <-
+    matrix(NA, ncol=ncol(out1$sims.list$Ntot)-1, nrow=nrow(out1$sims.list$Ntot))
 for (t in 1:5){
   lam1[,t] <- out1$sims.list$Ntot[,t+1] / out1$sims.list$Ntot[,t]
   lam2[,t] <- out2$sims.list$Ntot[,t+1] / out2$sims.list$Ntot[,t]
@@ -479,10 +489,11 @@ for (t in 1:5){
   lam4[,t] <- out4$sims.list$Ntot[,t+1] / out4$sims.list$Ntot[,t]
 }
 
-par(las = 1, mar = c(3,4,1,1))
+op <- par(las = 1, mar = c(3,4,1,1))
 d <- 0.1
 xa <- c(1.5, 2.5, 3.5, 4.5, 5.5)
-plot(x=xa-1.5*d, y=apply(lam1, 2, mean), type='b', pch=16, xlim=c(1,6), ylim=c(0.6, 1.2), col=cl[1], axes=F, xlab=NA, ylab='Population growth rate')
+plot(x=xa-1.5*d, y=apply(lam1, 2, mean), type='b', pch=16, xlim=c(1,6), ylim=c(0.6, 1.2),
+    col=cl[1], axes=FALSE, xlab=NA, ylab='Population growth rate')
 segments(xa-1.5*d, apply(lam1, 2, qu)[1,], xa-1.5*d, apply(lam1, 2, qu)[2,], col=cl[1])
 points(x=xa-0.5*d, y=apply(lam2, 2, mean), type='b', pch=16, col=cl[2])
 segments(xa-0.5*d, apply(lam2, 2, qu)[1,], xa-0.5*d, apply(lam2, 2, qu)[2,], col=cl[2])
@@ -492,9 +503,10 @@ points(x=xa+1.5*d, y=apply(lam4, 2, mean), type='b', pch=16, col=cl[4])
 segments(xa+1.5*d, apply(lam4, 2, qu)[1,], xa+1.5*d, apply(lam4, 2, qu)[2,], col=cl[4])
 axis(2)
 axis(1, at=1:6, labels=1988:1993)
-legend(x=2.5, y=0.75, pch=rep(16,2), col=cl[1:2], legend=c(expression('P'[1]),expression('P'[2])), bty='n')
+legend(x=2.5, y=0.75, pch=rep(16,2), col=cl[1:2],
+    legend=c(expression('P'[1]),expression('P'[2])), bty='n')
 legend(x=3.5, y=0.75, pch=rep(16,2), col=cl[3:4], legend=c(expression('P'[3]), 'U'), bty='n')
-
+par(op)
 
 
 # Define an IPM that uses a uniform prior for the initial population size. In principle this is the same model as model2.txt, however, instead of using the categorical distribution in JAGS to create a discrete uniform prior, we use here the uniform distribution and round the simulated number to the nearest integer. This is computationally more efficient, and is expected to have no impact on the results.
@@ -502,55 +514,55 @@ legend(x=3.5, y=0.75, pch=rep(16,2), col=cl[3:4], legend=c(expression('P'[3]), '
 # Write JAGS model file
 cat(file = "model3.txt", "
 model {
-# Priors and linear models
-for (t in 1:(n.years-1)){
-  f[t] ~ dunif(0, 1)
-}
-for (t in 1:n.years){
-  s[t] ~ dunif(0, 1)
-  h[t] ~ dunif(0, 1)
-  r[t] ~ dunif(0, 1)
-}
+  # Priors and linear models
+  for (t in 1:(n.years-1)){
+    f[t] ~ dunif(0, 1)
+  }
+  for (t in 1:n.years){
+    s[t] ~ dunif(0, 1)
+    h[t] ~ dunif(0, 1)
+    r[t] ~ dunif(0, 1)
+  }
 
-# Age-at-harvest data (state-space model)
-# Model for the initial population size: rounded uniform priors
-for (a in 1:n.age){
-  n[a] ~ dunif(0.5, upper+0.4999)    # Ensures that 1 and upper are chosen with the same probability as values 2 to 999
-  N[a,1] <- round(n[a])
-}
-
-# Process model over time: our model of population dynamics
-for (t in 1:(n.years-1)){
-  N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
-  for (a in 2:n.age){
-    N[a,t+1] ~ dbin((1-h[t]) * s[t], N[a-1,t])
-  } #a
-} #t
-
-# Derived quantity: total year-specific population size
-for (t in 1:n.years){
-  Ntot[t] <- sum(N[,t])
-}
-
-# Observation model
-for (t in 1:n.years){
+  # Age-at-harvest data (state-space model)
+  # Model for the initial population size: rounded uniform priors
   for (a in 1:n.age){
-    C[a,t] ~ dbin(h[t] * r[t], N[a,t])
-  } #a
-} #t
+    n[a] ~ dunif(0.5, upper+0.4999)    # Ensures that 1 and upper are chosen with the same probability as values 2 to 999
+    N[a,1] <- round(n[a])
+  }
 
-# Hunter survey data (logistic regression model)
-for (t in 1:n.years){
-  b[t] ~ dbin(r[t], a[t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.years-1)){
+    N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
+    for (a in 2:n.age){
+      N[a,t+1] ~ dbin((1-h[t]) * s[t], N[a-1,t])
+    } #a
+  } #t
 
-# Radio tracking data (multinomial model)
-for (t in 1:n.years){
-  R[,t] ~ dmulti(prt[,t], total[t])
-  prt[1,t] <- h[t]
-  prt[2,t] <- (1-h[t]) * (1-s[t])
-  prt[3,t] <- (1-h[t]) * s[t]
-}
+  # Derived quantity: total year-specific population size
+  for (t in 1:n.years){
+    Ntot[t] <- sum(N[,t])
+  }
+
+  # Observation model
+  for (t in 1:n.years){
+    for (a in 1:n.age){
+      C[a,t] ~ dbin(h[t] * r[t], N[a,t])
+    } #a
+  } #t
+
+  # Hunter survey data (logistic regression model)
+  for (t in 1:n.years){
+    b[t] ~ dbin(r[t], a[t])
+  }
+
+  # Radio tracking data (multinomial model)
+  for (t in 1:n.years){
+    R[,t] ~ dmulti(prt[,t], total[t])
+    prt[1,t] <- h[t]
+    prt[2,t] <- (1-h[t]) * (1-s[t])
+    prt[3,t] <- (1-h[t]) * s[t]
+  }
 }
 ")
 
@@ -559,7 +571,8 @@ for (t in 1:n.years){
 # Fit models
 
 # 1. Original data set; uniform prior U(1, 1000)
-jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R), n.years=ncol(C), n.age=nrow(C), upper=1000))
+jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R),
+    n.years=ncol(C), n.age=nrow(C), upper=1000))
 
 # Initial values
 # We need good initial values for the population size in the first year
@@ -582,7 +595,8 @@ N1 <- elk$C[1,1] / (h * r)
 # Compute age-specific population sizes in first year
 n <- N1 * revec / revec[1]
 
-inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n), h=runif(jags.data$n.years, 0.05, 0.1))}
+inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n),
+    h=runif(jags.data$n.years, 0.05, 0.1))}
 
 # Parameters monitored
 parameters <- c("h", "s", "f", "r", "Ntot", "N")
@@ -593,14 +607,16 @@ ni <- 25000; nt <- 2; nb <- 5000; nc <- 3; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 4 min) and check convergence
 out5 <- jags(jags.data, inits, parameters, "model3.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
 
 
 # 2. Original data set; uniform prior U(1, 3000)
-jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R), n.years=ncol(C), n.age=nrow(C), upper=3000))
+jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R),
+    n.years=ncol(C), n.age=nrow(C), upper=3000))
 
 # Initial values
-inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n), h=runif(jags.data$n.years, 0.05, 0.1))}
+inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n),
+    h=runif(jags.data$n.years, 0.05, 0.1))}
 
 # Parameters monitored
 parameters <- c("h", "s", "f", "r", "Ntot", "N")
@@ -611,14 +627,16 @@ ni <- 160000; nt <- 15; nb <- 10000; nc <- 3; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 27 min) and check convergence
 out6 <- jags(jags.data, inits, parameters, "model3.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
 
 
 # 3. 20 times more radio tracking data; uniform prior U(1, 1000)
-jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R*20, total=colSums(R*20), n.years=ncol(C), n.age=nrow(C), upper=1000))
+jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R*20, total=colSums(R*20),
+    n.years=ncol(C), n.age=nrow(C), upper=1000))
 
 # Initial values
-inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n), h=runif(jags.data$n.years, 0.05, 0.1))}
+inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n),
+    h=runif(jags.data$n.years, 0.05, 0.1))}
 
 # Parameters monitored
 parameters <- c("h", "s", "f", "r", "Ntot", "N")
@@ -629,14 +647,16 @@ ni <- 25000; nt <- 2; nb <- 5000; nc <- 3; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 4 min) and check convergence
 out7 <- jags(jags.data, inits, parameters, "model3.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
 
 
 # 4. 20 times more radio tracking data; uniform prior U(1, 3000)
-jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R*20, total=colSums(R*20), n.years=ncol(C), n.age=nrow(C), upper=3000))
+jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R*20, total=colSums(R*20),
+    n.years=ncol(C), n.age=nrow(C), upper=3000))
 
 # Initial values
-inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n), h=runif(jags.data$n.years, 0.05, 0.1))}
+inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), n=round(n),
+    h=runif(jags.data$n.years, 0.05, 0.1))}
 
 # Parameters monitored
 parameters <- c("h", "s", "f", "r", "Ntot", "N")
@@ -647,7 +667,7 @@ ni <- 25000; nt <- 2; nb <- 5000; nc <- 3; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 4 min) and check convergence
 out8 <- jags(jags.data, inits, parameters, "model3.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
 
 
 save(out1, out2, out3, out4, out5, out6, out7, out8, file="ElkResults.Rdata")
@@ -655,18 +675,19 @@ save(out1, out2, out3, out4, out5, out6, out7, out8, file="ElkResults.Rdata")
 
 
 # ~~~~ Fig. 13.7 ~~~~
-# load('ElkResults2.Rdata') # ????
 load('ElkResults.Rdata')
 library(scales)
 cl <- c(viridis_pal(option='E')(20)[c(18,8)], 'red')
 
+op <- par("mfrow", "mar")
 layout(matrix(1:16, 4, 4, byrow=TRUE), widths=c(1.1, 1, 1, 1), heights=c(1.1, 1, 1, 1), TRUE)
 
 up <- 1000
 upy <- 0.006
 
 par(mar=c(3,3,2,1))
-hist(out5$sims.list$N[,1,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out5$sims.list$N[,1,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out5$mean$N[1,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out5$sd$N[1,1])), pos=4)
@@ -675,7 +696,8 @@ mtext('U(1,1000)', side=2, line=1)
 mtext('1y old', side=3, line=0.5)
 
 par(mar=c(3,2,2,1))
-hist(out5$sims.list$N[,2,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out5$sims.list$N[,2,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out5$mean$N[2,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out5$sd$N[2,1])), pos=4)
@@ -683,7 +705,8 @@ axis(1)
 mtext('2y old', side=3, line=0.5)
 
 par(mar=c(3,2,2,1))
-hist(out5$sims.list$N[,3,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out5$sims.list$N[,3,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out5$mean$N[3,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out5$sd$N[3,1])), pos=4)
@@ -691,7 +714,8 @@ axis(1)
 mtext('3y old', side=3, line=0.5)
 
 par(mar=c(3,2,2,1))
-hist(out5$sims.list$N[,4,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out5$sims.list$N[,4,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=600, y=0.9*upy, labels=bquote(bar(x) == .(round(out5$mean$N[4,1]))), pos=4)
 text(x=600, y=0.8*upy, labels=paste('SD: ', round(out5$sd$N[4,1])), pos=4)
@@ -701,7 +725,8 @@ mtext('4y old', side=3, line=0.5)
 par(mar=c(3,3,1,1))
 up <- 3000
 upy <- 0.0015
-hist(out6$sims.list$N[,1,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out6$sims.list$N[,1,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out6$mean$N[1,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out6$sd$N[1,1])), pos=4)
@@ -709,21 +734,24 @@ axis(1)
 mtext('U(1,3000)', side=2, line=1)
 
 par(mar=c(3,2,1,1))
-hist(out6$sims.list$N[,2,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out6$sims.list$N[,2,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out6$mean$N[2,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out6$sd$N[2,1])), pos=4)
 axis(1)
 
 par(mar=c(3,2,1,1))
-hist(out6$sims.list$N[,3,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out6$sims.list$N[,3,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out6$mean$N[3,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out6$sd$N[3,1])), pos=4)
 axis(1)
 
 par(mar=c(3,2,1,1))
-hist(out6$sims.list$N[,4,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out6$sims.list$N[,4,1], col=cl[1], border=cl[1], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=1700, y=0.9*upy, labels=bquote(bar(x) == .(round(out6$mean$N[4,1]))), pos=4)
 text(x=1700, y=0.8*upy, labels=paste('SD: ', round(out6$sd$N[4,1])), pos=4)
@@ -732,7 +760,8 @@ axis(1)
 par(mar=c(3,3,1,1))
 up <- 1000
 upy <- 0.008
-hist(out7$sims.list$N[,1,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out7$sims.list$N[,1,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out7$mean$N[1,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out7$sd$N[1,1])), pos=4)
@@ -740,21 +769,24 @@ axis(1)
 mtext('U(1,1000)', side=2, line=1)
 
 par(mar=c(3,2,1,1))
-hist(out7$sims.list$N[,2,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out7$sims.list$N[,2,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=0, y=0.9*upy, labels=bquote(bar(x) == .(round(out7$mean$N[2,1]))), pos=4)
 text(x=0, y=0.8*upy, labels=paste('SD: ', round(out7$sd$N[2,1])), pos=4)
 axis(1)
 
 par(mar=c(3,2,1,1))
-hist(out7$sims.list$N[,3,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out7$sims.list$N[,3,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=500, y=0.9*upy, labels=bquote(bar(x) == .(round(out7$mean$N[3,1]))), pos=4)
 text(x=500, y=0.8*upy, labels=paste('SD: ', round(out7$sd$N[3,1])), pos=4)
 axis(1)
 
 par(mar=c(3,2,1,1))
-hist(out7$sims.list$N[,4,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,1000, by=50))
+hist(out7$sims.list$N[,4,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,1000, by=50))
 abline(h=1/up, col=cl[3])
 text(x=500, y=0.9*upy, labels=bquote(bar(x) == .(round(out7$mean$N[4,1]))), pos=4)
 text(x=500, y=0.8*upy, labels=paste('SD: ', round(out7$sd$N[4,1])), pos=4)
@@ -763,7 +795,8 @@ axis(1)
 par(mar=c(3,3,1,1))
 up <- 3000
 upy <- 0.006
-hist(out8$sims.list$N[,1,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out8$sims.list$N[,1,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=1000, y=0.9*upy, labels=bquote(bar(x) == .(round(out8$mean$N[1,1]))), pos=4)
 text(x=1000, y=0.8*upy, labels=paste('SD: ', round(out8$sd$N[1,1])), pos=4)
@@ -771,25 +804,29 @@ axis(1)
 mtext('U(1,3000)', side=2, line=1)
 
 par(mar=c(3,2,1,1))
-hist(out8$sims.list$N[,2,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out8$sims.list$N[,2,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=1000, y=0.9*upy, labels=bquote(bar(x) == .(round(out8$mean$N[2,1]))), pos=4)
 text(x=1000, y=0.8*upy, labels=paste('SD: ', round(out8$sd$N[2,1])), pos=4)
 axis(1)
 
 par(mar=c(3,2,1,1))
-hist(out8$sims.list$N[,3,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out8$sims.list$N[,3,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=1500, y=0.9*upy, labels=bquote(bar(x) == .(round(out8$mean$N[3,1]))), pos=4)
 text(x=1500, y=0.8*upy, labels=paste('SD: ', round(out8$sd$N[3,1])), pos=4)
 axis(1)
 
 par(mar=c(3,2,1,1))
-hist(out8$sims.list$N[,4,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up), ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=F, breaks=seq(0,3000, by=150))
+hist(out8$sims.list$N[,4,1], col=cl[2], border=cl[2], freq=FALSE, xlim=c(0, up),
+    ylim=c(0, upy), main=NA, ylab=NA, xlab=NA, axes=FALSE, breaks=seq(0,3000, by=150))
 abline(h=1/up, col=cl[3])
 text(x=1500, y=0.9*upy, labels=bquote(bar(x) == .(round(out8$mean$N[4,1]))), pos=4)
 text(x=1500, y=0.8*upy, labels=paste('SD: ', round(out8$sd$N[4,1])), pos=4)
 axis(1)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 17.8 Specification of the survival process with hazard rates
@@ -817,73 +854,75 @@ N1 <- elk$C[1,1] / (h * r)
 n <- N1 * revec / revec[1]
 
 # Bundle data and produce data overview
-jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R), n.years=ncol(C), n.age=nrow(C), n=n))
+jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R),
+    n.years=ncol(C), n.age=nrow(C), n=n))
 
 # Write JAGS model file
 cat(file = "model3.txt", "
 model {
-# Priors and linear models
-for (t in 1:(n.years-1)){
-  f[t] ~ dunif(0, 1)
-}
-for (t in 1:n.years){
-  # Priors for hazard rates
-  mh[t] ~ dgamma(0.1, 0.1)       # Hunting mortality hazard rate
-  mo[t] ~ dgamma(0.1, 0.1)       # Background mortality hazard rate
+  # Priors and linear models
+  for (t in 1:(n.years-1)){
+    f[t] ~ dunif(0, 1)
+  }
+  for (t in 1:n.years){
+    # Priors for hazard rates
+    mh[t] ~ dgamma(0.1, 0.1)       # Hunting mortality hazard rate
+    mo[t] ~ dgamma(0.1, 0.1)       # Background mortality hazard rate
 
-  # Calculate probabilities from hazard rates
-  s[t] <- exp(-(mh[t] + mo[t]))                    # Overall survival
-  h[t] <- (1 - s[t]) * (mh[t] / (mh[t] + mo[t]))   # Hunting mortality
-  o[t] <- (1 - s[t]) * (mo[t] / (mh[t] + mo[t]))   # Background mortality
+    # Calculate probabilities from hazard rates
+    s[t] <- exp(-(mh[t] + mo[t]))                    # Overall survival
+    h[t] <- (1 - s[t]) * (mh[t] / (mh[t] + mo[t]))   # Hunting mortality
+    o[t] <- (1 - s[t]) * (mo[t] / (mh[t] + mo[t]))   # Background mortality
 
-  # Prior for reporting rate
-  r[t] ~ dunif(0, 1)
-}
+    # Prior for reporting rate
+    r[t] ~ dunif(0, 1)
+  }
 
-# Age-at-harvest data (state-space model)
-# Model for the initial population size: Poisson priors
-for (a in 1:n.age){
-  N[a,1] ~ dpois(n[a])
-}
-
-# Process model over time: our model of population dynamics
-for (t in 1:(n.years-1)){
-  N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
-  for (a in 2:n.age){
-    N[a,t+1] ~ dbin(s[t], N[a-1,t])
-  } #a
-} #t
-
-# Derived quantity: total year-specific population size
-for (t in 1:n.years){
-  Ntot[t] <- sum(N[,t])
-}
-
-# Observation model
-for (t in 1:n.years){
+  # Age-at-harvest data (state-space model)
+  # Model for the initial population size: Poisson priors
   for (a in 1:n.age){
-    C[a,t] ~ dbin(h[t] * r[t], N[a,t])
-  } #a
-} #t
+    N[a,1] ~ dpois(n[a])
+  }
 
-# Hunter survey data (logistic regression model)
-for (t in 1:n.years){
-  b[t] ~ dbin(r[t], a[t])
-}
+  # Process model over time: our model of population dynamics
+  for (t in 1:(n.years-1)){
+    N[1,t+1] ~ dpois((Ntot[t] - N[1,t]) * f[t])
+    for (a in 2:n.age){
+      N[a,t+1] ~ dbin(s[t], N[a-1,t])
+    } #a
+  } #t
 
-# Radio tracking data (multinomial model)
-for (t in 1:n.years){
-  R[,t] ~ dmulti(prt[,t], total[t])
-  prt[1,t] <- h[t]
-  prt[2,t] <- o[t]
-  prt[3,t] <- s[t]
-}
+  # Derived quantity: total year-specific population size
+  for (t in 1:n.years){
+    Ntot[t] <- sum(N[,t])
+  }
+
+  # Observation model
+  for (t in 1:n.years){
+    for (a in 1:n.age){
+      C[a,t] ~ dbin(h[t] * r[t], N[a,t])
+    } #a
+  } #t
+
+  # Hunter survey data (logistic regression model)
+  for (t in 1:n.years){
+    b[t] ~ dbin(r[t], a[t])
+  }
+
+  # Radio tracking data (multinomial model)
+  for (t in 1:n.years){
+    R[,t] ~ dmulti(prt[,t], total[t])
+    prt[1,t] <- h[t]
+    prt[2,t] <- o[t]
+    prt[3,t] <- s[t]
+  }
 }
 ")
 
 
 # Initial values
-inits <- function() {list(mh=runif(jags.data$n.years, 0.01, 0.1), mo=runif(jags.data$n.years, 0.01, 0.1))}
+inits <- function() {list(mh=runif(jags.data$n.years, 0.01, 0.1),
+    mo=runif(jags.data$n.years, 0.01, 0.1))}
 
 # Parameters monitored
 parameters <- c("mh", "mo", "h", "s", "o", "f", "r", "Ntot", "N")
@@ -893,8 +932,9 @@ ni <- 450000; nt <- 40; nb <- 50000; nc <- 3; na <- 5000
 
 # Call JAGS from R (ART 9 min) and check convergence
 out9 <- jags(jags.data, inits, parameters, "model3.txt",
-    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = T)
-par(mfrow=c(3, 3)); traceplot(out9)
+    n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
+op <- par(mfrow=c(3, 3)); traceplot(out9)
+par(op)
 
 print(out9, 3)
 

@@ -32,7 +32,7 @@ eps <- rnorm(nyears, 0, sqrt(sig2.y)) # Draw random residuals
 y <- N + eps             # Add residual (error) to value of true state
 
 # ~~~~ code for Figure 4.1 ~~~~
-par(cex=1.25)
+op <- par(cex=1.25)
 ylim <- c(min(c(N, y)), max(c(N, y)))
 plot(N, xlab='Year', ylab='Number', type='b', pch=16, ylim=ylim, col='red', axes=FALSE)
 points(y, pch=16, col='black')
@@ -42,6 +42,7 @@ axis(1, at=c(5, 10, 15, 20, 25), tcl=-0.5, labels=c(5, 10, 15, 20, 25))
 axis(2, las=1)
 legend('topleft', c('True value of state', 'Observations'),
     pch=16, col=c('red', 'black'), bty='n', cex=1)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 library(IPMbook); library(jagsUI)
@@ -68,11 +69,11 @@ model {
 
   # Likelihood
   # Model for the initial population size: uniform priors
-  N[1] ~ dunif(0, 500)            
+  N[1] ~ dunif(0, 500)
 
   # Process model over time: our model of population dynamics
   for (t in 1:(T-1)){
-    lambda[t] ~ dnorm(mu.lam, tau.lam) 
+    lambda[t] ~ dnorm(mu.lam, tau.lam)
     N[t+1] <- N[t] * lambda[t]
   }
 
@@ -84,7 +85,7 @@ model {
 ")
 
 # Initial values
-inits <- function(){list(sig.lam = runif(1, 0, 1))} 
+inits <- function(){list(sig.lam = runif(1, 0, 1))}
 
 # Parameters monitored
 parameters <- c("lambda", "mu.lam", "sig2.y", "sig2.lam", "sig.y", "sig.lam", "N")
@@ -95,7 +96,8 @@ ni <- 200000; nb <- 10000; nc <- 3; nt <- 100; na <- 5000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(3, 3)); traceplot(out1)   # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out1)   # Not shown
+par(op)
 print(out1, 3)
 
               # mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
@@ -116,7 +118,7 @@ print(out1, 3)
 # ~~~~ code for Figure 4.2 ~~~~
 # Plot of true and observed and estimated states
 library(scales)
-par(cex=1.25)
+op <- par(cex=1.25)
 ylim <- c(min(c(N, y)), max(c(N, y)))
 plot(N, xlab='Year', ylab='Number', type='n', pch=16, ylim=ylim, col='red', axes=FALSE)
 polygon(c(1:nyears, nyears:1), c(out1$q2.5$N, rev(out1$q97.5$N)),
@@ -130,7 +132,7 @@ segments(1:nyears, N, 1:nyears, y, col='black')
 points(out1$mean$N, pch=16, type='b', col='blue')
 legend('topleft', c('True value of state', 'Observations', 'Estimate of state'),
     pch=16, col = c('red', 'black', 'blue'), bty='n', lwd=rep(1, 3))
-
+par(op)
 
 # 4.3.2 Effects of ‘evil’ patterns in the measurement error
 #       on a Gaussian state-space model
@@ -150,7 +152,7 @@ y2 <- rbinom(length(N), round(N), p2)
 # Plot both cases along with N
 library(scales)
 co <- viridis_pal(option='E')(20)[c(6, 16)]
-par(mar=c(4.5, 4.2, 1, 1), las=1)
+op <- par(mar=c(4.5, 4.2, 1, 1), las=1)
 ylim <- c(min(c(N, y)), max(c(N, y)))
 plot(N, xlab='Year', ylab='Number', type='b', pch=16, ylim=ylim, col='red', axes=FALSE)
 points(y1, pch=16, col=co[1], type='b')
@@ -161,6 +163,7 @@ axis(2, las=1)
 legend('topleft', c('True value of state', 'Observations (Problem case 1)',
     'Observations (Problem case 2)'), pch=c(16, 16, 16),
     col=c('red', co), bty='n', lwd=rep(1, 3))
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Bundle the two new data sets
@@ -177,8 +180,9 @@ out2 <- jags(jags.data1, inits, parameters, "model1.txt",
 out3 <- jags(jags.data2, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 
-par(mfrow=c(3, 3)); traceplot(out2)   # Not shown
+op <- par(mfrow=c(3, 3)); traceplot(out2)   # Not shown
 par(mfrow=c(3, 3)); traceplot(out3)   # Not shown
+par(op)
 print(out2, 3)                        # Not shown
 print(out3, 3)                        # Not shown
 

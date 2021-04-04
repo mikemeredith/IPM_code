@@ -3,7 +3,6 @@
 # ------------------------------------------------------
 # Code from MS submitted to publisher.
 
-library(IPMbook) ; library(jagsUI)
 
 # 4.5 Models for survival surveys
 # ===============================

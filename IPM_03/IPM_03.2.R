@@ -21,14 +21,14 @@ N <- numeric(14)
 N[1] <- 10
 for (i in 2:14){
   if (i %% 2 == 0){   # even numbers
-    N[i] <- N[i-1] / 2 * f1 + N[i-1] / 2 * fa}
-  else{               # odd numbers
+    N[i] <- N[i-1] / 2 * f1 + N[i-1] / 2 * fa
+  } else {               # odd numbers
     N[i] <- N[i-2] * sa + N[i-1] * sj
   }
 }
 x <- c(rbind(1:7, 1:7 + 0.1))
 
-plot(x=x, y=N, type="l", ylab="Total population size", ylim=c(7, 18), 
+plot(x=x, y=N, type="l", ylab="Total population size", ylim=c(7, 18),
     col="blue", lwd=2, axes=FALSE, xlab="Year")
 axis(2, las=1)
 axis(1)

@@ -85,7 +85,8 @@ ni <- 60000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
 out13 <- jags(jags.data, inits, parameters, "model10.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-par(mfrow=c(2, 2));  traceplot(out13)    # Not shown
+op <- par(mfrow=c(2, 2));  traceplot(out13)    # Not shown
+par(op)
 print(out13, 3)
 
              # mean    sd     2.5%      50%    97.5% overlap0 f Rhat n.eff
@@ -98,7 +99,7 @@ co <- viridis_pal(option='E')(20)[c(2, 18)]
 cl <- c(alpha(co[1], 0.5), alpha(co[2], 0.5))
 breaks <- hist(c(out13$sims.list$rho1, out13$sims.list$rho2),
   breaks=60, plot=FALSE)$breaks
-par(las=1, mar=c(4.5,5,1,1), cex=1.2)
+op <- par(las=1, mar=c(4.5,5,1,1), cex=1.2)
 hist(out13$sims.list$rho1, breaks=breaks, col=cl[1],
     xlab=expression(paste('Estimate of mean productivity (', rho,')')),
     xlim=c(1.35, 2), border=NA, ylim=c(0, 1500), main=NA)
@@ -106,6 +107,7 @@ hist(out13$sims.list$rho2, breaks=breaks, col=cl[2], border=NA, add=TRUE)
 segments(1.5, 0, 1.5, 1300, lwd=2, col='red')
 legend(x=1.325, y=1550, pch=rep(15,2), col=cl,
     legend=c('Ignoring truncation', 'Accounting for truncation'), bty='n', pt.cex=1.2)
+par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Number of zeroes in data set corrupted by partial zero-truncation
