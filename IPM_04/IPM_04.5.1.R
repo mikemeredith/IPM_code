@@ -20,7 +20,7 @@ library(IPMbook) ; library(jagsUI)
 nmarked <- 10            # Number of marked individuals at each occasion
 nyears <- 11             # Number of years
 phi <- 0.8               # Constant apparent survival probability
-p <- 0.4                 # Constant tecapture probability
+p <- 0.4                 # Constant recapture probability
 
 # Determine occasion when an individual first captured and marked
 f <- rep(1:(nyears-1), each=nmarked)
