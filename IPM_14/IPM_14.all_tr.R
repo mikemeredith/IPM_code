@@ -205,6 +205,7 @@ parameters <- c("mean.phij", "mean.phia", "alpha", "gamma", "mean.omega",
 ni <- 4000; nb <- 1000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing
 
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
+set.seed(2)  # ~~~ to get the example of switching
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 

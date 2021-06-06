@@ -3,8 +3,6 @@
 # ----------------------------------------------------
 # Code from MS submitted to publisher.
 
-# Time of test run 33 secs, full run 3 mins
-
 library(IPMbook) ; library(jagsUI)
 
 # 3.4 Analysis of matrix population models with Markov Chain

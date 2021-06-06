@@ -1,6 +1,6 @@
 # IPM code
 
-The book *Integrated Population Modeling* by Michael Schaub and Marc Kéry, due for publication in July 2021, contains lots of R and BUGS code.
+The book *Integrated Population Modeling* by Michael Schaub and Marc Kéry, due for publication in September 2021, contains lots of R and BUGS code.
 
 The R package `IPMbook` has all the data sets and the custom functions used in the book. Commented code for the functions is on GitHub [here](https://github.com/mikemeredith/IPMbook).
 

@@ -347,6 +347,7 @@ parameters <- c("s", "ann.s", "mean.rho", "gamma", "mean.p", "sigma.rho",
 ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
 
 # Call JAGS (ART 5 min), check convergence and summarize posteriors
+set.seed(101) # Reproducible results without crashing
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 

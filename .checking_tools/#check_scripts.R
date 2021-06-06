@@ -31,8 +31,6 @@
     return(TRUE)  # skip check for functions (esp. nimble)
   }
   all.equal.jagsUI <- function(target, current, ...) {
-    # if(!target$parallel || !current$parallel)  ## fixed in devel version of jagsUI
-      # stop("Can't compare jagsUI output for serial run!")
     target$run.date <- NULL ; target$mcmc.info$elapsed.mins <- NULL
     current$run.date <- NULL ; current$mcmc.info$elapsed.mins <- NULL
     all.equal.list(target, current, ...)
