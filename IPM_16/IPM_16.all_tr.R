@@ -1,4 +1,4 @@
-# Schaub & Kery (2021) Integrated Population Modeling
+# Schaub & Kery (2021) Integrated Population Models
 # Chapter 16 : Barn swallow
 # -------------------------
 # Code from MS submitted to publisher.

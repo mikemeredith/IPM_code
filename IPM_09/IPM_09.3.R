@@ -1,4 +1,4 @@
-# Schaub & Kery (2021) Integrated Population Modeling
+# Schaub & Kery (2021) Integrated Population Models
 # Chapter 9 : Retrospective population analyses
 # ---------------------------------------------
 # Code from MS submitted to publisher.

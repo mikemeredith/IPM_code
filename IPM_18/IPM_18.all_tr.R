@@ -1,4 +1,4 @@
-# Schaub & Kery (2021) Integrated Population Modeling
+# Schaub & Kery (2021) Integrated Population Models
 # Chapter 18 : Cormorant
 # ----------------------
 # Code from MS submitted to publisher.
@@ -474,7 +474,7 @@ library(RColorBrewer)
 co1 <- brewer.pal(n = 8, name = 'Blues')[c(8,5)]
 co2 <- brewer.pal(n = 8, name = 'Greens')[c(5,8)]
 
-par(mar=c(1, 4.5, 2, 1), "mfrow")
+op <- par(mar=c(1, 4.5, 2, 1), "mfrow")
 layout(matrix(1:6, 3, 2, byrow=TRUE), widths=c(1.6, 1.6), heights=c(1,1,1.15), TRUE)
 years <- 1991:2004
 ny <- length(years)-1
@@ -484,8 +484,8 @@ d <- 0.15
 plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 14000),
     axes=FALSE, ylab="Population size", xlab=NA, col=co1[1])
 mtext("Vorsø", side=3, line=-0.25)
-segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d, out1$q97.5$B[site,],
-    col=co1[1])
+segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d,
+    out1$q97.5$B[site,], col=co1[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=NA)
 axis(2, at=c(0, 2000, 4000, 6000, 8000, 10000, 12000), tcl=-0.25, labels=NA)
@@ -497,13 +497,15 @@ points(cormorant$count[site,], pch=3, col="red")
 
 plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1), axes=FALSE,
     ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
-segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d, out1$q97.5$phi[1,site,], col=co2[1])
+segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d,
+    out1$q97.5$phi[1,site,], col=co2[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=NA)
 axis(2, at=c(0, 0.2, 0.4, 0.6, 0.8, 1), tcl=-0.25, labels=NA)
 axis(2, las=1, at=c(0, 0.4, 0.8), tcl=-0.5, labels=c("0", "0.4", "0.8"))
 points(y=out1$mean$phi[2,site,], x=(1:ny)+0.5+d, type="b", pch=16, col=co2[2])
-segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d, out1$q97.5$phi[2,site,], col=co2[2])
+segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d,
+    out1$q97.5$phi[2,site,], col=co2[2])
 legend("bottomleft", pch=c(16,16), col=co2, legend=c("Juvenile", "Adult"), bty="n")
 
 site <- 2
@@ -511,60 +513,69 @@ d <- 0.15
 plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 4000),
     axes=FALSE, ylab="Population size", xlab=NA, col=co1[1])
 mtext("Mågeøerne", side=3, line=-0.25)
-segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d, out1$q97.5$B[site,], col=co1[1])
+segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d,
+    out1$q97.5$B[site,], col=co1[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=NA)
 axis(2, at=c(0, 500, 1000, 1500, 2000, 2500, 3000, 3500), tcl=-0.25, labels=NA)
 axis(2, las=1, at=c(0, 1000, 2000, 3000, 4000), tcl=-0.5, labels=c(0, 1000, 2000, 3000, 4000))
 points(y=out1$mean$N[site,], x=(1:length(years))+d, type="b", pch=16, col=co1[2])
-segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d, out1$q97.5$N[site,], col=co1[2])
+segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d,
+    out1$q97.5$N[site,], col=co1[2])
 points(cormorant$count[site,], pch=3, col="red")
 
 plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1), axes=FALSE,
     ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
-segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d, out1$q97.5$phi[1,site,], col=co2[1])
+segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d,
+    out1$q97.5$phi[1,site,], col=co2[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=NA)
 axis(2, at=c(0, 0.2, 0.4, 0.6, 0.8, 1), tcl=-0.25, labels=NA)
 axis(2, las=1, at=c(0, 0.4, 0.8), tcl=-0.5, labels=c("0", "0.4", "0.8"))
 points(y=out1$mean$phi[2,site,], x=(1:ny)+0.5+d, type="b", pch=16, col=co2[2])
-segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d, out1$q97.5$phi[2,site,], col=co2[2])
+segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d,
+    out1$q97.5$phi[2,site,], col=co2[2])
 
 par(mar=c(3, 4.5, 2, 1))
 site <- 3
 d <- 0.15
 plot(y=out1$mean$B[site,], x=(1:length(years))-d, type="b", pch=16, ylim=c(0, 12000),
     axes=FALSE, ylab="Population size", xlab=NA, col=co1[1])
-segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d, out1$q97.5$B[site,], col=co1[1])
+segments((1:length(years))-d, out1$q2.5$B[site,], (1:length(years))-d,
+    out1$q97.5$B[site,], col=co1[1])
 mtext("Stavns Fjord", side=3, line=-0.25)
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=seq(years[1], years[14], by=2))
 axis(2, at=c(0, 2000, 4000, 6000, 8000, 10000, 12000), tcl=-0.25, labels=NA)
 axis(2, las=1, at=c(0, 4000, 8000, 12000), tcl=-0.5, labels=c(0, 4000, 8000, 12000))
 points(y=out1$mean$N[site,], x=(1:length(years))+d, type="b", pch=16, col=co1[2])
-segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d, out1$q97.5$N[site,], col=co1[2])
+segments((1:length(years))+d, out1$q2.5$N[site,], (1:length(years))+d,
+    out1$q97.5$N[site,], col=co1[2])
 points(cormorant$count[site,], pch=3, col="red")
 legend("topleft", pch=c(16, 16, 3), col=c(co1, "red"),
-    legend=c("Breeders", "Non-breeders", "Counts"), lwd=c(NA, NA, 1), bty="n")
+    legend=c("Breeders", "Non-breeders", "Counts"), bty="n")
 
 plot(y=out1$mean$phi[1,site,], x=(1:ny)+0.5-d, type="b", pch=16, ylim=c(0, 1),
     axes=FALSE, ylab="Survival probability", xlab=NA, xlim=c(1,length(years)), col=co2[1])
-segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d, out1$q97.5$phi[1,site,], col=co2[1])
+segments((1:ny)+0.5-d, out1$q2.5$phi[1,site,], (1:ny)+0.5-d,
+    out1$q97.5$phi[1,site,], col=co2[1])
 axis(1, at=1:length(years), tcl=-0.25, labels=NA)
 axis(1, at=seq(1, length(years), by=2), tcl=-0.5, labels=seq(years[1], years[14], by=2))
 axis(2, at=c(0, 0.2, 0.4, 0.6, 0.8, 1), tcl=-0.25, labels=NA)
 axis(2, las=1, at=c(0, 0.4, 0.8), tcl=-0.5, labels=c("0", "0.4", "0.8"))
 points(y=out1$mean$phi[2,site,], x=(1:ny)+0.5+d, type="b", pch=16, col=co2[2])
-segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d, out1$q97.5$phi[2,site,], col=co2[2])
+segments((1:ny)+0.5+d, out1$q2.5$phi[2,site,], (1:ny)+0.5+d,
+    out1$q97.5$phi[2,site,], col=co2[2])
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ Code for Fig. 18.4 ~~~~
 library(denstrip)
 library(plotrix)
-par(mar=c(4.5, 6, 3, 1), "mfrow")
+op <- par(mar=c(4.5, 6, 3, 1), "mfrow")
 layout(matrix(1:3,3,1,byrow=TRUE), widths=1.6, heights=c(1,1,1), TRUE)
-plot(0, ylim=c(0.8, 3.2), xlim=c(0.725,1), axes=FALSE, pch=NA, xlab="Natal site fidelity", ylab=NA)
+plot(0, ylim=c(0.8, 3.2), xlim=c(0.725,1), axes=FALSE, pch=NA,
+    xlab="Natal site fidelity", ylab=NA)
 denstrip(out1$sims.list$mean.eta[,1,1], at=3,
     ticks=c(out1$mean$mean.eta[1,1], out1$q2.5$mean.eta[1,1], out1$q97.5$mean.eta[1,1]),
     twd=c(4,1.5,1.5), tlen=c(2,2,2), width=1/5)

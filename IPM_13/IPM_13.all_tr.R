@@ -1,4 +1,4 @@
-# Schaub & Kery (2021) Integrated Population Modeling
+# Schaub & Kery (2021) Integrated Population Models
 # Chapter 13 : Horseshoe bat
 # --------------------------
 # Code from MS submitted to publisher.

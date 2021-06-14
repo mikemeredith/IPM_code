@@ -13,7 +13,7 @@ All graphics produced by the script are saved in a PDF file with the same name. 
 
 Before running the scripts, you may want to check that the necessary packages are installed. I suggest first running `update.packages(ask='graphics',checkBuilt=TRUE)` to ensure everything is up to date, including dependencies. You can then install any extra packages needed with:
 ```
-needed <- c("jagsUI", "scales", "MCMCglm", "AHMbook", "wiqid", "RColorBrewer",
+needed <- c("jagsUI", "scales", "MCMCglmm", "AHMbook", "wiqid", "RColorBrewer",
     "denstrip", "plotrix")
 got <- rownames(installed.packages())
 
