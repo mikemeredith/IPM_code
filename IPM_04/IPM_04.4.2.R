@@ -20,7 +20,7 @@ brood.mean <- 1.5        # Average brood size in conditional Poisson process
 sd.brood <- 0.3          # Overdispersion in conditional Poisson process
 
 # Simulate Bernoulli process dividing broods in failures and 'potential successes'
-set.seed(46)
+set.seed(34)
 z <- rbinom(nbrood, 1, theta)   # z = 1 means 'potential success'
 
 # Draw conditional Poisson random numbers with overdispersion

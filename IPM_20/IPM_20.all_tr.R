@@ -499,19 +499,19 @@ plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Recruitment",
 r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2],
     z=100 * out1$sd$lambda / out1$mean$lambda))
 plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of density (% CV)",
-    axis.args=list(cex.axis=2), legend.width=3)
+    axis.args=list(cex.axis=2), legend.width=3, zlim=c(0,100))
 
 # Uncertainty in the random field of survival (% CV)
 r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2],
     z=100 * out1$sd$phi /out1$mean$phi))
 plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of survival (% CV)",
-    axis.args=list(cex.axis=2), legend.width=3)
+    axis.args=list(cex.axis=2), legend.width=3, zlim=c(0,100))
 
 # Uncertainty in the random field of recruitment (% CV)
 r <- rasterFromXYZ(data.frame(x=coordgrid[,1], y=coordgrid[,2],
     z=100 * out1$sd$gamma / out1$mean$gamma))
 plot(r, col=topo.colors(20), axes=FALSE, box=FALSE, asp=1, main="Uncertainty of recruitment (% CV)",
-    axis.args=list(cex.axis=2), legend.width=3)
+    axis.args=list(cex.axis=2), legend.width=3, zlim=c(0,100))
 par(op)
 
 # ~~~~ Produce Fig. 20.9 ~~~~

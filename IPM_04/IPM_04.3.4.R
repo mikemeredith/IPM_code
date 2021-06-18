@@ -93,7 +93,7 @@ par(op)
 jags.data <- list(y=y1, nterritory=nterritory, nvisit=nvisit, nyear=nyear)
 str(jags.data)
 # List of 4
- # $ y         : num [1:100, 1:2, 1:12] NA NA NA NA NA NA NA NA 1 NA ...
+ # $ y         : num [1:100, 1:2, 1:12] 0 0 0 0 0 0 0 ...
  # $ nterritory: num 100
  # $ nvisit    : num 2
  # $ nyear     : num 12

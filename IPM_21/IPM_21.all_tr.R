@@ -173,7 +173,7 @@ model {
 zin <- array(0, dim=c(dim(y)[1],6))
 zin[1:150,] <- 1
 inits <- function() {list(z=zin, phi=runif(1, 0.7, 0.9), p0=runif(1, 0.01, 0.1),
-    psi=runif(1, 0.2, 0.4))}
+    psi=runif(1, 0.2, 0.4), sigma=runif(1, 3, 4), gamma=runif(1, 0.2, 0.3))}
 
 # Parameters monitored
 parameters <- c("psi", "phi", "gamma", "p0", "sigma", "N", "EB", "b", "A", "s",

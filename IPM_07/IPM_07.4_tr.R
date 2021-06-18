@@ -537,7 +537,7 @@ leftLabels <- c(
 op <- par(las=1, mfrow=c(4, 2), oma=c(2.5, 2, 2, 0), "mar")
 for (i in 1:4){
   par(mar=c(1, 5, 1, 0))
-  boxplot(t(toplot3[,,i]), outline=FALSE, col=co[1], axes=FALSE, ylim=ylim,
+  boxplot(t(toplot3[,,i]), outline=FALSE, col=co[i], axes=FALSE, ylim=ylim,
       boxwex=0.5, xpd=TRUE, ylab="Population size")
   axis(1, at=1:10, tcl=-0.25, labels=NA)
   axis(1, at=c(1, 3, 5, 7, 9), tcl=-0.5, labels=(i==4))

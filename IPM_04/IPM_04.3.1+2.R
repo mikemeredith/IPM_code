@@ -91,13 +91,9 @@ inits <- function(){list(sig.lam = runif(1, 0, 1))}
 parameters <- c("lambda", "mu.lam", "sig2.y", "sig2.lam", "sig.y", "sig.lam", "N")
 
 # MCMC settings
-ni <- 200000; nb <- 10000; nc <- 3; nt <- 100; na <- 5000
+ni <- 300000; nb <- 100000; nc <- 3; nt <- 100; na <- 5000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-# ~~~ With the seed set above, 10k burn-in is not enough;
-# ~~~   increase burn-in or set new seed:
-set.seed(2021)
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 op <- par(mfrow=c(3, 3)); traceplot(out1)   # Not shown
