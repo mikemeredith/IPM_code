@@ -400,8 +400,7 @@ ni <- 3000; nb <- 1000; nt <- 1; nc <- 3; na <- 3000  # ~~~ for testing
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 save(out1, file = 'CormorantResults.Rdata')
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 
 
 # 18.6. Results

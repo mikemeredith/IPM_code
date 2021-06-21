@@ -295,8 +295,7 @@ ni <- 5000; nt <- 4; nb <- 1000; nc <- 3; na <- 500  # ~~~ for testing
 # Call JAGS from R (ART 12 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 
 # Bundle data
 # Calculate population growth rate
@@ -352,8 +351,7 @@ ni <- 1000; nt <- 1; nb <- 500; nc <- 3; na <- 200  # ~~~ for testing
 # Call JAGS from R (ART 54 min) and check convergence
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out2)
-par(op)
+traceplot(out2)
 save(out1, out2, file="SwallowResults.Rdata")
 
 

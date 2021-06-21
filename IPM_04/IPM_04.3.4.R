@@ -147,8 +147,7 @@ ni <- 6000; nb <- 1000; nc <- 3; nt <- 5; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out7 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out7)    # Not shown
-par(op)
+traceplot(out7)    # Not shown
 print(out7, 3)
 
 # Data bundle
@@ -157,8 +156,7 @@ jags.data <- list(y=y2, nterritory=nterritory, nvisit=nvisit, nyear=nyear)
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out8 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out8)     # Not shown
-par(op)
+traceplot(out8)     # Not shown
 print(out8, 3)                          # Not shown
 
 # ~~~~ Plot the estimates (add lower panel of Fig. 4.7) ~~~~

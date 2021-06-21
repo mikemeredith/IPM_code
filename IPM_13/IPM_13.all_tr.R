@@ -252,8 +252,7 @@ ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing
 # Call JAGS (ART 600 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 
 
 # ~~~~ code to run the other IPMs ~~~~
@@ -430,9 +429,7 @@ ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing
 # Call JAGS (ART 554 min) and check convergence
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out2)
-par(op)
-
+traceplot(out2)
 
 
 # IPM3
@@ -607,9 +604,7 @@ ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing
 # Call JAGS (ART 554 min) and check convergence
 out3 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out3)
-par(op)
-
+traceplot(out3)
 
 
 # IPM4
@@ -784,8 +779,7 @@ ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing
 # Call JAGS (ART 554 min) and check convergence
 out4 <- jags(jags.data, inits, parameters, "model4.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out4)
-par(op)
+traceplot(out4)
 
 save(out1, out2, out3, out4, file="BatResults.Rdata")
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -209,9 +209,7 @@ set.seed(2)  # ~~~ to get the example of switching
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
 
-op <- par(mfrow=c(1,3))
-traceplot(out2, c('alpha', 'gamma'))
-par(op)
+traceplot(out2, c('alpha', 'gamma'), layout=c(1,3))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -399,8 +397,7 @@ ni <- 4000; nb <- 1000; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
 # Call JAGS (ART 15 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 print(out1, 3)
 
 # ~~~~ save the results ~~~~
@@ -411,9 +408,7 @@ save(out1, out2, file ="Hoopoe.Results.Rdata")
 # ============
 
 # Fig. 14.3
-op <- par(mfrow=c(1,3))
-traceplot(out1, c('alpha', 'gamma'))
-par(op)
+traceplot(out1, c('alpha', 'gamma'), layout=c(1,3))
 
 print(out1, 3)
                    # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff

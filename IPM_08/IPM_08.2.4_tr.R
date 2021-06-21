@@ -151,8 +151,7 @@ ni <- 11000; nb <- 1000; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing
 # Call JAGS (ART 139 min), check convergence and summarize posteriors
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3));  traceplot(out2)
-par(op)
+traceplot(out2)
 
 print(out2, 3)
 

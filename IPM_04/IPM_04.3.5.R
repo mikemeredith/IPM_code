@@ -76,8 +76,7 @@ ni <- 20000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out9 <- jags(jags.data, inits, parameters, "model6.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3));  traceplot(out9)    # Not shown
-par(op)
+traceplot(out9)    # Not shown
 print(out9, 3)                          # Not shown
 
 # ~~~~ Plot of true and observed and estimated states (Fig. 4.8) ~~~~

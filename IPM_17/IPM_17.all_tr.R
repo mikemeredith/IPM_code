@@ -151,8 +151,7 @@ ni <- 250000; nt <- 20; nb <- 50000; nc <- 3; na <- 5000
 # Call JAGS from R (ART 4 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 
 
 # 17.6 Results on elk population dynamics
@@ -933,8 +932,7 @@ ni <- 450000; nt <- 40; nb <- 50000; nc <- 3; na <- 5000
 # Call JAGS from R (ART 9 min) and check convergence
 out9 <- jags(jags.data, inits, parameters, "model3.txt",
     n.chains = nc, n.thin = nt, n.iter = ni, n.burnin = nb, n.adapt = na, parallel = TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out9)
-par(op)
+traceplot(out9)
 
 print(out9, 3)
 

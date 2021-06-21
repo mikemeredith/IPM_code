@@ -413,14 +413,11 @@ ni <- 1500; nb <- 500; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing
 # Call JAGS from R (ART 88 h!) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow = c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 
 # Fig. 20.7
-op <- par(mfrow=c(3, 3))
 traceplot(out1, c("lambda.int", "alpha.lam", "phi.int", "alpha.phi", "gamma.int",
     "alpha.gam", "sd.b.lam", "sd.b.phi", "sd.b.gam"))
-par(op)
 print(out1$summary[1:300,], 3)
 print(out1$summary[1:47,-c(4,6)], 3)
 

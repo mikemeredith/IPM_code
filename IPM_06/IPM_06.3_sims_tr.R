@@ -274,8 +274,8 @@ model {
 # ---------------------
 
 # Number of simulations
-nsim <- 1500
-# nsim <- 3  # ~~~ for testing
+# nsim <- 1500
+nsim <- 3  # ~~~ for testing
 
 # Age specific survival probabilities (juv, adult)
 sj <- 0.3

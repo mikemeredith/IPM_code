@@ -64,8 +64,7 @@ ni <- 50000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART 1 min), check convergence and summarize posteriors
 out3 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(2, 2)); traceplot(out3)  # May need jagsUI::traceplot
-par(op)
+traceplot(out3, layout=c(2,2))  # May need jagsUI::traceplot
 print(out3, 3)
 
 #               mean    sd    2.5%     50%   97.5% overlap0 f Rhat n.eff

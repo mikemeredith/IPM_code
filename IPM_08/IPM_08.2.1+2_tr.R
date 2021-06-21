@@ -170,8 +170,7 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000  # ~~~ for testing
 # Call JAGS (ART 31 min), check convergence and produce figures
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 
 # ~~~~ save output for use later ~~~~
 save(out1, file="Shrike-mod1.Rdata")

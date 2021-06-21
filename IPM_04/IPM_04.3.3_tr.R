@@ -101,8 +101,7 @@ ni <- 5000; nb <- 1000; nc <- 3; nt <- 4; na <- 1000
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
 out4 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE )
-op <- par(mfrow=c(3, 3));  traceplot(out4)           # Not shown
-par(op)
+traceplot(out4)           # Not shown
 print(out4, 2)
 
                 # mean      sd      2.5%       50%     97.5% overlap0 f  Rhat n.eff
@@ -213,8 +212,7 @@ ni <- 50000; nb <- 25000; nc <- 3; nt <- 25; na <- 10000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out5 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE )
-op <- par(mfrow=c(3, 3)); traceplot(out5)   # Not shown
-par(op)
+traceplot(out5)   # Not shown
 print(out5, 3)                        # Not shown
 
 # ~~~~ code for Fig. 4.5 ~~~~
@@ -294,8 +292,7 @@ ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
 # Call JAGS from R (ART 11 min), check convergence and summarize posteriors
 out6 <- jags(jags.data, inits, parameters, "model4.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out6)  # Not shown
-par(op)
+traceplot(out6)  # Not shown
 print(out6, 3)                       # Not shown
 
 # Compare posterior means and SDs under the two models

@@ -85,11 +85,9 @@ out1 <- jags(jags.data, inits, parameters, "model1.txt",
 # Produce an overview of the R object created by jagsUI
 str(out1)          # Only a small portion of total output is shown here!
 
-op <- par(mfrow=c(2, 2)); jagsUI::traceplot(out1) # May need jagsUI::traceplot!
-par(op)
-op <- par(mfrow=c(1, 3), mar=c(5, 5, 4, 2), cex.axis=1.5, cex.lab=1.5, cex.main=1.5, las=1)
-jagsUI::traceplot(out1, c("alpha", "beta", "mean.exp.count")) # just some
-par(op)
+jagsUI::traceplot(out1, layout=c(2,2)) # May need jagsUI::traceplot!
+# par(mfrow=c(1, 3), mar=c(5, 5, 4, 2), cex.axis=1.5, cex.lab=1.5, cex.main=1.5, las=1)
+jagsUI::traceplot(out1, c("alpha", "beta", "mean.exp.count"), layout=c(1,3)) # just some
 
 print(out1, 3)
 

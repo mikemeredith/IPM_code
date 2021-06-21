@@ -179,8 +179,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out9 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out9)
-par(op)
+traceplot(out9)
 print(out9, 3)
 
 
@@ -306,8 +305,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out10 <- jags(jags.data, inits, parameters, "model6.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out10)
-par(op)
+traceplot(out10)
 print(out10, 3)
 
 # IPM6: no reproduction of 1y shrikes
@@ -431,8 +429,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out11 <- jags(jags.data, inits, parameters, "model7.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out11)
-par(op)
+traceplot(out11)
 print(out11, 3)
 
 # 2. Large sample size
@@ -461,8 +458,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out12 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out12)
-par(op)
+traceplot(out12)
 print(out12, 3)
 
 # Fit IPM5
@@ -479,8 +475,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out13 <- jags(jags.data, inits, parameters, "model6.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out13)
-par(op)
+traceplot(out13)
 print(out13, 3)
 
 # Fit IPM6
@@ -497,8 +492,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out14 <- jags(jags.data, inits, parameters, "model7.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out14)
-par(op)
+traceplot(out14)
 print(out14, 3)
 
 save(out9, out10, out11, out12, out13, out14,

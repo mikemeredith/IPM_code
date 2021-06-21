@@ -159,8 +159,7 @@ ni <- 11000; nb <- 1000; nc <- 3; nt <- 10; na <- 200  # ~~~ for testing
 # Call JAGS (ART 17 min), check convergence
 out4 <- jags(jags.data, inits, parameters, "model4.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out4)
-par(op)
+traceplot(out4)
 
 # ~~~~ code for modified model ~~~~
 # Write JAGS model file
@@ -298,8 +297,7 @@ ni <- 11000; nb <- 1000; nc <- 3; nt <- 10; na <- 200  # ~~~ for testing
 # Call JAGS (ART 18 min), check convergence and summarize posteriors
 out5 <- jags(jags.data, inits, parameters, "model5.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out5)
-par(op)
+traceplot(out5)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~ save output ~~~

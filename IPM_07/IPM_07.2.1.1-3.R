@@ -208,8 +208,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 print(out1, 3)
 
               # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
@@ -465,8 +464,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out2)
-par(op)
+traceplot(out2)
 print(out2, 3)
 
 # IPM3: no reproduction of 1y shrikes
@@ -621,8 +619,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
 out3 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out3)
-par(op)
+traceplot(out3)
 print(out3, 3)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -652,8 +649,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out4 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out4)
-par(op)
+traceplot(out4)
 print(out4, 3)
 
 # Fit IPM2
@@ -670,8 +666,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out5 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out5)
-par(op)
+traceplot(out5)
 print(out5, 3)
 
 # Fit IPM3
@@ -695,8 +690,7 @@ ni <- 12000; nb <- 2000; nc <- 3; nt <- 4; na <- 2000
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
 out6 <- jags(jags.data, inits, parameters, "model3.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out6)
-par(op)
+traceplot(out6)
 print(out6, 3)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

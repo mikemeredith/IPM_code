@@ -228,8 +228,7 @@ ni <- 10000; nb <- 2000; nc <- 3; nt <- 8; na <- 500  # ~~~ for testing
 # Call JAGS from R (ART 56 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out1)
-par(op)
+traceplot(out1)
 
 # IPM2: random-walk smoothers for all demographic rates
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -374,8 +373,7 @@ ni <- 20000; nb <- 5000; nc <- 3; nt <- 15; na <- 500  # ~~~ for testing
 # Call JAGS from R (ART 103 min) and check convergence
 out2 <- jags(jags.data, inits, parameters, "model2.txt",
     n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out2)
-par(op)
+traceplot(out2)
 
 
 # 12.6 Results

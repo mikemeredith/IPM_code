@@ -135,8 +135,7 @@ ni <- 4000; nb <- 1000; nc <- 3; nt <- 3; na <- 200  # ~~~ for testing
 # Call JAGS (ART <1 min), check convergence and produce figure
 out5 <- jags(jags.data, inits, parameters, "model5.txt", n.iter=ni,
     n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-op <- par(mfrow=c(3, 3)); traceplot(out5)
-par(op)
+traceplot(out5)
 
 
 # ~~~ code for  Fig. 6.7 ~~~~
