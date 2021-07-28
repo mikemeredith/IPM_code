@@ -7,8 +7,10 @@
 #   running of individual scripts.
 
 # -------- utility functions ----------------------------
-# Function to convert secs to mins/hrs
+# Function to convert secs to mins/hrs/days
 .hms <- function(time) {
+  if(time > 60*60*36)
+    return(paste(round(time/3600/24, 2), "days"))
   if(time > 60*90)
     return(paste(round(time/3600, 2), "hrs"))
   if(time > 90)
@@ -31,9 +33,9 @@
     return(TRUE)  # skip check for functions (esp. nimble)
   }
   all.equal.jagsUI <- function(target, current, ...) {
-    target$run.date <- NULL ; current$run.date <- NULL 
+    target$run.date <- NULL ; current$run.date <- NULL
     target$mcmc.info$elapsed.mins <- NULL ; current$mcmc.info$elapsed.mins <- NULL
-    # Checking model text will show a mismatch even for tiny changes, eg in 
+    # Checking model text will show a mismatch even for tiny changes, eg in
     #   comments or white space
     target$model <- NULL ; current$model <- NULL
     all.equal.list(target, current, ...)
