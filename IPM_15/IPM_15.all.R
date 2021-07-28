@@ -1,35 +1,28 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 15 : Black grouse
 # -------------------------
-# Code from MS submitted to publisher.
+# Code from corrected proofs.
 
-# Run time 3 mins
-
-library(IPMbook) ; library(jagsUI)
+# Run time 8 mins
 
 # 15.4 Component data likelihoods
 # =============================================
 
+library(IPMbook); library(jagsUI)
 data(grouse)
 str(grouse)
-
 # List of 10
- # $ ch       : int [1:96, 1:128] 1 1 NA NA NA NA NA NA NA NA ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:128] "Apr98" "May98" "June98" "July98" ...
- # $ age      : num [1:96, 1:127] 2 2 NA NA NA NA NA NA NA NA ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:127] "Apr98" "May98" "June98" "July98" ...
- # $ sex      : int [1:96] 2 2 2 2 2 2 2 2 2 2 ...
- # $ season   : int [1:128] 1 1 2 2 2 3 3 4 4 4 ...
- # $ count.sp : int [1:20] 36 45 52 64 46 49 50 35 36 39 ...
- # $ count.lsM: int [1:20] 15 11 14 14 14 5 16 19 19 16 ...
- # $ count.lsF: int [1:20] 23 32 29 20 19 18 28 21 31 39 ...
- # $ count.lsC: int [1:20] 44 86 76 28 18 24 99 53 101 82 ...
- # $ v        : int [1:20] 30 39 21 10 11 6 67 32 65 55 ...
- # $ u        : int [1:20] 18 22 11 5 4 2 25 15 29 26 ...
+# $ ch : int [1:96, 1:128] 1 1 NA NA NA NA NA NA NA NA ...
+# $ age : num [1:96, 1:127] 2 2 NA NA NA NA NA NA NA NA ...
+# $ sex : int [1:96] 2 2 2 2 2 2 2 2 2 2 ...
+# $ season : int [1:128] 1 1 2 2 2 3 3 4 4 4 ...
+# $ count.sp : int [1:20] 36 45 52 64 46 49 50 35 36 39 ...
+# $ count.lsM: int [1:20] 15 11 14 14 14 5 16 19 19 16 ...
+# $ count.lsF: int [1:20] 23 32 29 20 19 18 28 21 31 39 ...
+# $ count.lsC: int [1:20] 44 86 76 28 18 24 99 53 101 82 ...
+# $ v : int [1:20] 30 39 21 10 11 6 67 32 65 55 ...
+# $ u : int [1:20] 18 22 11 5 4 2 25 15 29 26 ...
+
 
 # 15.4.1 Population count data (no code)
 # 15.4.2 Radio tracking data (no code)
@@ -42,45 +35,35 @@ str(grouse)
 # Bundle data
 getLast <- function(x) max(which(!is.na(x))) # Last occasion function
 
-jags.data <- with(grouse, list(ch=ch, age=age, sex=sex, season=season,
-    f=getFirst(ch), k=apply(ch, 1, getLast), C.sp=count.sp, C.lsM=count.lsM,
-    C.lsF=count.lsF, C.lsC=count.lsC, u=u, v=v, nind=nrow(ch),
-    ny=length(count.sp), pinit=dUnif(1, 100)))
-
+jags.data <- with(grouse, list(ch=ch, age=age, sex=sex, season=season, f=getFirst(ch),
+    k=apply(ch, 1, getLast), C.sp=count.sp, C.lsM=count.lsM, C.lsF=count.lsF, C.lsC=count.lsC,
+    u=u, v=v, nind=nrow(ch), ny=length(count.sp), pinit=dUnif(1, 100)))
 str(jags.data)
-
 # List of 15
- # $ ch    : int [1:96, 1:128] 1 1 NA NA NA NA NA NA NA NA ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:128] "Apr98" "May98" "June98" "July98" ...
- # $ age   : num [1:96, 1:127] 2 2 NA NA NA NA NA NA NA NA ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:127] "Apr98" "May98" "June98" "July98" ...
- # $ sex   : int [1:96] 2 2 2 2 2 2 2 2 2 2 ...
- # $ season: int [1:128] 1 1 2 2 2 3 3 4 4 4 ...
- # $ f     : int [1:96] 1 1 2 2 2 2 14 14 14 14 ...
- # $ k     : int [1:96] 8 15 9 4 6 27 25 18 23 25 ...
- # $ C.sp  : int [1:20] 36 45 52 64 46 49 50 35 36 39 ...
- # $ C.lsM : int [1:20] 15 11 14 14 14 5 16 19 19 16 ...
- # $ C.lsF : int [1:20] 23 32 29 20 19 18 28 21 31 39 ...
- # $ C.lsC : int [1:20] 44 86 76 28 18 24 99 53 101 82 ...
- # $ u     : int [1:20] 18 22 11 5 4 2 25 15 29 26 ...
- # $ v     : int [1:20] 30 39 21 10 11 6 67 32 65 55 ...
- # $ nind  : int 96
- # $ ny    : int 20
- # $ pinit : num [1:100] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
-
+# $ ch    : int [1:96, 1:128] 1 1 NA NA NA NA NA NA NA NA ...
+# $ age   : num [1:96, 1:127] 2 2 NA NA NA NA NA NA NA NA ...
+# $ sex   : int [1:96] 2 2 2 2 2 2 2 2 2 2 ...
+# $ season: int [1:128] 1 1 2 2 2 3 3 4 4 4 ...
+# $ f     : int [1:96] 1 1 2 2 2 2 14 14 14 14 ...
+# $ k     : int [1:96] 8 15 9 4 6 27 25 18 23 25 ...
+# $ C.sp  : int [1:20] 36 45 52 64 46 49 50 35 36 39 ...
+# $ C.lsM : int [1:20] 15 11 14 14 14 5 16 19 19 16 ...
+# $ C.lsF : int [1:20] 23 32 29 20 19 18 28 21 31 39 ...
+# $ C.lsC : int [1:20] 44 86 76 28 18 24 99 53 101 82 ...
+# $ u     : int [1:20] 18 22 11 5 4 2 25 15 29 26 ...
+# $ v     : int [1:20] 30 39 21 10 11 6 67 32 65 55 ...
+# $ nind  : int 96
+# $ ny    : int 20
+# $ pinit : num [1:100] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
 
 # Write JAGS model file
 cat(file="model1.txt", "
 model {
   # Priors and linear models
   # Survival
-  for (a in 1:2){                     # age
-    for (j in 1:2){                   # sex
-      for (m in 1:4){                 # season
+  for (a in 1:2){       # age
+    for (j in 1:2){     # sex
+      for (m in 1:4){   # season
         s[a,j,m] ~ dbeta(1, 1)
       } #m
     } #j
@@ -119,24 +102,24 @@ model {
   # Process model: population sizes in spring
   for (t in 1:(ny-1)){
     # Females
-    Nsp[1,1,t+1] ~ dbin(s[1,1,2]^0.5 * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1], Nls[1,1,t])  # 1y
-    Nsp[2,1,t+1] ~ dbin(s[2,1,2]^0.5 * s[2,1,3]^2 * s[2,1,4]^5 * s[2,1,1], Nls[2,1,t])  # >1y
-
+    Nsp[1,1,t+1] ~ dbin(s[1,1,2]^0.5 * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1], Nls[1,1,t]) # 1y
+    Nsp[2,1,t+1] ~ dbin(s[2,1,2]^0.5 * s[2,1,3]^2 * s[2,1,4]^5 * s[2,1,1], Nls[2,1,t]) # >1y
     # Males
-    Nsp[1,2,t+1] ~ dbin(s[1,2,2]^0.5 * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1], Nls[1,2,t])  # 1y
-    Nsp[2,2,t+1] ~ dbin(s[2,2,2]^0.5 * s[2,2,3]^2 * s[2,2,4]^5 * s[2,2,1], Nls[2,2,t])  # >1y
+    Nsp[1,2,t+1] ~ dbin(s[1,2,2]^0.5 * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1], Nls[1,2,t]) # 1y
+    Nsp[2,2,t+1] ~ dbin(s[2,2,2]^0.5 * s[2,2,3]^2 * s[2,2,4]^5 * s[2,2,1], Nls[2,2,t]) # >1y
   }
 
   # Process model: population sizes in late summer
   for (t in 1:ny){
     # Total number of chicks
-    F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t])
+    # F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t]) # Correction 2021-07-28
+    F[t] ~ dpois(Nls[2,1,t] * rho[t])
     # Allocate chicks to a sex
-    Nls[1,1,t] ~ dbin(gamma, F[t])            # Female chicks
-    Nls[1,2,t] <- F[t] - Nls[1,1,t]           # Male chicks
+    Nls[1,1,t] ~ dbin(gamma, F[t])    # Female chicks
+    Nls[1,2,t] <- F[t] - Nls[1,1,t]   # Male chicks
     # Survival
-    Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t]))    # ≥1y females
-    Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t]))    # ≥1y males
+    Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t])) # ≥1y females
+    Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t])) # ≥1y males
   }
 
   # Observation models
@@ -177,21 +160,25 @@ model {
 inits <- function(){
   Nsp <- array(NA, dim=c(2, 2, 20))
   Nsp[,,1] <- round(runif(4, 30, 40))
-  s <- array(runif(2*2*4, 0.90, 0.97), dim=c(2, 2, 4))
+  # s <- array(runif(2*2*4, 0.90, 0.97), dim=c(2, 2, 4)) # Correction 2021-07-28
+  s <- array(runif(2*2*4, 0.94, 0.97), dim=c(2, 2, 4))
   list(Nsp=Nsp, s=s)
 }
 
 # Parameters monitored
-parameters <- c("s", "ann.s", "mean.rho", "gamma", "mean.p", "sigma.rho",
-    "sigma.p", "rho", "p", "Nsp", "Nls")
+parameters <- c("s", "ann.s", "mean.rho", "gamma", "mean.p", "sigma.rho", "sigma.p", "rho", "p",
+    "Nsp", "Nls")
 
 # MCMC settings
-ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
+# ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
+ni <- 120000; nb <- 20000; nc <- 3; nt <- 20; na <- 10000
 
-# Call JAGS (ART 5 min), check convergence and summarize posteriors
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+# Call JAGS (ART 8 min), check convergence and summarize posteriors
+set.seed(101)    # Reproducible results without crashing
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
+
 
 # ~~~~ model 1 plus posterior predictive checks ~~~~
 # Write JAGS model file
@@ -200,8 +187,8 @@ model {
   # Priors and linear models
   # Survival
   for (a in 1:2){                          # age
-    for (j in 1:2){                       # sex
-      for (m in 1:4){                    # season
+    for (j in 1:2){                        # sex
+      for (m in 1:4){                      # season
         s[a,j,m] ~ dbeta(1, 1)
       } #m
     } #j
@@ -251,7 +238,8 @@ model {
   # Process model: population sizes in late summer
   for (t in 1:ny){
     # Total number of chicks
-    F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t])
+    # F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t]) # Correction 2021-07-28
+    F[t] ~ dpois(Nls[2,1,t] * rho[t])
     # Allocate chicks to a sex
     Nls[1,1,t] ~ dbin(gamma, F[t])            # Female chicks
     Nls[1,2,t] <- F[t] - Nls[1,1,t]           # Male chicks
@@ -334,7 +322,8 @@ model {
 inits <- function(){
   Nsp <- array(NA, dim=c(2, 2, 20))
   Nsp[,,1] <- round(runif(4, 30, 40))
-  s <- array(runif(2*2*4, 0.90, 0.97), dim=c(2, 2, 4))
+  # s <- array(runif(2*2*4, 0.90, 0.97), dim=c(2, 2, 4)) # Correction 2021-07-28
+  s <- array(runif(2*2*4, 0.94, 0.97), dim=c(2, 2, 4))
   list(Nsp=Nsp, s=s)
 }
 
@@ -343,7 +332,8 @@ parameters <- c("s", "ann.s", "mean.rho", "gamma", "mean.p", "sigma.rho",
     "sigma.p", "rho", "p", "Nsp", "Nls", "fit1", "fit2", "fit3", "fit4", "fit5")
 
 # MCMC settings
-ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
+# ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
+ni <- 120000; nb <- 20000; nc <- 3; nt <- 20; na <- 10000
 
 # Call JAGS (ART 5 min), check convergence and summarize posteriors
 set.seed(101) # Reproducible results without crashing
@@ -356,57 +346,59 @@ save(out1, out2, file="Grouse.Results.Rdata")
 # 15.6 Results
 # ============
 
-print(out1, 3)
-                # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
-# s[1,1,1]       0.499  0.288    0.026    0.497    0.975    FALSE 1 1.000  9165
-# s[2,1,1]       0.949  0.016    0.914    0.950    0.975    FALSE 1 1.001  2959
-# s[1,2,1]       0.498  0.288    0.022    0.499    0.974    FALSE 1 1.000  7815
-# s[2,2,1]       0.898  0.029    0.837    0.900    0.951    FALSE 1 1.005   506
-# s[1,1,2]       0.940  0.055    0.792    0.955    0.998    FALSE 1 1.000  8495
-# s[2,1,2]       0.954  0.012    0.929    0.954    0.974    FALSE 1 1.001  4302
-# s[1,2,2]       0.860  0.087    0.653    0.875    0.981    FALSE 1 1.001  2753
-# s[2,2,2]       0.969  0.017    0.928    0.972    0.994    FALSE 1 1.007   315
-# s[1,1,3]       0.908  0.044    0.811    0.914    0.978    FALSE 1 1.000  7056
-# s[2,1,3]       0.932  0.020    0.889    0.934    0.966    FALSE 1 1.000  8804
-# s[1,2,3]       0.893  0.051    0.781    0.899    0.974    FALSE 1 1.001  2499
-# s[2,2,3]       0.923  0.033    0.849    0.927    0.974    FALSE 1 1.002  1521
-# s[1,1,4]       0.955  0.022    0.906    0.957    0.989    FALSE 1 1.002  1374
-# s[2,1,4]       0.970  0.010    0.948    0.971    0.986    FALSE 1 1.003   937
-# s[1,2,4]       0.947  0.026    0.889    0.951    0.987    FALSE 1 1.009   268
-# s[2,2,4]       0.962  0.016    0.924    0.964    0.987    FALSE 1 1.003  1418
-# ann.s[1,1]     0.585  0.077    0.433    0.583    0.732    FALSE 1 1.001  3071
-# ann.s[2,1]     0.582  0.041    0.504    0.582    0.661    FALSE 1 1.005   569
-# ann.s[1,2]     0.471  0.074    0.325    0.471    0.612    FALSE 1 1.009   231
-# ann.s[2,2]     0.517  0.063    0.397    0.517    0.643    FALSE 1 1.013   160
-# mean.rho       2.188  0.164    1.882    2.182    2.530    FALSE 1 1.000 12000
-# gamma          0.494  0.021    0.454    0.494    0.535    FALSE 1 1.002  1339
-# mean.p         0.426  0.039    0.357    0.423    0.509    FALSE 1 1.017   128
-# sigma.rho      0.295  0.063    0.194    0.289    0.439    FALSE 1 1.001  2281
-# sigma.p        0.346  0.112    0.155    0.335    0.599    FALSE 1 1.003   771
-# rho[1]         2.053  0.261    1.574    2.041    2.596    FALSE 1 1.000 12000
+print(out1, 3)  # Corrected 2021-07-28
+#                 mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
+# s[1,1,1]       0.501  0.290    0.024    0.503    0.976    FALSE 1 1.000 15000
+# s[2,1,1]       0.943  0.018    0.904    0.944    0.972    FALSE 1 1.000 15000
+# s[1,2,1]       0.501  0.288    0.025    0.506    0.974    FALSE 1 1.000 15000
+# s[2,2,1]       0.880  0.035    0.807    0.883    0.942    FALSE 1 1.000 15000
+# s[1,1,2]       0.930  0.065    0.759    0.948    0.998    FALSE 1 1.000 15000
+# s[2,1,2]       0.948  0.013    0.920    0.949    0.971    FALSE 1 1.000  8594
+# s[1,2,2]       0.843  0.097    0.612    0.861    0.979    FALSE 1 1.000 11434
+# s[2,2,2]       0.970  0.016    0.932    0.973    0.994    FALSE 1 1.000 15000
+# s[1,1,3]       0.878  0.055    0.759    0.884    0.969    FALSE 1 1.000 14762
+# s[2,1,3]       0.927  0.022    0.879    0.929    0.964    FALSE 1 1.000 15000
+# s[1,2,3]       0.863  0.063    0.728    0.868    0.966    FALSE 1 1.001  3878
+# s[2,2,3]       0.915  0.036    0.834    0.920    0.972    FALSE 1 1.000  5561
+# s[1,1,4]       0.937  0.027    0.881    0.939    0.983    FALSE 1 1.000  6933
+# s[2,1,4]       0.967  0.011    0.943    0.968    0.984    FALSE 1 1.000  8364
+# s[1,2,4]       0.927  0.032    0.858    0.930    0.980    FALSE 1 1.000 15000
+# s[2,2,4]       0.956  0.019    0.912    0.959    0.985    FALSE 1 1.000  5847
+# ann.s[1,1]     0.490  0.071    0.359    0.489    0.634    FALSE 1 1.000 10877
+# ann.s[2,1]     0.551  0.045    0.462    0.550    0.637    FALSE 1 1.000 15000
+# ann.s[1,2]     0.378  0.068    0.253    0.376    0.519    FALSE 1 1.000  7952
+# ann.s[2,2]     0.476  0.066    0.347    0.476    0.603    FALSE 1 1.000 14173
+# mean.rho       2.175  0.163    1.867    2.170    2.514    FALSE 1 1.000 15000
+# gamma          0.493  0.021    0.451    0.493    0.534    FALSE 1 1.000 15000
+# mean.p         0.430  0.038    0.361    0.428    0.510    FALSE 1 1.000 15000
+# sigma.rho      0.298  0.065    0.194    0.290    0.447    FALSE 1 1.000  8608
+# sigma.p        0.376  0.112    0.187    0.364    0.620    FALSE 1 1.001  2673
+# rho[1]         1.963  0.252    1.500    1.950    2.484    FALSE 1 1.000 14867
 # [... output truncated ...]
-# rho[20]        2.090  0.249    1.630    2.080    2.607    FALSE 1 1.001  2093
-# p[1]           0.373  0.061    0.261    0.371    0.502    FALSE 1 1.002   935
+# rho[20]        2.092  0.248    1.634    2.082    2.602    FALSE 1 1.000 10745
+# p[1]           0.408  0.059    0.298    0.405    0.531    FALSE 1 1.000  7604
 # [... output truncated ...]
-# p[20]          0.390  0.052    0.298    0.387    0.504    FALSE 1 1.008   261
-# Nsp[1,1,1]    44.709 25.655    3.000   44.000   93.000    FALSE 1 1.002   985
-# Nsp[2,1,1]    42.936 25.607    3.000   41.000   93.000    FALSE 1 1.003   770
-# Nsp[1,2,1]    21.090 12.434    1.000   20.000   44.000    FALSE 1 1.007   285
-# Nsp[2,2,1]    21.632 12.376    1.000   22.000   43.000    FALSE 1 1.008   260
+# p[20]          0.406  0.057    0.304    0.403    0.526    FALSE 1 1.000 15000
+# Nsp[1,1,1]    38.809 23.047    2.000   38.000   84.000    FALSE 1 1.000  3816
+# Nsp[2,1,1]    38.726 23.279    2.000   37.000   84.000    FALSE 1 1.000 14971
+# Nsp[1,2,1]    19.692 11.514    1.000   19.000   41.000    FALSE 1 1.001  3196
+# Nsp[2,2,1]    19.750 11.504    1.000   19.000   41.000    FALSE 1 1.001  2832
+# Nsp[1,1,2]    32.980  7.503   20.000   32.000   49.000    FALSE 1 1.000 12507
 # [... output truncated ...]
-# Nsp[1,1,20]   47.030  9.908   29.000   47.000   68.000    FALSE 1 1.002  1025
-# Nsp[2,1,20]   43.315  7.283   30.000   43.000   58.025    FALSE 1 1.011   194
-# Nsp[1,2,20]   42.234  7.408   28.000   42.000   57.025    FALSE 1 1.003   629
-# Nsp[2,2,20]   33.473  5.893   22.000   33.000   45.000    FALSE 1 1.010   194
-# Nls[1,1,1]    41.313  8.804   25.000   41.000   60.000    FALSE 1 1.001  4464
-# Nls[2,1,1]    73.558 14.826   48.000   73.000  106.000    FALSE 1 1.001  2510
-# Nls[1,2,1]    39.570  7.463   26.000   39.000   55.000    FALSE 1 1.000  8933
-# Nls[2,2,1]    35.942  4.451   28.000   36.000   45.000    FALSE 1 1.002   857
+# Nsp[1,1,20]   45.686 10.614   27.000   45.000   69.000    FALSE 1 1.000 15000
+# Nsp[2,1,20]   42.317  7.023   30.000   42.000   57.000    FALSE 1 1.000 15000
+# Nsp[1,2,20]   41.317  7.747   27.000   41.000   57.000    FALSE 1 1.000 11306
+# Nsp[2,2,20]   31.499  5.899   20.000   31.000   43.000    FALSE 1 1.000  7807
+# Nls[1,1,1]    63.130 12.022   42.000   62.000   89.000    FALSE 1 1.000 15000
+# Nls[2,1,1]    63.566  9.722   46.000   63.000   84.000    FALSE 1 1.000  5830
+# Nls[1,2,1]    60.773 12.075   40.000   60.000   87.000    FALSE 1 1.000 15000
+# Nls[2,2,1]    32.500  4.567   24.000   32.000   42.000    FALSE 1 1.000 15000
 # [... output truncated ...]
-# Nls[1,1,20]   70.303 13.962   45.000   70.000  100.000    FALSE 1 1.002   939
-# Nls[2,1,20]   75.709 10.508   56.000   75.000   98.000    FALSE 1 1.011   191
-# Nls[1,2,20]   71.980 14.120   47.000   71.000  102.000    FALSE 1 1.001  1828
-# Nls[2,2,20]   62.821  6.975   50.000   63.000   77.000    FALSE 1 1.006   316
+# Nls[1,1,20]   74.401 17.089   45.000   73.000  111.000    FALSE 1 1.000 15000
+# Nls[2,1,20]   72.206 10.858   53.000   72.000   95.000    FALSE 1 1.000 15000
+# Nls[1,2,20]   76.579 17.259   47.000   75.000  114.000    FALSE 1 1.000 15000
+# Nls[2,2,20]   59.468  6.765   47.000   59.000   73.000    FALSE 1 1.000 11886
+
 
 
 # ~~~~ posterior predictive checks ~~~~
@@ -486,7 +478,7 @@ op <- par(mfrow=c(1,2), las=1, mar=c(4.5,4,2,1))
 
 d <- 0.1
 plot(y=apply(NspM, 2, mean), x=(1:20)-d, type="b", pch=16,
-    ylab="Population size", xlab=NA, ylim=c(0, 180), col="blue",
+    ylab="Population size", xlab=NA, ylim=c(0, 220), col="blue",
     axes=FALSE, main="Spring")
 polygon(c((1:20)-d, (20:1)-d), c(apply(NspM, 2, qu)[1,], rev(apply(NspM, 2, qu)[2,])),
     col=alpha(co[1], alpha=0.25), border=NA)
@@ -502,7 +494,7 @@ legend("topright", pch=c(18,16,1), col=c(rev(co), "black"),
     legend=c("Females", "Males", "Males count"), bty="n")
 
 plot(y=apply(NlsM, 2, mean), x=(1:20)-d, type="b", pch=16, ylab=NA, xlab=NA,
-    ylim=c(0, 180), col=co[1], axes=FALSE, main="Late summer")
+    ylim=c(0, 220), col=co[1], axes=FALSE, main="Late summer")
 polygon(c((1:20)-d, (20:1)-d), c(apply(NlsM, 2, qu)[1,], rev(apply(NlsM, 2, qu)[2,])),
     col=alpha(co[1], alpha=0.25), border=NA)
 polygon(c((1:20)+d, (20:1)+d), c(apply(NlsF, 2, qu)[1,], rev(apply(NlsF, 2, qu)[2,])),
@@ -531,7 +523,7 @@ year <- c(1997, 2000, 2003, 2006, 2009, 2012, 2015)
 
 op <- par(mar=c(3, 4.2, 1, 1), las=1)
 plot(apply(NF, 2, mean), type="b", pch=rep(c(18,16),20),
-    ylab="Female population size", xlab=NA, ylim=c(40, 180), col=co, axes=FALSE)
+    ylab="Female population size", xlab=NA, ylim=c(40, 220), col=co, axes=FALSE)
 polygon(x=c(1:40, 40:1), y=c(apply(NF, 2, quant)[1,], rev(apply(NF, 2, quant)[2,])),
     col=alpha(co, alpha=0.25), border=NA)
 points(apply(NF, 2, mean), type="b", pch=rep(c(18,16),20), col=co)
