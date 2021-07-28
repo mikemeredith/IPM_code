@@ -31,8 +31,11 @@
     return(TRUE)  # skip check for functions (esp. nimble)
   }
   all.equal.jagsUI <- function(target, current, ...) {
-    target$run.date <- NULL ; target$mcmc.info$elapsed.mins <- NULL
-    current$run.date <- NULL ; current$mcmc.info$elapsed.mins <- NULL
+    target$run.date <- NULL ; current$run.date <- NULL 
+    target$mcmc.info$elapsed.mins <- NULL ; current$mcmc.info$elapsed.mins <- NULL
+    # Checking model text will show a mismatch even for tiny changes, eg in 
+    #   comments or white space
+    target$model <- NULL ; current$model <- NULL
     all.equal.list(target, current, ...)
   }
 
@@ -87,6 +90,7 @@ length(.ListOfFilesToCheck)
 # length(.ListOfFilesToCheck)
 
 # Attach rgdal before doing package count (does not unload properly)
+options("rgdal_show_exportToProj4_warnings"="none")
 library(rgdal)
 .oldPackageCount <- length(search())
 .oldWD <- getwd()
@@ -148,7 +152,16 @@ cat("\n\n#############################################\n")
 cat("Completed", format(Sys.time()), file = .logFile, append = TRUE)
 cat("\nOverall time taken", round(otime, 2), attr(otime, "units"), "\n")
 cat("\nSessionInfo:\n\n")
-print(sessionInfo())
+sess <- sessionInfo()
+sess$otherPkgs <- NULL
+sess$loadedOnly <- NULL
+print(sess)
+cat("\nPackages used:\n")  # in alphabetical order
+lns <- loadedNamespaces()
+lns <- sort(lns[!(lns %in% sess$basePkgs)])
+vers <- lapply(lns, packageVersion)
+names(vers) <- lns
+print(cbind(version=vers))
 sink(NULL)
 
 # Display info in the Console (important if running multiple instances of R)
