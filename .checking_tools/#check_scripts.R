@@ -122,7 +122,9 @@ for(.i in seq_along(.ListOfFilesToCheck)) {
   .pdfFile <- paste0(.fileStem, "#.pdf")
   .imageFile <- paste0(.fileStem, "#.Rdata")
   # run the script
-  cat("\n\n", .ListOfFilesToCheck[.i], "\n", file = .logFile, append = TRUE)
+  # cat("\n\n", .ListOfFilesToCheck[.i], "\n", file = .logFile, append = TRUE)
+  cat("\n\n", .ListOfFilesToCheck[.i], "\nmodified", format(file.mtime(.ListOfFilesToCheck[.i])), "\n",
+      file = .logFile, append = TRUE)
   cat(format(Sys.time()), "\n", file = .logFile, append = TRUE)
   pdf(.pdfFile)
   .defaultpars <- par(no.readonly = TRUE)
@@ -140,9 +142,11 @@ for(.i in seq_along(.ListOfFilesToCheck)) {
   dev.off()
   sessionInfo <- sessionInfo()
   timeTaken <- .timing
-  save.image(file = .imageFile)
-  if(inherits(.returnValue, "try-error"))
+  if(inherits(.returnValue, "try-error")) {
     cat(.returnValue, file = .logFile, append = TRUE)
+    .imageFile <- paste0(.fileStem, "_bad#.Rdata")
+  }
+  save.image(file = .imageFile)
   if(.timing[3] > 20)
     cat("Took", .hms(.timing[3]), file = .logFile, append = TRUE)
 }
