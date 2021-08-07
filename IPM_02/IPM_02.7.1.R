@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 3 mins
 
@@ -15,7 +15,7 @@ library(IPMbook)
 
 # Define imaginary counts and elevation data for 10 sites
 original.elev <- c(500, 400, 700, 500, 600, 800, 1000, 900, 1000, 900)
-C <- c(6, 10, 2, 7, 4, 1, 1, 2, 0, 0)   # Counts
+C <- c(6, 10, 2, 7, 4, 1, 1, 2, 0, 0) # Counts
 
 # Look at data and produce summaries of counts (not shown)
 cbind(original.elev, C)
@@ -28,40 +28,39 @@ plot(original.elev, C, xlab='Site elevation (m)', ylab='Asp viper count',
     cex=1.5, pch=16, frame=FALSE, las=1)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-elev <- (original.elev - mean(original.elev)) / 1000  # Center and scale
+elev <- (original.elev - mean(original.elev)) / 1000 # Center and scale
 
 library(jagsUI)
 
 # Bundle data
 jags.data <- list(C=C, elev=elev, n=length(C))
 str(jags.data)
-
 # List of 3
- # $ C   : num [1:10] 6 10 2 7 4 1 1 2 0 0
- # $ elev: num [1:10] -0.23 -0.33 -0.03 -0.23 -0.13 0.07 0.27 0.17 0.27 0.17
- # $ n   : int 10
+# $ C   : num [1:10] 6 10 2 7 4 1 1 2 0 0
+# $ elev: num [1:10] -0.23 -0.33 -0.03 -0.23 -0.13 0.07 0.27 0.17 0.27 0.17
+# $ n   : int 10
 
 # Write JAGS model file
 cat(file="model1.txt", "
 model {
   # Priors and linear models
   # One set of vague priors: 'flat' normal
-  alpha ~ dnorm(0, 1.0E-06)    # log-linear intercept
-  beta ~ dnorm(0, 1.0E-06)     # log-linear slope
+  alpha ~ dnorm(0, 1.0E-06) # log-linear intercept
+  beta ~ dnorm(0, 1.0E-06) # log-linear slope
 
   # Another possible set of vague priors: suitably wide uniform
-  # alpha ~ dunif(-100, 100)   # log-linear intercept
-  # beta ~ dunif(-100, 100)    # log-linear slope
+  # alpha ~ dunif(-100, 100) # log-linear intercept
+  # beta ~ dunif(-100, 100) # log-linear slope
 
   # Likelihood for the Poisson GLM
   for (i in 1:n){
-    C[i] ~ dpois(lambda[i])    # Stochastic part
+    C[i] ~ dpois(lambda[i]) # Stochastic part
     log(lambda[i]) <- alpha + beta * elev[i] # Link function and linear pred.
     # lambda[i] <- exp(alpha + beta * elev[i]) # same written differently
   }
 
   # Derived quantities
-  mean.exp.count <- exp(alpha)               # Backtransformed intercept
+  mean.exp.count <- exp(alpha) # Backtransformed intercept
 }
 ")
 
@@ -75,19 +74,22 @@ parameters <- c("alpha", "beta", "mean.exp.count", "lambda")
 ni <- 50000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 
 # Call JAGS from R (ART <1 min)
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=FALSE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=FALSE)
 
 # Call JAGS from R (ART <1 min) and do parallel computation
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 
 # Produce an overview of the R object created by jagsUI
-str(out1)          # Only a small portion of total output is shown here!
+str(out1) # Only a small portion of total output is shown here!
 
+# par(mfrow=c(2, 2)); jagsUI::traceplot(out1) # May need jagsUI::traceplot!
 jagsUI::traceplot(out1, layout=c(2,2)) # May need jagsUI::traceplot!
-# par(mfrow=c(1, 3), mar=c(5, 5, 4, 2), cex.axis=1.5, cex.lab=1.5, cex.main=1.5, las=1)
+
+# ~~~~ code for Fig 2.10 ~~~~
 jagsUI::traceplot(out1, c("alpha", "beta", "mean.exp.count"), layout=c(1,3)) # just some
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 print(out1, 3)
 
@@ -138,10 +140,9 @@ points(out1$sims.list$alpha[condition.true], out1$sims.list$beta[condition.true]
 
 condition.true <- out1$sims.list$alpha < 0.5 & out1$sims.list$beta < -6
 mean(condition.true)
-# [1] 0.1786667   # Your result will be somewhat different
+# [1] 0.1786667 # Your result will be somewhat different
 
-# Get frequentist MLEs for comparison
-#   and predict intercept on natural scale
+# Get frequentist MLEs for comparison and predict intercept on natural scale
 summary(fm <- glm(C ~ elev, family='poisson'))
 predict(fm, type='response', newdata=data.frame(elev=0), se=TRUE)
 
@@ -160,20 +161,19 @@ predict(fm, type='response', newdata=data.frame(elev=0), se=TRUE)
         # 1
 # 0.5331537
 
-
 # New data bundle with variant of data with bigger sample size
-times.bigger <- 100      # Results in sample size of 1000
+times.bigger <- 100                       # Results in sample size of 1000
 newC <- rep(C, times.bigger)
 newElev <- rep(elev, times.bigger)
 jags.data <- list(C=newC, elev=newElev, n=length(newC))
-str(jags.data)           # This is now the big data set
+str(jags.data)                            # This is now the big data set
 
 # Parameters monitored
 parameters <- c("alpha", "beta", "mean.exp.count")
 
 # Call JAGS from R (ART 2 min), check convergence and summarize posteriors
-out2 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out2 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 print(out2, 3)
 
 #                    mean    sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
@@ -183,9 +183,8 @@ print(out2, 3)
 
 # Get frequentist MLEs for comparison (for the 100x larger sample size)
 summary(fm <- glm(newC ~ newElev, family='poisson'))
-
 # Coefficients:
-            # Estimate Std. Error z value Pr(>|z|)
+#             Estimate Std. Error z value Pr(>|z|)
 # (Intercept)  0.67867    0.02705   25.09   <2e-16 ***
 # newElev     -5.01976    0.11035  -45.49   <2e-16 ***
 
