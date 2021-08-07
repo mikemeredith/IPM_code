@@ -1,10 +1,16 @@
 ## IPM code
 
-# CHANGES
+# MAJOR CHANGES
+
+## 2021-08-07
+
+Code to appear in the book replaced with code from the proofs. Additional code not to be printed unchanged.
+
+Tested on Windows 10 with R 4.1.0 and R-devel (as at 2021-08-05), and up-to-date versions of packages, including `IPMbook` 0.1.1 and `jagsUI` 1.5.2.
 
 ## 2021-06-21
 
-* Changes to calls to `jagsUI::traceplot` to accommodate the new version (1.5.2).
+Changes to calls to `jagsUI::traceplot` to accommodate the new version (1.5.2).
 
 ## 2021-04-04
 
