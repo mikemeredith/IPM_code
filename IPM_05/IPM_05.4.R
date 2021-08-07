@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 1 min
 
@@ -26,21 +26,19 @@ marr <- marrayAge(woodchat5$ch, woodchat5$age)
 # Bundle data and produce data overview
 jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     rel.j=rowSums(marr[,,1]), rel.a=rowSums(marr[,,2]), J=woodchat5$repro[,1],
-    year=woodchat5$repro[,2], age=woodchat5$repro[,3], C=woodchat5$count,
-    pNinit=dUnif(1, 300))
+    year=woodchat5$repro[,2], age=woodchat5$repro[,3], C=woodchat5$count, pNinit=dUnif(1, 300))
 str(jags.data)
-
 # List of 10
- # $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
- # $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
- # $ n.occasions: int 20
- # $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
- # $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
- # $ J          : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
- # $ year       : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
- # $ age        : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
- # $ C          : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
- # $ pNinit     : num [1:300] 0.00333 0.00333 0.00333 0.00333 0.00333 ...
+# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ n.occasions: int 20
+# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ J : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
+# $ year : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ age : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ C : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
+# $ pNinit : num [1:300] 0.00333 0.00333 0.00333 0.00333 0.00333 ...
 
 # Write JAGS model file
 cat(file="model4.txt", "
@@ -48,23 +46,23 @@ model {
   # Priors and linear models
   for (t in 1:(n.occasions-1)){
     logit.sj[t] ~ dnorm(mu.sj, tau.sj)
-    sj[t] <- ilogit(logit.sj[t])      # Back-transformation from logit scale
+    sj[t] <- ilogit(logit.sj[t])       # Back-transformation from logit scale
     logit.sa[t] ~ dnorm(mu.sa, tau.sa)
-    sa[t] <- ilogit(logit.sa[t])      # Back-transformation from logit scale
+    sa[t] <- ilogit(logit.sa[t])       # Back-transformation from logit scale
     p[t] <- mean.p
   }
 
   for (t in 1:n.occasions){
     log.f[1,t] ~ dnorm(mu.f[1], tau.f[1])
-    f[1,t] <- exp(log.f[1,t])         # Back-transformation from log scale
+    f[1,t] <- exp(log.f[1,t])          # Back-transformation from log scale
     log.f[2,t] ~ dnorm(mu.f[2], tau.f[2])
-    f[2,t] <- exp(log.f[2,t])         # Back-transformation from log scale
+    f[2,t] <- exp(log.f[2,t])          # Back-transformation from log scale
   }
 
   mean.sj ~ dunif(0, 1)
-  mu.sj <- logit(mean.sj)        # Logit transformation
+  mu.sj <- logit(mean.sj)              # Logit transformation
   mean.sa ~ dunif(0, 1)
-  mu.sa <- logit(mean.sa)        # Logit transformation
+  mu.sa <- logit(mean.sa)              # Logit transformation
   sigma.sj ~ dunif(0, 3)
   tau.sj <- pow(sigma.sj, -2)
   sigma.sa ~ dunif(0, 3)
@@ -72,7 +70,7 @@ model {
 
   for (j in 1:2){
     mean.f[j] ~ dunif(0, 10)
-    mu.f[j] <- log(mean.f[j])   # Log transformation
+    mu.f[j] <- log(mean.f[j])          # Log transformation
     sigma.f[j] ~ dunif(0, 3)
     tau.f[j] <- pow(sigma.f[j], -2)
   }
@@ -110,9 +108,9 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    q[t] <- 1 - p[t]   # Probability of non-recapture
+    # Main diagonal
+    q[t] <- 1 - p[t] # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -148,19 +146,18 @@ model {
 inits <- function(){list(mean.sj=runif(1, 0, 0.5))}
 
 # Parameters monitored
-parameters <- c("mean.sj", "mean.sa", "mean.f", "mean.p", "sigma.sj",
-    "sigma.sa", "sigma.f", "sigma", "sj", "sa", "f", "N", "ann.growth.rate", "Ntot")
+parameters <- c("mean.sj", "mean.sa", "mean.f", "mean.p", "sigma.sj", "sigma.sa", "sigma.f",
+    "sigma", "sj", "sa", "f", "N", "ann.growth.rate", "Ntot")
 
 # MCMC settings
 ni <- 12000; nb <- 2000; nc <- 3; nt <- 2; na <- 1000
 
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
-out4 <- jags(jags.data, inits, parameters, "model4.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out4 <- jags(jags.data, inits, parameters, "model4.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out4)
 print(out4, 3)
-
-                        # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
+#                         mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # mean.sj                0.301  0.014    0.275    0.301    0.327    FALSE 1 1.001  2027
 # mean.sa                0.542  0.016    0.511    0.542    0.573    FALSE 1 1.000  5642
 # mean.f[1]              2.673  0.083    2.502    2.673    2.829    FALSE 1 1.006  1000

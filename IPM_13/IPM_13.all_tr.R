@@ -1,30 +1,26 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 13 : Horseshoe bat
 # --------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 40 mins, full run 26 hrs.
-
-library(IPMbook) ; library(jagsUI)
 
 # 13.4 Single data likelihoods
 # ============================
 
 # Load greater horseshoe bat data and produce data overview
+library(IPMbook); library(jagsUI)
 data(bats)
 str(bats)
-
 # List of 7
- # $ ch     : int [1:574, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:29] "1989" "1990" "1991" "1992" ...
- # $ age    : num [1:574] 1 1 1 1 1 1 1 1 1 1 ...
- # $ sex    : num [1:574] 2 2 2 1 2 1 1 2 2 1 ...
- # $ J.count: num [1:29] 13 11 11 16 16 16 18 20 17 16 ...
- # $ Jm     : num 293
- # $ Jf     : num 289
- # $ A.count: num [1:29] 27 33 NA 27 42 43 41 40 44 33 ...
+# $ ch : int [1:574, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
+# $ age : num [1:574] 1 1 1 1 1 1 1 1 1 1 ...
+# $ sex : num [1:574] 2 2 2 1 2 1 1 2 2 1 ...
+# $ J.count: num [1:29] 13 11 11 16 16 16 18 20 17 16 ...
+# $ Jm : num 293
+# $ Jf : num 289
+# $ A.count: num [1:29] 27 33 NA 27 42 43 41 40 44 33 ...
+
 
 # 13.4.1 Capture-recapture data
 # '''''''''''''''''''''''''''''
@@ -47,37 +43,27 @@ k <- c(rep(12, 14), 1, 2, 3, 4, 5, 12, 12, 6, 7, 8, 12, 11, 9, 10)
 # =====================================
 
 # Bundle data and produce a data overview
-jags.data <- with(bats, list(ch=ch, f=getFirst(ch), nind=nrow(ch),
-    n.occasions=ncol(ch), x=x, sex=sex, k=k, J=J.count, Jf=Jf, Jm=Jm,
-    C=A.count, pinit1=dUnif(1, 50), pinit2=dUnif(1, 100),
-    beta.priors=as.numeric(getBeta2Par(0.4, 0.15)), rpres=which(k<11),
-    nrpres=which(k>10)))
-
+jags.data <- with(bats, list(ch=ch, f=getFirst(ch), nind=nrow(ch), n.occasions=ncol(ch), x=x,
+    sex=sex, k=k, J=J.count, Jf=Jf, Jm=Jm, C=A.count, pinit1=dUnif(1, 50), pinit2=dUnif(1, 100),
+    beta.priors=as.numeric(getBeta2Par(0.4, 0.15)), rpres=which(k<11), nrpres=which(k>10)))
 str(jags.data)
-
 # List of 16
- # $ ch         : int [1:574, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:29] "1989" "1990" "1991" "1992" ...
- # $ f          : int [1:574] 4 4 4 4 4 4 4 4 4 4 ...
- # $ nind       : int 574
- # $ n.occasions: int 29
- # $ x          : num [1:574, 1:28] NA NA NA NA NA NA NA NA NA NA ...
- # $ sex        : num [1:574] 2 2 2 1 2 1 1 2 2 1 ...
- # $ k          : num [1:28] 12 12 12 12 12 12 12 12 12 12 ...
- # $ J          : num [1:29] 13 11 11 16 16 16 18 20 17 16 ...
- # $ Jf         : num 289
- # $ Jm         : num 293
- # $ C          : num [1:29] 27 33 NA 27 42 43 41 40 44 33 ...
- # $ pinit1     : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
- # $ pinit2     : num [1:100] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
- # $ beta.priors: num [1:2] 3.87 5.8
- # $ rpres      : int [1:10] 15 16 17 18 19 22 23 24 27 28
- # $ nrpres     : int [1:18] 1 2 3 4 5 6 7 8 9 10 ...
-
-# code of IPM1
-# ''''''''''''
+# $ ch : int [1:574, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
+# $ f : int [1:574] 4 4 4 4 4 4 4 4 4 4 ...
+# $ nind : int 574
+# $ n.occasions: int 29
+# $ x : num [1:574, 1:28] NA NA NA NA NA NA NA NA NA NA ...
+# $ sex : num [1:574] 2 2 2 1 2 1 1 2 2 1 ...
+# $ k : num [1:28] 12 12 12 12 12 12 12 12 12 12 ...
+# $ J : num [1:29] 13 11 11 16 16 16 18 20 17 16 ...
+# $ Jf : num 289
+# $ Jm : num 293
+# $ C : num [1:29] 27 33 NA 27 42 43 41 40 44 33 ...
+# $ pinit1 : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
+# $ pinit2 : num [1:100] 0.01 0.01 0.01 0.01 0.01 0.01 0.01 0.01 ...
+# $ beta.priors: num [1:2] 3.87 5.8
+# $ rpres : int [1:10] 15 16 17 18 19 22 23 24 27 28
+# $ nrpres : int [1:18] 1 2 3 4 5 6 7 8 9 10 ...
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -108,8 +94,8 @@ model {
         logit.pt[s,a,t] ~ dnorm(mu.p[s,a], tau.p[s,a])
         pt[s,a,t] <- ilogit(logit.pt[s,a,t])
       } #t
-      pt[s,a,11] ~ dunif(0, 1)   # rate in 2015, incomplete capture
-      pt[s,a,12] <- 0            # fix to 0 in years without capture
+      pt[s,a,11] ~ dunif(0, 1)      # rate in 2015, incomplete capture
+      pt[s,a,12] <- 0               # fix to 0 in years without capture
     } #a
   } #s
 
@@ -119,9 +105,8 @@ model {
   mu.s[4] <- logit(mean.s[2,1])
   mu.s[5] <- logit(mean.s[2,2])
   mu.s[6] <- logit(mean.s[2,3])
-
   for (j in 1:6){
-    sd.s[j] ~ dunif(0.001, 10)  # Prior of the temporal SD
+    sd.s[j] ~ dunif(0.001, 10)      # Prior of the temporal SD
     Sigma[j,j] <- pow(sd.s[j], 2)
   }
 
@@ -129,7 +114,7 @@ model {
     for (j in (m+1):6){
       Sigma[m,j] <- zeta[m,j] * pow(Sigma[m,m] * Sigma[j,j], 0.5)
       Sigma[j,m] <- Sigma[m,j]
-      zeta[m,j] ~ dunif(-1, 1)     # Priors for correlation coefficients
+      zeta[m,j] ~ dunif(-1, 1)      # Priors for correlation coefficients
     } #j
   } #m
 
@@ -145,14 +130,14 @@ model {
 
   # Productivity
   for (t in 1:n.occasions){
-    rho[1,t] <- mean.rho[1]                  # of 2y females
-    logit(rho[2,t]) <- mu.rho + eps.rho[t]   # of >2y females
+    rho[1,t] <- mean.rho[1]                 # of 2y females
+    logit(rho[2,t]) <- mu.rho + eps.rho[t]  # of >2y females
     eps.rho[t] ~ dnorm(0, tau.rho)
   }
   # Priors for productivity of 2y females
   # To run IPMs 2-4, manually un-hash one line and hash out the others
   mean.rho[1] <- 0
-  # mean.rho[1] <- 0.99       # does not work if = 1 due to initial values
+  # mean.rho[1] <- 0.99                     # does not work if = 1 due to initial values
   # mean.rho[1] ~ dunif(0, 1)
   # mean.rho[1] ~ dbeta(beta.priors[1], beta.priors[2])
 
@@ -205,8 +190,9 @@ model {
 
   # Observation model
   for (t in 1:n.occasions){
-    Ns[t] <- sum(N[,,t])       # total population size
-    U[t] <- N[1,1,t] * kappa[1,1,t] + N[1,2,t] * kappa[1,2,t] + N[1,3,t] * kappa[1,3,t]  + N[2,1,t] * kappa[2,1,t]  + N[2,2,t] * kappa[2,2,t] + N[2,3,t] * kappa[2,3,t]
+    Ns[t] <- sum(N[,,t])                  # total population size
+    U[t] <- N[1,1,t] * kappa[1,1,t] + N[1,2,t] * kappa[1,2,t] + N[1,3,t] * kappa[1,3,t] + N[2,1,t] *
+        kappa[2,1,t] + N[2,2,t] * kappa[2,2,t] + N[2,3,t] * kappa[2,3,t]
     C[t] ~ dnorm(U[t], tau.y)
   }
 
@@ -224,11 +210,11 @@ model {
 
   # Newborn count data (binomial models)
   for (t in 1:n.occasions){
-    G[1,t] ~ dbin(rho[1,t], N[1,2,t])   # Newborn by 2y females
-    G[2,t] ~ dbin(rho[2,t], N[1,3,t])   # Newborn by >2y females
-    J[t] ~ dsum(G[1,t], G[2,t])         # Total newborn
-    NB[1,t] ~ dbin(xi, J[t])            # Newborn females
-    NB[2,t] <- J[t] - NB[1,t]           # Newborn males
+    G[1,t] ~ dbin(rho[1,t], N[1,2,t])     # Newborn by 2y females
+    G[2,t] ~ dbin(rho[2,t], N[1,3,t])     # Newborn by >2y females
+    J[t] ~ dsum(G[1,t], G[2,t])           # Total newborn
+    NB[1,t] ~ dbin(xi, J[t])              # Newborn females
+    NB[2,t] <- J[t] - NB[1,t]             # Newborn males
   }
 }
 ")
@@ -241,19 +227,17 @@ G[2,] <- bats$J.count
 inits <- function(){list(z=zInit(bats$ch), N=Ninit, G=G)}
 
 # Parameters monitored
-parameters <- c("mean.s", "Sigma", "mean.rho", "sigma.rho", "xi", "zeta",
-    "mean.p", "sigma.p", "sigma.y", "sur", "pt", "rho", "kappa",
-    "N", "U", "Ns", "NB", "G")
+parameters <- c("mean.s", "Sigma", "mean.rho", "sigma.rho", "xi", "zeta", "mean.p", "sigma.p", "sigma.y",
+    "sur", "pt", "rho", "kappa", "N", "U", "Ns", "NB", "G")
 
 # MCMC settings
 # ni <- 500000; nb <- 200000; nc <- 3; nt <- 100; na <- 5000
-ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing
+ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 5000  # ~~~ for testing, 8 mins
 
 # Call JAGS (ART 600 min) and check convergence
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
-
 
 # ~~~~ code to run the other IPMs ~~~~
 

@@ -1,35 +1,33 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 9 : Retrospective population analyses
 # ---------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 1 min
-
-library(IPMbook) ; library(jagsUI)
 
 # 9.2 Correlations between demographic rates and population growth
 # ================================================================
 
 # Load the hoopoe data and produce data overview
+library(IPMbook); library(jagsUI)
 data(hoopoe)
 str(hoopoe)
-
 # List of 5
- # $ ch      : int [1:3844, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:16] "2002" "2003" "2004" "2005" ...
- # $ age     : int [1:3844] 1 1 1 1 1 1 1 1 1 1 ...
- # $ count   : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
- # $ reproAgg:List of 4
-  # ..$ J1: num [1:16] 73 188 243 320 261 222 206 154 278 220 ...
-  # ..$ J2: num [1:16] 51 83 101 182 256 226 206 278 237 244 ...
-  # ..$ B1: num [1:16] 15 23 36 50 44 37 39 30 48 48 ...
-  # ..$ B2: num [1:16] 6 13 12 23 38 38 32 41 39 41 ...
- # $ reproInd:List of 3
-  # ..$ f   : int [1:1092] 6 11 11 3 15 6 11 12 7 6 ...
-  # ..$ id  : num [1:1092] 483 486 530 531 532 533 534 535 536 538 ...
-  # ..$ year: int [1:1092] 2002 2002 2002 2002 2002 2002 2002 2002 2002 ...
+# $ ch : int [1:3844, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : NULL
+# .. ..$ : chr [1:16] "2002" "2003" "2004" "2005" ...
+# $ age : int [1:3844] 1 1 1 1 1 1 1 1 1 1 ...
+# $ count : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
+# $ reproAgg:List of 4
+# ..$ J1: num [1:16] 73 188 243 320 261 222 206 154 278 220 ...
+# ..$ J2: num [1:16] 51 83 101 182 256 226 206 278 237 244 ...
+# ..$ B1: num [1:16] 15 23 36 50 44 37 39 30 48 48 ...
+# ..$ B2: num [1:16] 6 13 12 23 38 38 32 41 39 41 ...
+# $ reproInd:List of 3
+# ..$ f : int [1:1092] 6 11 11 3 15 6 11 12 7 6 ...
+# ..$ id : num [1:1092] 483 486 530 531 532 533 534 535 536 538 ...
+# ..$ year: int [1:1092] 2002 2002 2002 2002 2002 2002 2002 2002 2002 ...
 
 # Produce age-dependent m-arrays
 marr <- marrayAge(hoopoe$ch, hoopoe$age, 2)
@@ -37,11 +35,10 @@ marr.j <- marr[,,1]
 marr.a <- marr[,,2]
 
 # Bundle data
-jags.data <- with(hoopoe$reproAgg, list(marr.j=marr.j, marr.a=marr.a,
-    n.occasions=ncol(marr.j), rel.j=rowSums(marr.j), rel.a=rowSums(marr.a),
-    J1=J1, B1=B1, J2=J2, B2=B2, count=hoopoe$count, pNinit=dUnif(1, 50)))
-str(jags.data)    # Remind ourselves of how the data look like
-
+jags.data <- with(hoopoe$reproAgg, list(marr.j=marr.j, marr.a=marr.a, n.occasions=ncol(marr.j),
+    rel.j=rowSums(marr.j), rel.a=rowSums(marr.a), J1=J1, B1=B1, J2=J2, B2=B2, count=hoopoe$count,
+    pNinit=dUnif(1, 50)))
+str(jags.data)                            # Remind ourselves of how the data look like
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -72,7 +69,7 @@ model {
   sigma.f2 ~ dunif(0, 3)
   tau.f2 <- pow(sigma.f2, -2)
 
-  sigma ~ dunif(0.4, 20)      # lower bound >0
+  sigma ~ dunif(0.4, 20)                  # lower bound > 0
   tau <- pow(sigma, -2)
 
   # Linear models for demographic parameters
@@ -109,7 +106,7 @@ model {
   # Observation model
   for (t in 1:n.occasions){
     count[t] ~ dnorm(Ntot[t], tau)
-    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]    # total population size
+    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]   # total population size
   }
 
   # Productivity data (Poisson regression model)
@@ -125,8 +122,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     qj[t] <- 1 - pj[t]
     q[t] <- 1 - p[t]
     pr.j[t,t] <- phij[t] * pj[t]
@@ -160,20 +157,19 @@ model {
 inits <- function(){list(mean.phij=runif(1, 0.05, 0.2), mean.phia=runif(1, 0.3, 0.5))}
 
 # Parameters monitored
-parameters <- c("mean.phij", "sigma.phij", "mean.phia", "sigma.phia",
-    "mean.omega", "sigma.omega", "mean.f1", "sigma.f1", "mean.f2", "sigma.f2",
-    "mean.p", "mean.pj", "sigma", "phij", "phia", "omega", "f1", "f2", "N", "Ntot", "lambda")
+parameters <- c("mean.phij", "sigma.phij", "mean.phia", "sigma.phia", "mean.omega", "sigma.omega",
+    "mean.f1", "sigma.f1", "mean.f2", "sigma.f2", "mean.p", "mean.pj", "sigma", "phij", "phia", "omega",
+    "f1", "f2", "N", "Ntot", "lambda")
 
 # MCMC settings
 ni <- 20000; nb <- 10000; nc <- 3; nt <- 4; na <- 2000
 
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
-print(out1, 3); save(out1, file="ResultsHoopoe.Rdata")
-
-               # mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
+print(out1, 3)
+#                mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # mean.phij     0.123  0.012   0.100   0.123   0.148    FALSE 1 1.009   249
 # sigma.phij    0.280  0.103   0.102   0.272   0.509    FALSE 1 1.001  3609
 # mean.phia     0.364  0.020   0.325   0.364   0.406    FALSE 1 1.000  7500
@@ -216,11 +212,14 @@ print(out1, 3); save(out1, file="ResultsHoopoe.Rdata")
 # [ ... output truncated ... ]
 # lambda[15]    0.976  0.087   0.793   0.980   1.150    FALSE 1 1.001  7500
 
+# ~~~~ save output for use later ~~~~~
+save(out1, file="ResultsHoopoe.Rdata")
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-n.draws <- out1$mcmc.info$n.samples        # Determine number of MCMC draws
-corr <- matrix(NA, ncol=5, nrow=n.draws)   # Create object to hold results
-draws <- out1$sims.list                    # Dig out MCMC samples
-for (s in 1:n.draws){     # Loop over all MCMC draws and get correlations
+n.draws <- out1$mcmc.info$n.samples # Determine number of MCMC draws
+corr <- matrix(NA, ncol=5, nrow=n.draws) # Create object to hold results
+draws <- out1$sims.list # Dig out MCMC samples
+for (s in 1:n.draws){ # Loop over all MCMC draws and get correlations
   corr[s,1] <- cor(draws$phij[s,], draws$lambda[s,])
   corr[s,2] <- cor(draws$phia[s,], draws$lambda[s,])
   corr[s,3] <- cor(draws$omega[s,], draws$lambda[s,])

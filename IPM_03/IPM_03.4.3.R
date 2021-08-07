@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -13,19 +13,18 @@ library(IPMbook) ; library(jagsUI)
 # ----------------------------------------------------------------------------
 
 # Define mean and temporal variability (SD) of the demographic parameters
-mean.sj <- 0.3         # Mean juv. survival on probability scale
-sd.sj.t <- 0.25        # Temporal variability of sj on the logit scale
-mean.sa <- 0.55        # Mean ad. survival on probability scale
-sd.sa.t <- 0.07        # Temporal variability of sa on the logit scale
-mean.f1 <- 1.3         # Mean productivity of 1y females on natural scale
-sd.f1.t <- 0.3         # Temporal variability of f1 on the natural scale
-mean.fa <- 1.8         # Mean productivity of adult females on natural scale
-sd.fa.t <- 0.3         # Temporal variability of fa on the natural scale
+mean.sj <- 0.3    # Mean juv. survival on probability scale
+sd.sj.t <- 0.25   # Temporal variability of sj on the logit scale
+mean.sa <- 0.55   # Mean ad. survival on probability scale
+sd.sa.t <- 0.07   # Temporal variability of sa on the logit scale
+mean.f1 <- 1.3    # Mean productivity of 1y females on natural scale
+sd.f1.t <- 0.3    # Temporal variability of f1 on the natural scale
+mean.fa <- 1.8    # Mean productivity of adult females on natural scale
+sd.fa.t <- 0.3    # Temporal variability of fa on the natural scale
 
 # Bundle data
-jags.data <- list(mean.sj=mean.sj, mean.sa=mean.sa, mean.f1=mean.f1,
-    mean.fa=mean.fa, sd.sj.t=sd.sj.t, sd.sa.t=sd.sa.t, sd.f1.t=sd.f1.t,
-    sd.fa.t=sd.fa.t, T=21000, u=1000)
+jags.data <- list(mean.sj=mean.sj, mean.sa=mean.sa, mean.f1=mean.f1, mean.fa=mean.fa,
+    sd.sj.t=sd.sj.t, sd.sa.t=sd.sa.t, sd.f1.t=sd.f1.t, sd.fa.t=sd.fa.t, T=21000, u=1000)
 
 # Write JAGS model file
 cat(file="model4.txt", "
@@ -38,9 +37,9 @@ model {
 
   # Use of RNG to accomodate temporal variability of demographic rates (process variability)
   for (t in 1:T){
-    sj[t] <- ilogit(logit.sj[t])    # Backt. from logit to natural scale
+    sj[t] <- ilogit(logit.sj[t]) # Backt. from logit to natural scale
     logit.sj[t] ~ dnorm(logit(mean.sj), tau.logit.sj)
-    sa[t] <- ilogit(logit.sa[t])    # Backt. from logit to natural scale
+    sa[t] <- ilogit(logit.sa[t]) # Backt. from logit to natural scale
     logit.sa[t] ~ dnorm(logit(mean.sa), tau.logit.sa)
     f1[t] ~ dnorm(mean.f1, tau.f1)
     fa[t] ~ dnorm(mean.fa, tau.fa)
@@ -63,7 +62,7 @@ model {
   lambda <- exp(r)
 
   # Sensitivity and elasticity of lambda to changes in sj
-  delta <- 0.001                     # Size of perturbation
+  delta <- 0.001 # Size of perturbation
   N.star[1,1] <- 1
   N.star[2,1] <- 1
   for (t in 1:T){
@@ -84,11 +83,11 @@ parameters <- c("r", "lambda", "s.sj", "e.sj")
 ni <- 1; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out4 <- jags(jags.data, NULL, parameters, "model4.txt", n.adapt=na,
-    n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
+out4 <- jags(jags.data, NULL, parameters, "model4.txt", n.adapt=na, n.chains=nc, n.thin=nt, n.iter=ni,
+    n.burnin=nb, DIC=FALSE)
 print(out4, 4)
 
-         # mean sd   2.5%    50%  97.5% overlap0 f
+#          mean sd   2.5%    50%  97.5% overlap0 f
 # r      0.0191 NA 0.0191 0.0191 0.0191    FALSE 1
 # lambda 1.0193 NA 1.0193 1.0193 1.0193    FALSE 1
 # s.sj   1.4486 NA 1.4486 1.4486 1.4486    FALSE 1
@@ -99,8 +98,8 @@ sa.t <- c(0.546, 0.545, 0.547, 0.545, 0.547, 0.556, 0.540, 0.551, 0.548, 0.550)
 f1.t <- c(1.56, 1.15, 1.38, 1.89, 1.06, 0.69, 1.16, 1.10, 1.48, 1.28)
 fa.t <- c(2.03, 1.69, 1.95, 1.98, 1.63, 1.43, 1.63, 1.45, 1.79, 1.91)
 
-T <- 21000                # Number of predicted years
-t <- 1:10                 # Number of years with actual data
+T <- 21000   # Number of predicted years
+t <- 1:10    # Number of years with actual data
 year <- sample(t, T, replace=TRUE)
 sj <- sj.t[year]
 sa <- sa.t[year]
@@ -130,7 +129,7 @@ model {
   lambda <- exp(r)
 
   # Sensitivity and elasticity of lambda to changes in sj
-  delta <- 0.001                     # size of perturbation
+  delta <- 0.001 # size of perturbation
   N.star[1,1] <- 1
   N.star[2,1] <- 1
   for (t in 1:T){
@@ -151,8 +150,8 @@ parameters <- c("r", "lambda", "s.sj", "e.sj")
 ni <- 1; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out5 <- jags(jags.data, NULL, parameters, "model5.txt", n.adapt=na,
-    n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
+out5 <- jags(jags.data, NULL, parameters, "model5.txt", n.adapt=na, n.chains=nc, n.thin=nt,
+    n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out5, 4)
 
          # mean sd   2.5%    50%  97.5% overlap0 f

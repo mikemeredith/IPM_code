@@ -1,28 +1,27 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 18 : Cormorant
 # ----------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 8 mins, full run 3 hrs
-
-library(IPMbook) ; library(jagsUI)
 
 # 18.4 Component data likelihoods
 # ===============================
 
+library(IPMbook); library(jagsUI)
 data(cormorant)
 str(cormorant)
-
 # $ count: int [1:3, 1:14] 5048 1982 804 4321 1860 1350 4634 2170 1848 4318 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:3] "V" "M" "S"
-  # .. ..$ : chr [1:14] "1991" "1992" "1993" "1994" ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : chr [1:3] "V" "M" "S"
+# .. ..$ : chr [1:14] "1991" "1992" "1993" "1994" ...
 # $ ms.ch: int [1:12659, 1:14] 1 1 1 0 0 0 0 0 0 0 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:14] "1991" "1992" "1993" "1994" ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : NULL
+# .. ..$ : chr [1:14] "1991" "1992" "1993" "1994" ...
 
 marr <- marray(cormorant$ms.ch, unobs=3)
+
 
 # 18.4.1 Population count data
 # ----------------------------
@@ -30,16 +29,13 @@ marr <- marray(cormorant$ms.ch, unobs=3)
 phi <- c(0.4, 0.8)
 kappa <- 0.25
 rho <- 1.5
-
 A <- matrix(c(
-  phi[2] * (1-kappa), phi[1] * rho,
-  phi[2] * kappa, phi[2]), byrow=TRUE, ncol=2)
-
+    phi[2] * (1-kappa), phi[1] * rho,
+    phi[2] * kappa, phi[2]), byrow=TRUE, ncol=2)
 z <- which.max(Re(eigen(A)$values))
 revec <- Re(eigen(A)$vectors[,z])
-matrix(revec / sum(revec))     # Standardized right eigenvector
-
-          # [,1]
+matrix(revec / sum(revec))                       # Standardized right eigenvector
+#           [,1]
 # [1,] 0.5657415
 # [2,] 0.4342585
 
@@ -50,21 +46,17 @@ matrix(revec / sum(revec))     # Standardized right eigenvector
 # ====================================
 
 # Bundle data and produce data overview
-jags.data <- list(marr=marr, n.years=ncol(cormorant$ms.ch), rel=rowSums(marr),
-    ns=9, zero=matrix(0, ncol=9, nrow=9), ones=diag(9), C=cormorant$count)
+jags.data <- list(marr=marr, n.years=ncol(cormorant$ms.ch), rel=rowSums(marr), ns=9,
+    zero=matrix(0, ncol=9, nrow=9), ones=diag(9), C=cormorant$count)
 str(jags.data)
-
 # List of 7
- # $ marr   : num [1:117, 1:118] 0 0 0 0 0 0 0 0 0 0 ...
- # $ n.years: int 14
- # $ rel    : num [1:117] 379 0 0 532 39 0 0 0 0 375 ...
- # $ ns     : num 9
- # $ zero   : num [1:9, 1:9] 0 0 0 0 0 0 0 0 0 0 ...
- # $ ones   : num [1:9, 1:9] 1 0 0 0 0 0 0 0 0 0 ...
- # $ C      : int [1:3, 1:14] 5048 1982 804 4321 1860 1350 4634 2170 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:3] "V" "M" "S"
-  # .. ..$ : NULL
+# $ marr : num [1:117, 1:118] 0 0 0 0 0 0 0 0 0 0 ...
+# $ n.years: int 14
+# $ rel : num [1:117] 379 0 0 532 39 0 0 0 0 375 ...
+# $ ns : num 9
+# $ zero : num [1:9, 1:9] 0 0 0 0 0 0 0 0 0 0 ...
+# $ ones : num [1:9, 1:9] 1 0 0 0 0 0 0 0 0 0 ...
+# $ C : int [1:3, 1:14] 5048 1982 804 4321 1860 1350 4634 2170 ...
 
 # Write JAGS model file
 cat(file = "model1.txt", "
@@ -81,7 +73,6 @@ model {
   # rho[site, time]: productivity
   # p[site, time]: recapture probability
   # -------------------------------------------------
-
   # Priors and linear models
   # Productivity
   for (t in 1:n.years){
@@ -120,41 +111,41 @@ model {
     } #s
   } #t
 
-  # Multinomial logit link to impose the constraint that natal dispersal
-  #    does only depend on the site of departure
+  # Multinomial logit link to impose the constraint that natal dispersal does
+  #  only depend on the site of departure
   logit.mean.eta[1,2] ~ dnorm(0, 0.01)
   logit.mean.eta[1,3] <- logit.mean.eta[1,2]
-  mean.eta[1,2] <- exp(logit.mean.eta[1,2]) /
-      (1 + exp(logit.mean.eta[1,2]) + exp(logit.mean.eta[1,3]))
-  mean.eta[1,3] <- exp(logit.mean.eta[1,3]) /
-      (1 + exp(logit.mean.eta[1,2]) + exp(logit.mean.eta[1,3]))
+  mean.eta[1,2] <- exp(logit.mean.eta[1,2]) / (1 + exp(logit.mean.eta[1,2]) +
+      exp(logit.mean.eta[1,3]))
+  mean.eta[1,3] <- exp(logit.mean.eta[1,3]) / (1 + exp(logit.mean.eta[1,2]) +
+      exp(logit.mean.eta[1,3]))
   mean.eta[1,1] <- 1 - mean.eta[1,2] - mean.eta[1,3]
   logit.mean.eta[2,1] ~ dnorm(0, 0.01)
   logit.mean.eta[2,3] <- logit.mean.eta[2,1]
-  mean.eta[2,1] <- exp(logit.mean.eta[2,1]) /
-      (1 + exp(logit.mean.eta[2,1]) + exp(logit.mean.eta[2,3]))
-  mean.eta[2,3] <- exp(logit.mean.eta[2,3]) /
-      (1 + exp(logit.mean.eta[2,1]) + exp(logit.mean.eta[2,3]))
+  mean.eta[2,1] <- exp(logit.mean.eta[2,1]) / (1 + exp(logit.mean.eta[2,1]) +
+      exp(logit.mean.eta[2,3]))
+  mean.eta[2,3] <- exp(logit.mean.eta[2,3]) / (1 + exp(logit.mean.eta[2,1]) +
+      exp(logit.mean.eta[2,3]))
   mean.eta[2,2] <- 1 - mean.eta[2,1] - mean.eta[2,3]
   logit.mean.eta[3,1] ~ dnorm(0, 0.01)
   logit.mean.eta[3,2] <- logit.mean.eta[3,1]
-  mean.eta[3,1] <- exp(logit.mean.eta[3,1]) /
-      (1 + exp(logit.mean.eta[3,1]) + exp(logit.mean.eta[3,2]))
-  mean.eta[3,2] <- exp(logit.mean.eta[3,2]) /
-      (1 + exp(logit.mean.eta[3,1]) + exp(logit.mean.eta[3,2]))
+  mean.eta[3,1] <- exp(logit.mean.eta[3,1]) / (1 + exp(logit.mean.eta[3,1]) +
+      exp(logit.mean.eta[3,2]))
+  mean.eta[3,2] <- exp(logit.mean.eta[3,2]) / (1 + exp(logit.mean.eta[3,1]) +
+      exp(logit.mean.eta[3,2]))
   mean.eta[3,3] <- 1 - mean.eta[3,1] - mean.eta[3,2]
 
-  # Multinomial logit link to impose the constraint that breeding dispersal
-  #  does only depend on the site of arrival
+  # Multinomial logit link to impose the constraint that breeding dispersal does only depend on the
+  #   site of arrival
   logit.mean.nu[1,2] ~ dnorm(0, 0.01)
   logit.mean.nu[1,3] ~ dnorm(0, 0.01)
   logit.mean.nu[2,1] ~ dnorm(0, 0.01)
-  mean.nu[1,2] <- exp(logit.mean.nu[1,2]) /
-      (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
-  mean.nu[1,3] <- exp(logit.mean.nu[1,3]) /
-      (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
-  mean.nu[2,1] <- exp(logit.mean.nu[2,1]) /
-      (1 + exp(logit.mean.nu[1,2]) + exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
+  mean.nu[1,2] <- exp(logit.mean.nu[1,2]) / (1 + exp(logit.mean.nu[1,2]) +
+      exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
+  mean.nu[1,3] <- exp(logit.mean.nu[1,3]) / (1 + exp(logit.mean.nu[1,2]) +
+      exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
+  mean.nu[2,1] <- exp(logit.mean.nu[2,1]) / (1 + exp(logit.mean.nu[1,2]) +
+      exp(logit.mean.nu[1,3]) + exp(logit.mean.nu[2,1]))
   mean.nu[1,1] <- 1 - mean.nu[1,2] - mean.nu[1,3]
   mean.nu[2,2] <- 1 - mean.nu[2,1] - mean.nu[1,3]
   mean.nu[2,3] <- mean.nu[1,3]
@@ -189,30 +180,21 @@ model {
 
   # Process model over time: our model of population dynamics
   for (t in 1:(n.years-1)){
-    N[1,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,1,t] +
-        B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,1,t] +
-        B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,1,t] +
-        N[1,t] * phi[2,1,t] * (1 - kappa[1,t])
-    N[2,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,2,t] +
-        B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,2,t] +
-        B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,2,t] +
-        N[2,t] * phi[2,2,t] * (1 - kappa[2,t])
-    N[3,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,3,t] +
-        B[2,t] * rho[2,t] * phi[1,2,t] * eta[2,3,t] +
-        B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,3,t] +
-        N[3,t] * phi[2,3,t] * (1 - kappa[3,t])
-    B[1,t+1] <- B[1,t] * phi[2,1,t] * nu[1,1,t] +
-        B[2,t] * phi[2,2,t] * nu[2,1,t] +
-        B[3,t] * phi[2,3,t] * nu[3,1,t] +
-        N[1,t] * phi[2,1,t] * kappa[1,t]
-    B[2,t+1] <- B[1,t] * phi[2,1,t] * nu[1,2,t] +
-        B[2,t] * phi[2,2,t] * nu[2,2,t] +
-        B[3,t] * phi[2,3,t] * nu[3,2,t] +
-        N[2,t] * phi[2,2,t] * kappa[2,t]
-    B[3,t+1] <- B[1,t] * phi[2,1,t] * nu[1,3,t] +
-        B[2,t] * phi[2,2,t] * nu[2,3,t] +
-        B[3,t] * phi[2,3,t] * nu[3,3,t] +
-        N[3,t] * phi[2,3,t] * kappa[3,t]
+    N[1,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,1,t] + B[2,t] * rho[2,t] * phi[1,2,t] *
+        eta[2,1,t] + B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,1,t] + N[1,t] * phi[2,1,t] *
+        (1 - kappa[1,t])
+    N[2,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,2,t] + B[2,t] * rho[2,t] * phi[1,2,t] *
+        eta[2,2,t] + B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,2,t] + N[2,t] * phi[2,2,t] *
+        (1 - kappa[2,t])
+    N[3,t+1] <- B[1,t] * rho[1,t] * phi[1,1,t] * eta[1,3,t] + B[2,t] * rho[2,t] * phi[1,2,t] *
+        eta[2,3,t] + B[3,t] * rho[3,t] * phi[1,3,t] * eta[3,3,t] + N[3,t] * phi[2,3,t] *
+        (1 - kappa[3,t])
+    B[1,t+1] <- B[1,t] * phi[2,1,t] * nu[1,1,t] + B[2,t] * phi[2,2,t] * nu[2,1,t] + B[3,t] *
+        phi[2,3,t] * nu[3,1,t] + N[1,t] * phi[2,1,t] * kappa[1,t]
+    B[2,t+1] <- B[1,t] * phi[2,1,t] * nu[1,2,t] + B[2,t] * phi[2,2,t] * nu[2,2,t] + B[3,t] *
+        phi[2,3,t] * nu[3,2,t] + N[2,t] * phi[2,2,t] * kappa[2,t]
+    B[3,t+1] <- B[1,t] * phi[2,1,t] * nu[1,3,t] + B[2,t] * phi[2,2,t] * nu[2,3,t] + B[3,t] *
+        phi[2,3,t] * nu[3,3,t] + N[3,t] * phi[2,3,t] * kappa[3,t]
   }
 
   # Observation model
@@ -317,8 +299,8 @@ model {
     po[8,t] <- 0
     po[9,t] <- 0
 
-    # Calculate probability of non-encounter (dq) and reshape the array
-    #  for the encounter probabilities
+    # Calculate probability of non-encounter (dq) and reshape the array for the encounter
+    #  probabilities
     for (s in 1:ns){
       dp[s,t,s] <- po[s,t]
       dq[s,t,s] <- 1-po[s,t]
@@ -346,20 +328,20 @@ model {
   for (t in 1:(n.years-2)){
     U[(t-1)*ns+(1:ns), (t-1)*ns+(1:ns)] <- ones
     for (j in (t+1):(n.years-1)){
-      U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <-
-          U[(t-1)*ns+(1:ns), (j-2)*ns+(1:ns)] %*% psi[,t,] %*% dq[,t,]
+      U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-2)*ns+(1:ns)] %*% psi[,t,]
+          %*% dq[,t,]
     } #j
   } #t
   U[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- ones
 
   # Diagonal
   for (t in 1:(n.years-2)){
-    pr[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <-
-        U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] %*% psi[,t,] %*% dp[,t,]
+    pr[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)]
+        %*% psi[,t,] %*% dp[,t,]
     # Above main diagonal
     for (j in (t+1):(n.years-1)){
-      pr[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <-
-          U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] %*% psi[,j,] %*% dp[,j,]
+      pr[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] %*% psi[,j,]
+          %*% dp[,j,]
     } #j
   } #t
   pr[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- psi[,n.years-1,] %*% dp[,n.years-1,]
@@ -389,25 +371,24 @@ inits <- function(cc = cormorant$count){
 }
 
 # Parameters monitored
-parameters <- c("beta.phi", "phi", "mu.kappa", "kappa", "p", "mean.eta",
-    "mean.nu", "mean.rho", "sigma", "N", "B")
+parameters <- c("beta.phi", "phi", "mu.kappa", "kappa", "p", "mean.eta", "mean.nu", "mean.rho", "sigma",
+    "N", "B")
 
 # MCMC settings
 # ni <- 150000; nb <- 50000; nt <- 100; nc <- 3; na <- 3000
 ni <- 3000; nb <- 1000; nt <- 1; nc <- 3; na <- 3000  # ~~~ for testing
 
-# Call JAGS from R (ART 143 min) and check convergence
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-save(out1, file = 'CormorantResults.Rdata')
-traceplot(out1)
 
+# Call JAGS from R (ART 143 min) and check convergence
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out1)
 
 # 18.6. Results
 # =============
 
 print(out1, 3)
-                   # mean       sd     2.5%       50%     97.5% overlap0     f  Rhat n.eff
+#                    mean       sd     2.5%       50%     97.5% overlap0     f  Rhat n.eff
 # mu.phi[2,1]       0.201    0.298   -0.410     0.212     0.753     TRUE 0.765 1.016   167
 # mu.phi[1,2]      -1.654    0.333   -2.320    -1.652    -0.999    FALSE 1.000 1.011   223
 # mu.phi[2,2]       0.244    0.291   -0.347     0.258     0.779     TRUE 0.802 1.016   171

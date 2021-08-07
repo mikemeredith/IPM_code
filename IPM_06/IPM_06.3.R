@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 6 : Benefits of integrated population modeling
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 2.5 mins
 
@@ -51,9 +51,9 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    q[t] <- 1 - p[t]   # Probability of non-recapture
+    # Main diagonal
+    q[t] <- 1 - p[t] # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -88,14 +88,13 @@ model {
 library(IPMbook); library(jagsUI)
 data(woodchat6)
 str(woodchat6)
-
 # List of 6
- # $ ch   : num [1:947, 1:10] 1 1 1 1 1 0 1 1 1 0 ...
- # $ age  : num [1:947] 2 2 2 2 2 2 2 2 2 2 ...
- # $ count: num [1:10] 110 104 100 85 85 71 118 112 91 104
- # $ J    : num [1:10] 147 144 132 131 178 178 235 169 177 186
- # $ B    : num [1:10] 48 48 45 37 53 56 74 59 55 60
- # $ f    : num [1:535] 4 7 5 5 1 5 4 1 3 0 ...
+# $ ch   : num [1:947, 1:10] 1 1 1 1 1 0 1 1 1 0 ...
+# $ age  : num [1:947] 2 2 2 2 2 2 2 2 2 2 ...
+# $ count: num [1:10] 110 104 100 85 85 71 118 112 91 104
+# $ J    : num [1:10] 147 144 132 131 178 178 235 169 177 186
+# $ B    : num [1:10] 48 48 45 37 53 56 74 59 55 60
+# $ f    : num [1:535] 4 7 5 5 1 5 4 1 3 0 ...
 
 marr <- marrayAge(woodchat6$ch, woodchat6$age)
 
@@ -107,19 +106,18 @@ jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
 inits <- function(){list(mean.sj=runif(1, 0, 0.5))}
 
 # Parameters monitored
-parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "sigma",
-    "N", "ann.growth.rate", "Ntot")
+parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "sigma", "N", "ann.growth.rate", "Ntot")
 
 # MCMC settings
 ni <- 40000; nb <- 10000; nc <- 3; nt <- 3; na <- 2000
 
 # Call JAGS (ART <1 min), check convergence and summarize posteriors
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
 print(out1, 3)
 
-                      # mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
+#                       mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # mean.sj              0.253  0.022   0.213   0.253   0.297    FALSE 1 1.000 11961
 # mean.sa              0.567  0.022   0.523   0.567   0.610    FALSE 1 1.000 30000
 # mean.p               0.604  0.031   0.543   0.604   0.664    FALSE 1 1.000 30000
@@ -138,7 +136,9 @@ print(out1, 3)
 # Ntot[10]            96.358 11.774  72.446  96.441 119.201    FALSE 1 1.000 30000
 
 
-# Write JAGS model file
+# model for productivity and population count data only
+# '''''''''''''''''''''''''''''''''''''''''''''''''''''
+
 cat(file="model2.txt", "
 model {
   # Priors and linear models
@@ -156,13 +156,13 @@ model {
 
   # Process model over time: our model of population dynamics
   for (t in 1:(n.occasions-1)){
-    N[1,t+1] <- mean.f / 2 * mean.sj * (N[1,t] + N[2,t])
-    N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
+  N[1,t+1] <- mean.f / 2 * mean.sj * (N[1,t] + N[2,t])
+  N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
   }
 
   # Observation model
   for (t in 1:n.occasions){
-    count[t] ~ dnorm(N[1,t] + N[2,t], tau)
+  count[t] ~ dnorm(N[1,t] + N[2,t], tau)
   }
 
   # Productivity data (Poisson regression model)
@@ -171,18 +171,18 @@ model {
   # Derived parameters
   # Annual population growth rate
   for (t in 1:(n.occasions-1)){
-    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
+  ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
   }
   # Total population size
   for (t in 1:n.occasions){
-    Ntot[t] <- N[1,t] + N[2,t]
+  Ntot[t] <- N[1,t] + N[2,t]
   }
 }
 ")
 
 # Bundle data
-jags.data <- list(n.occasions=length(woodchat6$count), nJ=sum(woodchat6$J),
-    n.rep=sum(woodchat6$B), count= woodchat6$count)
+jags.data <- list(n.occasions=length(woodchat6$count), nJ=sum(woodchat6$J), n.rep=sum(woodchat6$B),
+    count=woodchat6$count)
 
 # Initial values
 inits <- function(){list(mean.sj=runif(1, 0, 0.5))}
@@ -194,12 +194,11 @@ parameters <- c("mean.sj", "mean.sa", "mean.f", "sigma", "N", "ann.growth.rate",
 ni <- 1000000; nb <- 50000; nc <- 3; nt <- 500; na <- 2000
 
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
-out2 <- jags(jags.data, inits, parameters, "model2.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out2 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out2)
 print(out2, 3)
-
-                      # mean     sd   2.5%    50%   97.5% overlap0 f  Rhat n.eff
+#                       mean     sd   2.5%    50%   97.5% overlap0 f  Rhat n.eff
 # mean.sj              0.317  0.183  0.018  0.318   0.619    FALSE 1 1.001  1201
 # mean.sa              0.500  0.286  0.029  0.500   0.966    FALSE 1 1.001  1205
 # mean.f               3.136  0.076  2.991  3.134   3.289    FALSE 1 1.000  5700
@@ -215,6 +214,10 @@ print(out2, 3)
 # Ntot[1]            100.014 11.773 77.965 99.496 124.997    FALSE 1 1.001  5700
 # [ ... output truncated ... ]
 # Ntot[10]            96.734 11.539 73.067 96.764 119.929    FALSE 1 1.000  5700
+
+
+# model with population count data alone
+# ''''''''''''''''''''''''''''''''''''''
 
 # Write JAGS model file
 cat(file="model3.txt", "
@@ -256,7 +259,7 @@ model {
 ")
 
 # Bundle data
-jags.data <- list(n.occasions=length(woodchat6$count), count= woodchat6$count)
+jags.data <- list(n.occasions=length(woodchat6$count), count=woodchat6$count)
 
 # Initial values
 inits <- function(){list(mean.sj=runif(1, 0, 0.5))}
@@ -268,12 +271,11 @@ parameters <- c("mean.sj", "mean.sa", "mean.f", "sigma", "N", "ann.growth.rate",
 ni <- 1000000; nb <- 50000; nc <- 3; nt <- 500; na <- 2000
 
 # Call JAGS (ART 1 min), check convergence and summarize posteriors
-out3 <- jags(jags.data, inits, parameters, "model3.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out3 <- jags(jags.data, inits, parameters, "model3.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out3)
 print(out3, 3)
-
-                      # mean     sd   2.5%    50%   97.5% overlap0 f  Rhat n.eff
+#                       mean     sd   2.5%    50%   97.5% overlap0 f  Rhat n.eff
 # mean.sj              0.352  0.267  0.018  0.277   0.937    FALSE 1 1.000  5700
 # mean.sa              0.586  0.285  0.039  0.620   0.982    FALSE 1 1.002   951
 # mean.f               3.447  2.623  0.166  2.737   9.228    FALSE 1 1.003   729
@@ -291,7 +293,7 @@ print(out3, 3)
 # Ntot[10]            96.521 11.738 73.273 96.525 119.578    FALSE 1 1.000  5700
 
 
-# ~~~~ extra code ~~~~
+# ~~~~ extra code for figure 6.3 ~~~~
 cat(file="model14.txt", "
 model {
   # Priors and linear models
@@ -332,8 +334,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -454,8 +456,9 @@ axis(2, lwd=lwd.tif)
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# ~~~~ code for the simulations for figure 6.4 is in the script "IPM_06.3_sims.R"
 
-# ~~~~ more extra code ~~~~
+# ~~~~ extra code for figure 6.5 ~~~~
 data(woodchat6)
 marr <- marrayAge(woodchat6$ch, woodchat6$age)
 
@@ -507,8 +510,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]

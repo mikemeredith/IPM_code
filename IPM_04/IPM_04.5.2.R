@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 2 mins
 
@@ -17,38 +17,38 @@ library(IPMbook) ; library(jagsUI)
 # '''''''''''''''''''''''''''''''
 
 # Choose constants in simulation
-nmarked <- 50            # Number of marked individuals each year and site
-nyears <- 6              # Number of years
-phiA <- 0.8              # App. survival prob. when at site A
-phiB <- 0.7              # App. survival prob. when at site B
-psiAB <- 0.3             # Prob. to move from A to B
-psiBA <- 0.5             # Prob. to move from B to A
-pA <- 0.7                # Recapture prob. when at site A
-pB <- 0.4                # Recapture prob. when at site B
+nmarked <- 50                           # Number of marked individuals each year and site
+nyears <- 6                             # Number of years
+phiA <- 0.8                             # App. survival prob. when at site A
+phiB <- 0.7                             # App. survival prob. when at site B
+psiAB <- 0.3                            # Prob. to move from A to B
+psiBA <- 0.5                            # Prob. to move from B to A
+pA <- 0.7                               # Recapture prob. when at site A
+pB <- 0.4                               # Recapture prob. when at site B
 
 # Determine occasion when an individual first captured and marked
 f <- rep(rep(1:(nyears-1), each=nmarked), 2)
-nind <- length(f)      # Total number of marked individuals
+nind <- length(f)                       # Total number of marked individuals
 
 # Construct the transition probability matrix (TPM)
 # Includes the dead state as state number 3
 # Departure state in rows (time t), arrival state in columns (t+1)
 TPM <- matrix(c(
-      phiA * (1-psiAB), phiA * psiAB,     1-phiA,
-      phiB * psiBA,     phiB * (1-psiBA), 1-phiB,
-      0,                0,                1       ), nrow=3, byrow=TRUE)
+      phiA * (1-psiAB), phiA * psiAB, 1-phiA,
+      phiB * psiBA, phiB * (1-psiBA), 1-phiB,
+      0, 0, 1 ), nrow=3, byrow=TRUE)
 
 # Construct the observation probability matrix (OPM)
 # True state is in rows, observed state is in columns
 # Includes nondetection as observation event number 3
 OPM <- matrix(c(
-      pA, 0,  1-pA,
-      0,  pB, 1-pB,
-      0,  0,  1       ), nrow=3, byrow=TRUE)
+      pA, 0, 1-pA,
+      0, pB, 1-pB,
+      0, 0, 1 ), nrow=3, byrow=TRUE)
 
 # State or ecological process
 # Simulate true system state
-z <- array(NA, dim=c(nind, nyears)) # Empty dead/alive matrix
+z <- array(NA, dim=c(nind, nyears))     # Empty dead/alive matrix
 
 # Initial conditions: all individuals alive at f(i)
 initial.state <- c(rep(1, nind/2), rep(2, nind/2))
@@ -56,7 +56,7 @@ for (i in 1:nind){
   z[i,f[i]] <- initial.state[i]
 }
 
-set.seed(2)              # Initialize the RNGs in R
+set.seed(2) # Initialize the RNGs in R
 # Propagate dead/alive process forwards via transition rule (=TPM)
 for (i in 1:nind){
   for (t in (f[i]+1):nyears){
@@ -65,7 +65,7 @@ for (i in 1:nind){
     z[i,t] <- arrival.state
   } #t
 } #i
-z           # Not shown, but useful if you do look at this
+z                                       # Not shown, but useful if you do look at this
 
 # Observation process: simulate observations
 y <- array(3, dim=c(nind, nyears))
@@ -79,8 +79,7 @@ for (i in 1:nind){
 } #i
 
 head(y)
-
-     # [,1] [,2] [,3] [,4] [,5] [,6]
+#      [,1] [,2] [,3] [,4] [,5] [,6]
 # [1,]    1    1    1    3    3    3
 # [2,]    1    1    3    3    3    3
 # [3,]    1    1    1    3    3    3
@@ -91,12 +90,11 @@ head(y)
 # Data bundle
 jags.data <- list(y=y, f=f, nind=nind, nyears=ncol(y))
 str(jags.data)
-
 # List of 4
- # $ y     : num [1:500, 1:6] 1 1 1 1 1 1 1 1 1 1 ...
- # $ f     : int [1:500] 1 1 1 1 1 1 1 1 1 1 ...
- # $ nind  : int 500
- # $ nyears: num 6
+# $ y     : num [1:500, 1:6] 1 1 1 1 1 1 1 1 1 1 ...
+# $ f     : int [1:500] 1 1 1 1 1 1 1 1 1 1 ...
+# $ nind  : int 500
+# $ nyears: num 6
 
 # Write JAGS model file
 cat(file="model18.txt", "
@@ -111,15 +109,15 @@ model {
     pB[t] <- mean.p[2]
   }
   for (u in 1:2){
-    mean.phi[u] ~ dunif(0, 1)    # Priors for mean state-spec. survival
-    mean.psi[u] ~ dunif(0, 1)    # Priors for mean transitions
-    mean.p[u] ~ dunif(0, 1)      # Priors for mean state-spec. recapture
+    mean.phi[u] ~ dunif(0, 1) # Priors for mean state-spec. survival
+    mean.psi[u] ~ dunif(0, 1) # Priors for mean transitions
+    mean.p[u] ~ dunif(0, 1) # Priors for mean state-spec. recapture
   }
 
   # Define state-transition and observation matrices
   for (i in 1:nind){
     # Define probabilities of state S(t+1) given S(t)
-    #   (Transition probability matrix)
+    # (Transition probability matrix)
     for (t in f[i]:(nyears-1)){
       TPM[1,i,t,1] <- phiA[t] * (1-psiAB[t])
       TPM[1,i,t,2] <- phiA[t] * psiAB[t]
@@ -130,9 +128,8 @@ model {
       TPM[3,i,t,1] <- 0
       TPM[3,i,t,2] <- 0
       TPM[3,i,t,3] <- 1
-
       # Define probabilities of O(t) given S(t)
-      #   (Observation probability matrix)
+      # (Observation probability matrix)
       OPM[1,i,t,1] <- pA[t]
       OPM[1,i,t,2] <- 0
       OPM[1,i,t,3] <- 1-pA[t]
@@ -161,12 +158,12 @@ model {
 
 # Function to create a matrix of initial values for latent state z
 zInitMS <- function(ch, f){
-  states <- max(ch, na.rm=TRUE)
-  known.states <- 1:(states-1)
-  v <- which(ch==states)
-  ch[v] <- sample(known.states, length(v), replace=TRUE)
-  for (i in 1:nrow(ch)) ch[i,1:f[i]] <- NA
-  return(ch)
+states <- max(ch, na.rm=TRUE)
+known.states <- 1:(states-1)
+v <- which(ch==states)
+ch[v] <- sample(known.states, length(v), replace=TRUE)
+for (i in 1:nrow(ch)) ch[i,1:f[i]] <- NA
+return(ch)
 }
 
 # Initial values
@@ -179,12 +176,11 @@ parameters <- c("mean.phi", "mean.psi", "mean.p")
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
-out21 <- jags(jags.data, inits, parameters, "model18.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out21)      # Not shown
+out21 <- jags(jags.data, inits, parameters, "model18.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out21)                        # Not shown
 print(out21)
-
-              # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
+#               mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # mean.phi[1]  0.864  0.021    0.821    0.864    0.903    FALSE 1 1.002   957
 # mean.phi[2]  0.813  0.028    0.756    0.814    0.866    FALSE 1 1.001  6000
 # mean.psi[1]  0.120  0.019    0.086    0.119    0.159    FALSE 1 1.001  1503
@@ -197,49 +193,48 @@ print(out21)
 # '''''''''''''''''''''''''''''''
 
 y[y==3] <- 0
-
 y[45:55,]
-     # [,1] [,2] [,3] [,4] [,5] [,6]
- # [1,]    1    0    1    0    0    0
- # [2,]    1    1    1    0    0    0
- # [3,]    1    1    0    2    0    0
- # [4,]    1    0    1    1    0    0
- # [5,]    1    1    0    1    0    0
- # [6,]    1    1    1    2    1    1
- # [7,]    0    1    0    0    1    0
- # [8,]    0    1    0    0    0    0
- # [9,]    0    1    1    2    0    0
+#       [,1] [,2] [,3] [,4] [,5] [,6]
+#  [1,]    1    0    1    0    0    0
+#  [2,]    1    1    1    0    0    0
+#  [3,]    1    1    0    2    0    0
+#  [4,]    1    0    1    1    0    0
+#  [5,]    1    1    0    1    0    0
+#  [6,]    1    1    1    2    1    1
+#  [7,]    0    1    0    0    1    0
+#  [8,]    0    1    0    0    0    0
+#  [9,]    0    1    1    2    0    0
 # [10,]    0    1    1    1    0    0
 # [11,]    0    1    0    0    1    1
 
 marr <- marray(y)
 marr
-      # [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11]
- # [1,]   34    0    8    1    1    1    0    0    1     0     4
- # [2,]    0   17    8    2    3    2    1    1    0     0    16
- # [3,]    0    0   51    3    9    2    3    1    0     1    14
- # [4,]    0    0    5   24    8    8    1    1    1     1    18
- # [5,]    0    0    0    0   56   10   13    5    3     1    34
- # [6,]    0    0    0    0    5   32    6    3    4     2    28
- # [7,]    0    0    0    0    0    0   72    3   14     3    40
- # [8,]    0    0    0    0    0    0   14   33   15     5    38
- # [9,]    0    0    0    0    0    0    0    0   85     9    66
-# [10,]    0    0    0    0    0    0    0    0   10    22    65
+#         recaptured
+# released Y2.S1 Y2.S2 Y3.S1 Y3.S2 Y4.S1 Y4.S2 Y5.S1 Y5.S2 Y6.S1 Y6.S2 never
+#    Y1.S1    34     0     8     1     1     1     0     0     1     0     4
+#    Y1.S2     0    17     8     2     3     2     1     1     0     0    16
+#    Y2.S1     0     0    51     3     9     2     3     1     0     1    14
+#    Y2.S2     0     0     5    24     8     8     1     1     1     1    18
+#    Y3.S1     0     0     0     0    56    10    13     5     3     1    34
+#    Y3.S2     0     0     0     0     5    32     6     3     4     2    28
+#    Y4.S1     0     0     0     0     0     0    72     3    14     3    40
+#    Y4.S2     0     0     0     0     0     0    14    33    15     5    38
+#    Y5.S1     0     0     0     0     0     0     0     0    85     9    66
+#    Y5.S2     0     0     0     0     0     0     0     0    10    22    65
 
 # Bundle data
 # Calculate the number of states
 ns <- length(unique(as.numeric(y))) - 1
-jags.data <- list(marr=marr, nyears=ncol(y), rel=rowSums(marr), ns=ns,
-    zero=matrix(0, ns, ns), ones=diag(ns))
+jags.data <- list(marr=marr, nyears=ncol(y), rel=rowSums(marr), ns=ns, zero=matrix(0, ns, ns),
+    ones=diag(ns))
 str(jags.data)
-
 # List of 6
- # $ marr : num [1:10, 1:11] 34 0 0 0 0 0 0 0 0 0 ...
- # $ nyears: int 6
- # $ rel  : num [1:10] 50 50 84 67 122 80 132 105 160 97
- # $ ns   : num 2
- # $ zero : num [1:2, 1:2] 0 0 0 0
- # $ ones : num [1:2, 1:2] 1 0 0 1
+# $ marr  : num [1:10, 1:11] 34 0 0 0 0 0 0 0 0 0 ...
+# $ nyears: int 6
+# $ rel   : num [1:10] 50 50 84 67 122 80 132 105 160 97
+# $ ns    : num 2
+# $ zero  : num [1:2, 1:2] 0 0 0 0
+# $ ones  : num [1:2, 1:2] 1 0 0 1
 
 # Write JAGS model file
 cat(file="model19.txt", "
@@ -255,9 +250,9 @@ model {
   }
 
   for (u in 1:2){
-    mean.phi[u] ~ dunif(0, 1)    # Priors for mean state-spec. survival
-    mean.psi[u] ~ dunif(0, 1)    # Priors for mean transitions
-    mean.p[u] ~ dunif(0, 1)      # Priors for mean state-spec. recapture
+    mean.phi[u] ~ dunif(0, 1) # Priors for mean state-spec. survival
+    mean.psi[u] ~ dunif(0, 1) # Priors for mean transitions
+    mean.p[u] ~ dunif(0, 1) # Priors for mean state-spec. recapture
   }
 
   # Define state-transition and reencounter probabilities
@@ -272,7 +267,8 @@ model {
   }
 
   # From here onwards, no changes needed regardless of which model is fitted
-  # Calculate probability of non-encounter (dq) and reshape the array for the encounter probabilities
+  # Calculate probability of non-encounter (dq) and reshape the array for the encounter
+  #   probabilities
   for (t in 1:(nyears-1)){
     for (s in 1:ns){
       dp[s,t,s] <- po[s,t]
@@ -288,8 +284,8 @@ model {
       for (m in 1:(s-1)){
         dp[s,t,m] <- 0
         dq[s,t,m] <- 0
-      } #s
-    } #m
+      } #m
+    } #s
   } #t
 
   # Define the multinomial likelihood
@@ -298,32 +294,33 @@ model {
   }
 
   # Define cell probabilities of the multistate m-array
-  # Matrix U: product of probabilities of state-transition and non-encounter (needed because there is no product function for matrix multiplication in JAGS)
+  # Matrix U: product of probabilities of state-transition and non-encounter (needed because
+  #   there is no product function for matrix multiplication in JAGS)
   for (t in 1:(nyears-2)){
     U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- ones
     for (j in (t+1):(nyears-1)){
-      U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-2)*ns+(1:ns)] %*% psi[,t,] %*% dq[,t,]
+      U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-2)*ns+(1:ns)] %*% psi[,t,] %*%
+          dq[,t,]
     } #j
   } #t
   U[(nyears-2)*ns+(1:ns), (nyears-2)*ns+(1:ns)] <- ones
-
-  # Diagonal
   for (t in 1:(nyears-2)){
-    pi[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] %*% psi[,t,] %*% dp[,t,]
+    # Diagonal
+    pi[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(t-1)*ns+(1:ns)] %*% psi[,t,] %*%
+        dp[,t,]
     # Above main diagonal
     for (j in (t+1):(nyears-1)){
-      pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] %*% psi[,j,] %*% dp[,j,]
+      pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] %*% psi[,j,] %*%
+      dp[,j,]
     } #j
-   } #t
+  } #t
   pi[(nyears-2)*ns+(1:ns),(nyears-2)*ns+(1:ns)] <- psi[,nyears-1,] %*% dp[,nyears-1,]
-
   # Below main diagonal
   for (t in 2:(nyears-1)){
     for (j in 1:(t-1)){
       pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- zero
     } #j
   } #t
-
   # Last column: probability of non-recapture
   for (t in 1:((nyears-1)*ns)){
     pi[t,(nyears*ns-(ns-1))] <- 1-sum(pi[t,1:((nyears-1)*ns)])
@@ -341,12 +338,11 @@ parameters <- c("mean.phi", "mean.psi", "mean.p")
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-out22 <- jags(jags.data, inits, parameters, "model19.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out22, layout=c(2,2))      # Not shown
+out22 <- jags(jags.data, inits, parameters, "model19.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out22)                        # Not shown
 print(out22)
-
-               # mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
+#                mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # mean.phi[1]   0.863 0.021   0.822   0.863   0.902    FALSE 1 1.000  6000
 # mean.phi[2]   0.813 0.029   0.756   0.813   0.867    FALSE 1 1.000  6000
 # mean.psi[1]   0.119 0.020   0.085   0.118   0.161    FALSE 1 1.000  6000

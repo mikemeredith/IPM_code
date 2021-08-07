@@ -1,35 +1,30 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 14 : Hoopoe
 # -------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 2 mins, full run 15 mins
-
-library(IPMbook) ; library(jagsUI)
 
 # 14.4 Component data likelihoods
 # =============================================
 
 # Load hoopoe data and produce data overview
+library(IPMbook); library(jagsUI)
 data(hoopoe)
 str(hoopoe)
-
 # List of 5
- # $ ch      : int [1:3844, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:16] "2002" "2003" "2004" "2005" ...
- # $ age     : int [1:3844] 1 1 1 1 1 1 1 1 1 1 ...
- # $ count   : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
- # $ reproAgg:List of 4
-  # ..$ J1: num [1:16] 73 188 243 320 261 222 206 154 278 220 ...
-  # ..$ J2: num [1:16] 51 83 101 182 256 226 206 278 237 244 ...
-  # ..$ B1: num [1:16] 15 23 36 50 44 37 39 30 48 48 ...
-  # ..$ B2: num [1:16] 6 13 12 23 38 38 32 41 39 41 ...
- # $ reproInd:List of 3
-  # ..$ f   : int [1:1092] 6 11 11 3 15 6 11 12 7 6 ...
-  # ..$ id  : num [1:1092] 483 486 530 531 532 533 534 535 536 538 ...
-  # ..$ year: int [1:1092] 2002 2002 2002 2002 2002 2002 2002 2002 2002 ...
+# $ ch : int [1:3844, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
+# $ age : int [1:3844] 1 1 1 1 1 1 1 1 1 1 ...
+# $ count : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
+# $ reproAgg:List of 4
+# ..$ J1: num [1:16] 73 188 243 320 261 222 206 154 278 220 ...
+# ..$ J2: num [1:16] 51 83 101 182 256 226 206 278 237 244 ...
+# ..$ B1: num [1:16] 15 23 36 50 44 37 39 30 48 48 ...
+# ..$ B2: num [1:16] 6 13 12 23 38 38 32 41 39 41 ...
+# $ reproInd:List of 3
+# ..$ f : int [1:1092] 6 11 11 3 15 6 11 12 7 6 ...
+# ..$ id : num [1:1092] 483 486 530 531 532 533 534 535 536 538 ...
+# ..$ year: int [1:1092] 2002 2002 2002 2002 2002 2002 2002 2002 2002 ...
 
 # 14.4.1 Population count data (no code)
 
@@ -40,7 +35,6 @@ str(hoopoe)
 marr <- marrayAge(hoopoe$ch, hoopoe$age, 2)
 marr.j <- marr[,,1]
 marr.a <- marr[,,2]
-
 
 # 14.4.3 Productivity data
 # ------------------------
@@ -87,7 +81,7 @@ model {
   gamma ~ dunif(0, 1)
 
   # Residual (observation) error
-  sigma ~ dunif(0.4, 20)      # lower bound >0
+  sigma ~ dunif(0.4, 20)          # lower bound >0
   tau <- pow(sigma, -2)
 
   # Linear models for demographic parameters
@@ -102,7 +96,7 @@ model {
   }
 
   # Reproduction parameters
-  for (g in 1:2){    # Loop over two groups
+  for (g in 1:2){                 # Loop over two groups
     for (t in 1:n.years){
       log(rep[g,t]) <- alpha[g] + eps[g,t]
       eps[g,t] ~ dnorm(0, tau.rep.t[g])
@@ -154,8 +148,8 @@ model {
     marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.years-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     qa[t] <- 1-pa[t]
     pr.j[t,t] <- phij[t] * pj[t]
@@ -179,13 +173,13 @@ model {
 
   # Productivity data (finite-mixture model with Gaussian error)
   # Mixture
-  for (i in 1:nind){    # Loop over all ID of mothers with known annual prod.
+  for (i in 1:nind){              # Loop over all ID of mothers with known annual prod.
     k[i] ~ dbern(gamma)
     h[i] <- k[i] + 1
   }
 
   # Productivity
-  for (i in 1:nrep){  # Loop over all known-ID annual productivity data
+  for (i in 1:nrep){              # Loop over all known-ID annual productivity data
     f[i] ~ dnorm(rep[h[id[i]], year[i]], tau.rep)
   }
 }
@@ -217,27 +211,23 @@ traceplot(out2, c('alpha', 'gamma'), layout=c(1,3))
 # ====================================
 
 # Bundle the data
-jags.data <- with(hoopoe$reproInd, list(marr.j=marr.j, marr.a=marr.a,
-    n.years=ncol(marr.j), rel.j=rowSums(marr.j), rel.a=rowSums(marr.a),
-    nind=length(unique(id)), id=id, nrep=length(id), f=f, year=year-2001,
-    C=hoopoe$count, pNinit=dUnif(1, 50)))
-
-str(jags.data)    # Remind ourselves of how the data look like
-
+jags.data <- with(hoopoe$reproInd, list(marr.j=marr.j, marr.a=marr.a, n.years=ncol(marr.j),
+    rel.j=rowSums(marr.j), rel.a=rowSums(marr.a), nind=length(unique(id)), id=id, nrep=length(id),
+    f=f, year=year-2001, C=hoopoe$count, pNinit=dUnif(1, 50)))
+str(jags.data)                    # Remind ourselves of how the data look like
 # List of 12
- # $ marr.j : num [1:15, 1:16] 6 0 0 0 0 0 0 0 0 0 ...
- # $ marr.a : num [1:15, 1:16] 6 0 0 0 0 0 0 0 0 0 ...
- # $ n.years: int 16
- # $ rel.j  : num [1:15] 104 165 256 285 265 264 237 222 260 242 ...
- # $ rel.a  : num [1:15] 29 36 57 77 82 83 78 73 86 90 ...
- # $ nind   : int 767
- # $ id     : num [1:1092] 483 486 530 531 532 533 534 535 536 538 ...
- # $ nrep   : int 1092
- # $ f      : int [1:1092] 6 11 11 3 15 6 11 12 7 6 ...
- # $ year   : num [1:1092] 1 1 1 1 1 1 1 1 1 1 ...
- # $ C      : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
- # $ pNinit : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
-
+# $ marr.j : num [1:15, 1:16] 6 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a : num [1:15, 1:16] 6 0 0 0 0 0 0 0 0 0 ...
+# $ n.years: int 16
+# $ rel.j : num [1:15] 104 165 256 285 265 264 237 222 260 242 ...
+# $ rel.a : num [1:15] 29 36 57 77 82 83 78 73 86 90 ...
+# $ nind : int 767
+# $ id : num [1:1092] 483 486 530 531 532 533 534 535 536 538 ...
+# $ nrep : int 1092
+# $ f : int [1:1092] 6 11 11 3 15 6 11 12 7 6 ...
+# $ year : num [1:1092] 1 1 1 1 1 1 1 1 1 1 ...
+# $ C : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
+# $ pNinit : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -269,30 +259,31 @@ model {
   }
 
   # Enforce order on the alphas: alpha[1] < alpha[2]
-  alpha[1] ~ dnorm(0, 0.01)        # Not too low precision, for convergence
+  alpha[1] ~ dnorm(0, 0.01)                 # Not too low precision, for convergence
   alpha[2] <- alpha[1] + diff.alpha
-  diff.alpha ~ dnorm(0, 0.01)T(0,) # Diff. must be positive; alpha[2] is
-                                   # defined to have higher values
+  diff.alpha ~ dnorm(0, 0.01)T(0,)          # Diff. must be positive; alpha[2] is
+                                            # defined to have higher values
+
   # Mixture parameter
   gamma ~ dunif(0, 0.5)
 
   # Residual (observation) error
-  sigma ~ dunif(0.4, 20)      # lower bound >0
+  sigma ~ dunif(0.4, 20)                    # lower bound >0
   tau <- pow(sigma, -2)
 
   # Linear models for demographic parameters
   # Survival and recapture
   for (t in 1:(n.years-1)){
-    logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
-    phij[t] <- ilogit(logit.phij[t])
-    logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
-    phia[t] <- ilogit(logit.phia[t])
-    pa[t] <- mean.pa
-    pj[t] <- mean.pj
+  logit.phij[t] ~ dnorm(mean.logit.phij, tau.phij)
+  phij[t] <- ilogit(logit.phij[t])
+  logit.phia[t] ~ dnorm(mean.logit.phia, tau.phia)
+  phia[t] <- ilogit(logit.phia[t])
+  pa[t] <- mean.pa
+  pj[t] <- mean.pj
   }
 
   # Reproduction parameters
-  for (g in 1:2){    # Loop over two groups
+  for (g in 1:2){ # Loop over two groups
     for (t in 1:n.years){
       log(rep[g,t]) <- alpha[g] + eps[g,t]
       eps[g,t] ~ dnorm(0, tau.rep.t[g])
@@ -307,9 +298,9 @@ model {
 
   # Population count data (state-space model)
   # Model for initial stage-spec. population sizes
-  ini[1] ~ dcat(pNinit)               # Local recruits
-  ini[2] ~ dcat(pNinit)               # Surviving adults
-  ini[3] ~ dpois(omega[1])            # Immigrants
+  ini[1] ~ dcat(pNinit) # Local recruits
+  ini[2] ~ dcat(pNinit) # Surviving adults
+  ini[3] ~ dpois(omega[1]) # Immigrants
   R[1,1] ~ dbin(1-gamma, ini[1])
   R[2,1] <- ini[1]-R[1,1]
   S[1,1] ~ dbin(1-gamma, ini[2])
@@ -319,21 +310,23 @@ model {
 
   # Process model over time: our model of population dynamics
   for (t in 2:n.years){
-    J[1,t] ~ dpois(rep[1,t-1] / 2 * phij[t-1] * N[1,t-1]) # Local recruits produced by females of group 1 (L)
-    J[2,t] ~ dpois(rep[2,t-1] / 2 * phij[t-1] * N[2,t-1]) # Local recruits produced by females of group 2 (H)
-    R[1,t] ~ dbin(1-gamma, J[1,t] + J[2,t]) # Allocate recruits to group 1
-    R[2,t] <- J[1,t] + J[2,t] - R[1,t]    # Allocate recruits to group 2 (H)
-    S[1,t] ~ dbin(phia[t-1], N[1,t-1])    # Surviving adults, group 1 (L)
-    S[2,t] ~ dbin(phia[t-1], N[2,t-1])    # Surviving adults, group 2 (H)
-    Itot[t] ~ dpois(omega[t])             # Total number of immigrants
-    I[1,t] ~ dbin(1-gamma, Itot[t])       # Immigrants of group 1 (L)
-    I[2,t] <- Itot[t]-I[1,t]              # Immigrants of group 2 (H)
+    J[1,t] ~ dpois(rep[1,t-1] / 2 * phij[t-1] * N[1,t-1]) # Local recruits
+      # produced by females of group 1 (L)
+    J[2,t] ~ dpois(rep[2,t-1] / 2 * phij[t-1] * N[2,t-1]) # Local recruits
+      # produced by females of group 2 (H)
+    R[1,t] ~ dbin(1-gamma, J[1,t] + J[2,t])               # Allocate recruits to group 1
+    R[2,t] <- J[1,t] + J[2,t] - R[1,t]                    # Allocate recruits to group 2 (H)
+    S[1,t] ~ dbin(phia[t-1], N[1,t-1])                    # Surviving adults, group 1 (L)
+    S[2,t] ~ dbin(phia[t-1], N[2,t-1])                    # Surviving adults, group 2 (H)
+    Itot[t] ~ dpois(omega[t])                             # Total number of immigrants
+    I[1,t] ~ dbin(1-gamma, Itot[t])                       # Immigrants of group 1 (L)
+    I[2,t] <- Itot[t]-I[1,t]                              # Immigrants of group 2 (H)
   }
 
   # Observation model
   for (t in 1:n.years){
-    N[1,t] <- S[1,t] + R[1,t] + I[1,t]    # Total no of females in group 1
-    N[2,t] <- S[2,t] + R[2,t] + I[2,t]    # Total no of females in group 2
+    N[1,t] <- S[1,t] + R[1,t] + I[1,t]                    # Total no of females in group 1
+    N[2,t] <- S[2,t] + R[2,t] + I[2,t]                    # Total no of females in group 2
     C[t] ~ dnorm(N[1,t] + N[2,t], tau)
   }
 
@@ -344,8 +337,8 @@ model {
     marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.years-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     qa[t] <- 1-pa[t]
     pr.j[t,t] <- phij[t] * pj[t]
@@ -369,13 +362,13 @@ model {
 
   # Productivity data (finite-mixture model with Gaussian error)
   # Mixture
-  for (i in 1:nind){    # Loop over all ID of mothers with known annual prod.
+  for (i in 1:nind){                        # Loop over all ID of mothers with known annual prod.
     k[i] ~ dbern(gamma)
     h[i] <- k[i] + 1
   }
 
   # Productivity
-  for (i in 1:nrep){  # Loop over all known-ID annual productivity data
+  for (i in 1:nrep){                        # Loop over all known-ID annual productivity data
     f[i] ~ dnorm(rep[h[id[i]], year[i]], tau.rep)
   }
 }
@@ -385,18 +378,17 @@ model {
 inits <- function(){list(mean.omega=runif(1, 8, 12))}
 
 # Parameters to be monitored
-parameters <- c("mean.phij", "mean.phia", "alpha", "gamma", "diff.alpha",
-    "mean.omega", "mean.pj", "mean.pa", "sigma.rep", "sigma.phij",
-    "sigma.phia", "sigma.omega", "sigma.rep.t", "sigma", "phij", "phia",
-    "rep", "R", "S", "I", "N")
+parameters <- c("mean.phij", "mean.phia", "alpha", "gamma", "diff.alpha", "mean.omega", "mean.pj",
+    "mean.pa", "sigma.rep", "sigma.phij", "sigma.phia", "sigma.omega", "sigma.rep.t", "sigma",
+    "phij", "phia", "rep", "R", "S", "I", "N")
 
 # MCMC settings
 # ni <- 40000; nb <- 10000; nc <- 10; nt <- 10; na <- 5000
-ni <- 4000; nb <- 1000; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
+ni <- 4000; nb <- 1000; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing, < 1 min
 
 # Call JAGS (ART 15 min), check convergence and summarize posteriors
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
 print(out1, 3)
 
@@ -407,8 +399,9 @@ save(out1, out2, file ="Hoopoe.Results.Rdata")
 # 14.6 Results
 # ============
 
-# Fig. 14.3
+# ~~~~ Fig. 14.3 ~~~~
 traceplot(out1, c('alpha', 'gamma'), layout=c(1,3))
+# ~~~~~~~~~~~~~~~~~~~
 
 print(out1, 3)
                    # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff

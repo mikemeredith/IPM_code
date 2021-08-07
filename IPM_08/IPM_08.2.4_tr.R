@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 8 : Integrated population models with density-dependence
 # ----------------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 12 mins, full run 1.7 hrs
 
@@ -80,20 +80,20 @@ model {
 
   # Population count data (state-space model)
   # Model for initial stage-spec. population sizes: discrete uniform priors
-  R[1] ~ dcat(pNinit)      # Local recruits
-  S[1] ~ dcat(pNinit)      # Surviving adults
-  I[1] ~ dpois(omega[1])   # Immigrants
+  R[1] ~ dcat(pNinit)     # Local recruits
+  S[1] ~ dcat(pNinit)     # Surviving adults
+  I[1] ~ dpois(omega[1])  # Immigrants
 
   # Process model over time: our model of population dynamics
   for (t in 2:n.occasions){
-    R[t] ~ dpois(f[t-1]/2 * phij[t-1] * N[t-1])    # No. local recruits
-    S[t] ~ dbin(phia[t-1], N[t-1])                   # No. surviving adults
-    I[t] ~ dpois(omega[t])                           # No. immigrants
+    R[t] ~ dpois(f[t-1]/2 * phij[t-1] * N[t-1]) # No. local recruits
+    S[t] ~ dbin(phia[t-1], N[t-1])              # No. surviving adults
+    I[t] ~ dpois(omega[t])                      # No. immigrants
   }
 
   # Observation process
   for (t in 1:n.occasions){
-    N[t] <- S[t] + R[t] + I[t]            # Total number of breeding females
+    N[t] <- S[t] + R[t] + I[t]                  # Total number of breeding females
     logN[t] <- log(N[t])
     C[t] ~ dlnorm(logN[t], tau)
   }
@@ -105,10 +105,10 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    qj[t] <- 1-pj[t]     # Probability of non-recapture (juv)
-    qa[t] <- 1-pa[t]     # Probability of non-recapture (ad)
+    # Main diagonal
+    qj[t] <- 1-pj[t]                            # Probability of non-recapture (juv)
+    qa[t] <- 1-pa[t]                            # Probability of non-recapture (ad)
     pr.j[t,t] <- phij[t] * pj[t]
     pr.a[t,t] <- phia[t] * pa[t]
     # Above main diagonal
@@ -136,26 +136,25 @@ model {
 ")
 
 # Define initial values
-inits <- function() {list(b0.pj=runif(1,0.2,0.7), b0.pa=runif(1,0.1,0.6),
-    sigma.pa=runif(1,0,1), I=rep(10, 36))}
+inits <- function() {list(b0.pj=runif(1,0.2,0.7), b0.pa=runif(1,0.1,0.6), sigma.pa=runif(1,0,1),
+    I=rep(10, 36))}
 
 # Define parameters to be monitored
-parameters <- c("phij", "phia", "f", "omega", "b0.pj", "b0.pa", "sigma2.phij", "sigma2.phia",
-    "sigma2.f", "sigma2.om", "sigma2.pj", "sigma2.pa", "R", "S", "I", "N", "pa", "pj",
-    "sigma2", "alpha", "beta")
+parameters <- c("phij", "phia", "f", "omega", "b0.pj", "b0.pa", "sigma2.phij", "sigma2.phia", "sigma2.f",
+    "sigma2.om", "sigma2.pj", "sigma2.pa", "R", "S", "I", "N", "pa", "pj", "sigma2", "alpha", "beta")
 
 # MCMC settings
-# ni <- 110000; nb <- 10000; nc <- 3; nt <- 20; na <- 1000
-ni <- 11000; nb <- 1000; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing
+ni <- 110000; nb <- 10000; nc <- 3; nt <- 20; na <- 1000
+ni <- 11000; nb <- 1000; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing, 11 mins
 
 # Call JAGS (ART 139 min), check convergence and summarize posteriors
-out2 <- jags(jags.data, inits, parameters, "model2.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out2 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out2)
 
 print(out2, 3)
 
-               # mean     sd    2.5%     50%    97.5% overlap0     f  Rhat n.eff
+#                mean     sd    2.5%     50%    97.5% overlap0     f  Rhat n.eff
 # phij[1]       0.065  0.025   0.026   0.061    0.126    FALSE 1.000 1.000 15000
 # phij[2]       0.072  0.027   0.031   0.068    0.137    FALSE 1.000 1.000  7918
 # ... [output truncated] ...

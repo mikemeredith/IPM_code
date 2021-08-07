@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 3 mins
 
@@ -24,41 +24,39 @@ C <- rpois(nbrood, expNyoung)
 
 # Create a variant of the data with partial zero truncation
 set.seed(68)
-C1 <- C                  # Copy data set
-table(C1)                # Remind ourselves of the actual data
-prop.uncertain <- 0.6    # Proportion of zeros dropped
+C1 <- C                                 # Copy data set
+table(C1)                               # Remind ourselves of the actual data
+prop.uncertain <- 0.6                   # Proportion of zeros dropped
 zeros <- which(C1==0)
 toss <- zeros[rbinom(n=length(zeros), size=1, prob=prop.uncertain) == 1]
-C1 <- C1[-toss]          # Toss out some of the zeros
-table(C1)                # Frequency dist. of new brood size data
-
+C1 <- C1[-toss]                         # Toss out some of the zeros
+table(C1)                               # Frequency dist. of new brood size data
 # C1
-  # 0   1   2   3   4   5   6   7   8
- # 89 330 237 134  39  16   7   3   3
+#  0   1   2   3   4   5   6   7   8
+# 89 330 237 134  39  16   7   3   3
 
-mean(C);  mean(C1)     # Compare sample means
+mean(C); mean(C1) # Compare sample means
 # [1] 1.529
 # [1] 1.782051
 
 # Make another copy of C1 data and kick out remaining zeroes as well
-C2 <- C1[C1 > 0]         # Make a copy and toss out remaining zeroes
+C2 <- C1[C1 > 0]                          # Make a copy and toss out remaining zeroes
 
 # Data bundle
 jags.data <- list(C1=C1, C2=C2, nC1=length(C1), nC2=length(C2))
 str(jags.data)
-
 # List of 4
- # $ C1 : int [1:858] 0 0 1 1 4 1 2 0 1 3 ...
- # $ C2 : int [1:769] 1 1 4 1 2 1 3 1 1 1 ...
- # $ nC1: int 858
- # $ nC2: int 769
+# $ C1 : int [1:858] 0 0 1 1 4 1 2 0 1 3 ...
+# $ C2 : int [1:769] 1 1 4 1 2 1 3 1 1 1 ...
+# $ nC1: int 858
+# $ nC2: int 769
 
 # Write JAGS model file
 cat(file="model10.txt", "
 model {
   # Priors and linear models
-  rho1 ~ dunif(0, 3)            # Expected brood size in model 1
-  rho2 ~ dunif(0, 3)            # Expected brood size in model 3
+  rho1 ~ dunif(0, 3) # Expected brood size in model 1
+  rho2 ~ dunif(0, 3) # Expected brood size in model 2
 
   # Likelihoods
   # Model 1: Standard Poisson GLM
@@ -83,12 +81,11 @@ parameters <- c("rho1", "rho2")
 ni <- 60000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
-out13 <- jags(jags.data, inits, parameters, "model10.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out13, layout=c(2,2))    # Not shown
+out13 <- jags(jags.data, inits, parameters, "model10.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out13)                        # Not shown
 print(out13, 3)
-
-             # mean    sd     2.5%      50%    97.5% overlap0 f Rhat n.eff
+#              mean    sd     2.5%      50%    97.5% overlap0 f Rhat n.eff
 # rho1        1.784 0.046    1.694    1.784    1.874    FALSE 1    1  9064
 # rho2        1.580 0.053    1.481    1.579    1.685    FALSE 1    1  5698
 

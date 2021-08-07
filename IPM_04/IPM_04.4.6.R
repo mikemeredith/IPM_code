@@ -1,9 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
-
-library(IPMbook) ; library(jagsUI)
+# Code from proofs.
 
 # 4.4 Models for productivity surveys
 # ===================================
@@ -11,19 +9,18 @@ library(IPMbook) ; library(jagsUI)
 # 4.4.6 Nest survival models
 # --------------------------
 
+library(IPMbook); library(jagsUI)
 data(wryneck)
 str(wryneck)
-
-# 'data.frame':   181 obs. of  5 variables:
- # $ f  : int  49 15 23 23 47 11 23 15 65 2 ...
- # $ j  : int  53 32 37 40 66 30 37 30 71 18 ...
- # $ k  : int  53 32 37 40 66 30 37 30 72 18 ...
- # $ x  : int  1 1 1 1 1 1 1 1 0 1 ...
- # $ age: int  16 2 4 2 2 2 5 2 5 2 ...
+# 'data.frame': 181 obs. of 5 variables:
+# $ f  : int 49 15 23 23 47 11 23 15 65 2 ...
+# $ j  : int 53 32 37 40 66 30 37 30 71 18 ...
+# $ k  : int 53 32 37 40 66 30 37 30 72 18 ...
+# $ x  : int 1 1 1 1 1 1 1 1 0 1 ...
+# $ age: int 16 2 4 2 2 2 5 2 5 2 ...
 
 tail(wryneck)
-
-     # f  j  k x age
+#      f  j  k x age
 # 176  5 25 25 1   1
 # 177 53 56 60 0   1
 # 178  9 29 29 1   1
@@ -43,24 +40,21 @@ for (i in 1:length(wryneck$f)){
 for (i in 1:length(fail)){
   y[fail[i],wryneck$k[fail[i]]] <- 0
 }
-
 y[176,]
-# [1] ... NA  1 NA NA ... NA NA  1 NA NA ...
-
+# [1] ... NA 1 NA NA ... NA NA 1 NA NA ...
 y[177,]
-# [37] ... NA NA  1 NA NA  1 NA NA NA  0 NA NA ...
+# [37] ... NA NA 1 NA NA 1 NA NA NA 0 NA NA ...
 
 # Bundle data
 jags.data <- with(wryneck, list(y=y, f=f, k=k, n.nest=nrow(y), T=21, age=age))
 str(jags.data)
-
 # List of 6
- # $ y     : num [1:181, 1:81] NA NA NA NA NA NA NA NA NA NA ...
- # $ f     : int [1:181] 49 15 23 23 47 11 23 15 65 2 ...
- # $ k     : int [1:181] 53 32 37 40 66 30 37 30 72 18 ...
- # $ n.nest: int 181
- # $ T     : num 21
- # $ age   : int [1:181] 16 2 4 2 2 2 5 2 5 2 ...
+# $ y     : num [1:181, 1:81] NA NA NA NA NA NA NA NA NA NA ...
+# $ f     : int [1:181] 49 15 23 23 47 11 23 15 65 2 ...
+# $ k     : int [1:181] 53 32 37 40 66 30 37 30 72 18 ...
+# $ n.nest: int 181
+# $ T     : num 21
+# $ age   : int [1:181] 16 2 4 2 2 2 5 2 5 2 ...
 
 # Write JAGS model file
 cat(file="model13.txt", "
@@ -71,7 +65,6 @@ model {
       phi[i,t] <- phia[age[i] + t - f[i]]
     } #t
   } #i
-
   for (a in 1:T){
     phia[a] <- ilogit(alpha + beta * a)
   }
@@ -100,12 +93,11 @@ parameters <- c("phia", "nu", "alpha", "beta")
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
 # Call JAGS from R (ART 0.1 min) and check convergence
-out16 <- jags(jags.data, inits, parameters, "model13.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out16)       # Not shown
+out16 <- jags(jags.data, inits, parameters, "model13.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out16)                        # Not shown
 print(out16, 3)
-
-            # mean     sd   2.5%     50%   97.5% overlap0     f  Rhat n.eff
+#             mean     sd   2.5%     50%   97.5% overlap0     f  Rhat n.eff
 # phia[1]    0.971  0.008  0.953   0.972   0.985    FALSE 1.000 1.001  1650
 # phia[2]    0.973  0.007  0.958   0.974   0.985    FALSE 1.000 1.001  1633
 # [... output truncated ...]

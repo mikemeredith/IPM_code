@@ -1,12 +1,11 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 3 mins, full run 15 hrs
 
 library(IPMbook) ; library(jagsUI)
-
 
 # 5.5 Simulation assessment of a simple IPM
 # =========================================
@@ -15,53 +14,53 @@ library(IPMbook) ; library(jagsUI)
 # ----------------------------------------------------------
 
 # Pick values for the function arguments
-T <- 20             # Number of years
-phi <- c(0.3, 0.55) # Age specific survival probabilities (juv, adult)
-f <- c(2.6, 3.6)    # Age-specific productivity (1y, older)
-Ni <- c(50, 50)     # Initial pop. size for each age class (1y, older)
+T <- 20                      # Number of years
+phi <- c(0.3, 0.55)          # Age specific survival probabilities (juv, adult)
+f <- c(2.6, 3.6)             # Age-specific productivity (1y, older)
+Ni <- c(50, 50)              # Initial pop. size for each age class (1y, older)
 
 # Apply the function and produce data overview
-set.seed(111167)    # To initialize the RNGs at the same place
+set.seed(111167)             # To initialize the RNGs at the same place
 pop <- simPop(Ni=Ni, phi=phi, f=f, nYears=T)
 str(pop)
 
 # List of 14
- # $ Ni         : num [1:2] 50 50
- # $ phi        : num [1:3, 1:19] 0.3 0.55 0.55 0.3 0.55 0.55 0.3 0.55 ...
- # $ f          : num [1:2, 1:20] 2.6 3.6 2.6 3.6 2.6 3.6 2.6 3.6 2.6 3.6 ...
- # $ pBreed     : num [1:2, 1:20] 1 1 1 1 1 1 1 1 1 1 ...
- # $ sex.ratio  : num [1:20] 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...
- # $ Im         : num [1:20] 0 0 0 0 0 0 0 0 0 0 ...
- # $ ageOfIm    : num [1:20] 1 1 1 1 1 1 1 1 1 1 ...
- # $ state      : num [1:3492, 1:20] 1 1 1 1 1 1 1 1 1 1 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
- # $ imYear     : logi [1:3492] NA NA NA NA NA NA ...
- # $ reprod     : num [1:3492, 1:20, 1:3] 5 2 2 1 0 1 1 1 2 2 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
-  # .. ..$ : chr [1:3] "F" "M" "Age"
- # $ N          : num [1:6, 1:20] 50 50 100 158 336 0 49 52 101 165 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:6] "1-Year" "2-Year" "totAdults" "BornF" ...
-  # .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
- # $ breeders   : num [1:3, 1:20] 50 50 100 49 52 101 46 56 102 50 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:3] "1-Year" "2-Year" "totBreeders"
-  # .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
- # $ totAdults  : Named num [1:20] 100 101 102 108 109 116 115 121 124 ...
-  # ..- attr(*, "names")= chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
- # $ totBreeders: Named num [1:20] 100 101 102 108 109 116 115 121 124 ...
-  # ..- attr(*, "names")= chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
+# $ Ni : num [1:2] 50 50
+# $ phi : num [1:3, 1:19] 0.3 0.55 0.55 0.3 0.55 0.55 0.3 0.55 ...
+# $ f : num [1:2, 1:20] 2.6 3.6 2.6 3.6 2.6 3.6 2.6 3.6 2.6 3.6 ...
+# $ pBreed : num [1:2, 1:20] 1 1 1 1 1 1 1 1 1 1 ...
+# $ sex.ratio : num [1:20] 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 ...
+# $ Im : num [1:20] 0 0 0 0 0 0 0 0 0 0 ...
+# $ ageOfIm : num [1:20] 1 1 1 1 1 1 1 1 1 1 ...
+# $ state : num [1:3492, 1:20] 1 1 1 1 1 1 1 1 1 1 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : NULL
+# .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
+# $ imYear : logi [1:3492] NA NA NA NA NA NA ...
+# $ reprod : num [1:3492, 1:20, 1:3] 5 2 2 1 0 1 1 1 2 2 ...
+# ..- attr(*, "dimnames")=List of 3
+# .. ..$ : NULL
+# .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
+# .. ..$ : chr [1:3] "F" "M" "Age"
+# $ N : num [1:6, 1:20] 50 50 100 158 336 0 49 52 101 165 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : chr [1:6] "1-Year" "2-Year" "totAdults" "BornF" ...
+# .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
+# $ breeders : num [1:3, 1:20] 50 50 100 49 52 101 46 56 102 50 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : chr [1:3] "1-Year" "2-Year" "totBreeders"
+# .. ..$ : chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
+# $ totAdults : Named num [1:20] 100 101 102 108 109 116 115 121 124 ...
+# ..- attr(*, "names")= chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
+# $ totBreeders: Named num [1:20] 100 101 102 108 109 116 115 121 124 ...
+# ..- attr(*, "names")= chr [1:20] "Y1" "Y2" "Y3" "Y4" ...
 
 pop$state[488, 1:10]
  # Y1  Y2  Y3  Y4  Y5  Y6  Y7  Y8  Y9 Y10
  # NA  NA   0   1   2   2  -1  NA  NA  NA
 
 pop$reprod[488,1:10,]
-     # F  M Age
+#      F  M Age
 # Y1  NA NA  NA
 # Y2  NA NA  NA
 # Y3  NA NA  NA
@@ -74,7 +73,7 @@ pop$reprod[488,1:10,]
 # Y10 NA NA  NA
 
 pop$N[,1:10]
-           # Y1  Y2  Y3  Y4  Y5  Y6  Y7  Y8  Y9 Y10
+#            Y1  Y2  Y3  Y4  Y5  Y6  Y7  Y8  Y9 Y10
 # 1-Year     50  49  46  50  53  57  53  61  61  51
 # 2-Year     50  52  56  58  56  59  62  60  63  62
 # totAdults 100 101 102 108 109 116 115 121 124 113
@@ -83,7 +82,7 @@ pop$N[,1:10]
 # Im          0   0   0   0   0   0   0   0   0   0
 
 pop$breeders[,1:10]
-             # Y1  Y2  Y3  Y4  Y5  Y6  Y7  Y8  Y9 Y10
+#              Y1  Y2  Y3  Y4  Y5  Y6  Y7  Y8  Y9 Y10
 # 1-Year       50  49  46  50  53  57  53  61  61  51
 # 2-Year       50  52  56  58  56  59  62  60  63  62
 # totBreeders 100 101 102 108 109 116 115 121 124 113
@@ -98,10 +97,18 @@ sigma <- 10
 # Create the population survey data and produce data overview
 count <- simCountNorm(N=pop1$totB, sigma=sigma)
 str(count)
-
 # List of 2
- # $ sigma: num [1:20] 10 10 10 10 10 10 10 10 10 10 ...
- # $ count: num [1:20] 111 84 85 94 116 132 115 89 82 61 ...
+# $ sigma: num [1:20] 10 10 10 10 10 10 10 10 10 10 ...
+# $ count: num [1:20] 111 84 85 94 116 132 115 89 82 61 ...
+
+# Pick values for capture and recapture probabilities
+cap <- 0.4        # Initial capture probability (same for juv. and adults)
+recap <- 0.6      # Recapture probability
+
+# Create the capture histories and produce data overview
+ch <- simCapHist(state=pop2$state, cap=cap, recap=recap, maxAge=2)
+str(ch)
+
 
 # Pick values for capture and recapture probabilities
 cap <- 0.4        # Initial capture probability (same for juv. and adults)
@@ -112,11 +119,11 @@ ch <- simCapHist(state=pop2$state, cap=cap, recap=recap, maxAge=2)
 str(ch)
 
 # List of 5
- # $ cap   : num [1:3, 1:20] 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 ...
- # $ recap : num [1:2, 1:19] 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 ...
- # $ maxAge: num 2
- # $ ch    : num [1:2645, 1:20] 1 1 1 1 1 1 0 1 0 1 ...
- # $ age   : num [1:2645] 2 2 2 2 2 2 2 2 2 2 ...
+# $ cap   : num [1:3, 1:20] 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 0.4 ...
+# $ recap : num [1:2, 1:19] 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 0.6 ...
+# $ maxAge: num 2
+# $ ch    : num [1:2645, 1:20] 1 1 1 1 1 1 0 1 0 1 ...
+# $ age   : num [1:2645] 2 2 2 2 2 2 2 2 2 2 ...
 
 # Create m-arrays
 marr <- marrayAge(ch$ch, ch$age)
@@ -127,18 +134,17 @@ pprod <- 0.3
 # Create productivity data and produce data overview
 pro <- simProd(reprod=pop3$reprod, pInclude=pprod)
 str(pro)
-
 # List of 4
- # $ pInclude    : num [1:20] 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 ...
- # $ females.only: logi FALSE
- # $ prod.ind    : num [1:705, 1:3] 2 2 0 3 5 3 5 4 5 3 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:3] "Productivity" "Year" "Age of mother"
- # $ prod.agg    : num [1:20, 1:2] 117 98 89 99 103 96 89 131 96 129 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:20] "1" "2" "3" "4" ...
-  # .. ..$ : chr [1:2] "Juveniles" "Surveyed broods"
+# $ pInclude : num [1:20] 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 0.3 ...
+# $ females.only: logi FALSE
+# $ prod.ind : num [1:705, 1:3] 2 2 0 3 5 3 5 4 5 3 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : NULL
+# .. ..$ : chr [1:3] "Productivity" "Year" "Age of mother"
+# $ prod.agg : num [1:20, 1:2] 117 98 89 99 103 96 89 131 96 129 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : chr [1:20] "1" "2" "3" "4" ...
+# .. ..$ : chr [1:2] "Juveniles" "Surveyed broods"
 
 
 # 5.5.2 Simulation results
@@ -194,9 +200,9 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    q[t] <- 1 - p[t]   # Probability of non-recapture
+    # Main diagonal
+    q[t] <- 1 - p[t]           # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -228,8 +234,6 @@ model {
   }
 }
 ")
-
-
 
 # IPM 2: include demographic stochasticity
 # Write JAGS model file
@@ -278,8 +282,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -312,8 +316,6 @@ model {
   }
   }
 ")
-
-
 
 # IPM 3: include environmental and demographic stochasticity
 # Write JAGS model file
@@ -384,8 +386,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]

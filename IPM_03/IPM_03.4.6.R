@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -15,17 +15,17 @@ library(IPMbook) ; library(jagsUI)
 # Define means of the demographic rates and strength of density-dependence
 mean.sj <- 0.3
 mean.sa <- 0.55
-f1.int <- 2.3        # Productivity of 1y females when population size is 0
-f1.beta <- -0.02     # Strength of density-dependence on 1y productivity
-fa.int <- 2.3        # Productivity of adult females when population size is 0
-fa.beta <- -0.01     # Strength of density-dependence on ad productivity
+f1.int <- 2.3     # Productivity of 1y females when population size is 0
+f1.beta <- -0.02  # Strength of density-dependence on 1y productivity
+fa.int <- 2.3     # Productivity of adult females when population size is 0
+fa.beta <- -0.01  # Strength of density-dependence on ad productivity
 
 # Define the number of years with predictions
 T <- 200
 
 # Bundle data
-jags.data <- list(sj=mean.sj, sa=mean.sa, f1.int=f1.int, f1.beta=f1.beta,
-    fa.int=fa.int, fa.beta=fa.beta, T=T)
+jags.data <- list(sj=mean.sj, sa=mean.sa, f1.int=f1.int, f1.beta=f1.beta, fa.int=fa.int,
+    fa.beta=fa.beta, T=T)
 
 # Write JAGS model file
 cat(file="model8.txt", "
@@ -43,9 +43,8 @@ model {
     # Population model
     N[1,t+1] ~ dpois(sj * (f1[t] * N[1,t] + fa[t] * N[2,t]))
     N[2,t+1] ~ dbin(sa, (N[1,t] + N[2,t]))
-    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0)
-        # Determines whether population is still thriving (extinct = 0) or
-        # went extinct (extinct = 1)
+    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0) # Determines whether
+        # population is still thriving (extinct = 0) or went extinct (extinct = 1)
   }
 }
 ")
@@ -62,8 +61,8 @@ parameters <- c("N", "f1", "fa", "extinct")
 ni <- 1000; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out8 <- jags(jags.data, inits, parameters, "model8.txt", n.adapt=na,
-    n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
+out8 <- jags(jags.data, inits, parameters, "model8.txt", n.adapt=na, n.chains=nc, n.thin=nt,
+    n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out8, 4)
 
                 # mean     sd    2.5%    50%   97.5% overlap0 f

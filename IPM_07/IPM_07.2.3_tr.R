@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 7 : Assessment of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from final MS.
 
 # Run time for test script 4 mins, full run 9 hrs
 
@@ -57,11 +57,11 @@ model {
 
   # Assessing the fit of the state-space model
   for (t in 1:n.occasions){
-    C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
-    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
+    C.exp[t] <- N[1,t] + N[2,t]                            # Expected counts
+    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])           # Discrepancy measure
 
-    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau.obs)     # Generate replicate data
-    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
+    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau.obs)             # Generate replicate data
+    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t])   # Discrepancy measure
   }
   Dmape.obs <- sum(Dssm.obs)
   Dmape.rep <- sum(Dssm.rep)
@@ -70,7 +70,7 @@ model {
   for (t in 1:n.occasions){
     J[t] ~ dpois(B[t] * f[t])
 
-    J.exp[t] <- B[t] * f[t]              # Expected data
+    J.exp[t] <- B[t] * f[t]                                # Expected data
     D.obs[t] <- J[t] * log(J[t]/J.exp[t]) - (J[t] - J.exp[t])
 
     J.rep[t] ~ dpois(B[t] * f[t])
@@ -86,9 +86,9 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    q[t] <- 1-p[t]   # Probability of non-recapture
+    # Main diagonal
+    q[t] <- 1-p[t]                                         # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
     # Above main diagonal
@@ -177,11 +177,11 @@ model {
 
   # Assessing the fit of the state-space model
   for (t in 1:n.occasions){
-    C.exp[t] <- N[1,t] + N[2,t]                    # Expected counts
-    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])   # Discrepancy measure
+    C.exp[t] <- N[1,t] + N[2,t]                            # Expected counts
+    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])           # Discrepancy measure
 
-    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau.obs)     # Generate replicate data
-    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t]) # Discrepancy measure
+    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau.obs)             # Generate replicate data
+    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t])   # Discrepancy measure
   }
   Dmape.obs <- sum(Dssm.obs)
   Dmape.rep <- sum(Dssm.rep)
@@ -194,8 +194,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -249,7 +249,7 @@ model {
 
 # Number of simulations
 # nsim <- 600  # 2.5 hrs
-nsim <- 6  # ~~~ testing
+nsim <- 6  # ~~~ for testing
 
 # Number of years
 T <- 10

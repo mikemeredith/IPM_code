@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 10 : Population viability analysis
 # ------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 4 mins, full run 36 mins
 
@@ -11,6 +11,7 @@ library(IPMbook) ; library(jagsUI)
 # =========================================
 
 # Load hoopoe data
+library(IPMbook)
 data(hoopoe)
 
 # Produce m-array
@@ -19,10 +20,10 @@ marr.j <- marr[,,1]
 marr.a <- marr[,,2]
 
 # Bundle data
-jags.data <- with(hoopoe$reproAgg, list(marr.j=marr.j, marr.a=marr.a,
-    n.occasions=ncol(marr.j), rel.j=rowSums(marr.j), rel.a=rowSums(marr.a),
-    J1=J1, B1=B1, J2=J2, B2=B2, count=hoopoe$count, pNinit=dUnif(1, 50), K=10))
-str(jags.data)    # Remind ourselves of how the data look like
+jags.data <- with(hoopoe$reproAgg, list(marr.j=marr.j, marr.a=marr.a, n.occasions=ncol(marr.j),
+  rel.j=rowSums(marr.j), rel.a=rowSums(marr.a), J1=J1, B1=B1, J2=J2, B2=B2, count=hoopoe$count,
+  pNinit=dUnif(1, 50), K=10))
+str(jags.data) # Remind ourselves of how the data look like
 
 # Write JAGS model file
 cat(file="model4.txt", "
@@ -48,7 +49,7 @@ model {
   for (t in 1:(n.occasions-1+K)){
     logit(phij[t]) <- eps[1,t]
     logit(phia[t]) <- eps[2,t]
-    log(omega[t])  <- eps[3,t]
+    log(omega[t]) <- eps[3,t]
     log(f1[t]) <- eps[4,t]
     log(f2[t]) <- eps[5,t]
     eps[1:5,t] ~ dmnorm.vcov(mu[], sigma2[,])
@@ -97,7 +98,7 @@ model {
     count[t] ~ dnorm(Ntot[t], tau.res)
   }
   for (t in 1:(n.occasions+K)){
-    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]    # total population size
+    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]      # total population size
   }
 
   # Productivity data (Poisson regression model)
@@ -113,8 +114,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     q[t] <- 1-p[t]
     pr.j[t,t] <- phij[t] * pj[t]
@@ -148,17 +149,16 @@ model {
 inits <- function(){list(mean.phij=runif(1, 0.05, 0.2), mean.phia=runif(1, 0.3, 0.5))}
 
 # Parameters monitored
-parameters <- c("mean.phij", "mean.phia", "mean.omega", "mean.f1", "mean.f2",
-    "mean.p", "mean.pj", "sigma.res", "rho", "sigma2", "phij", "phia", "omega",
-    "f1", "f2", "N", "Ntot", "lambda")
+parameters <- c("mean.phij", "mean.phia", "mean.omega", "mean.f1", "mean.f2", "mean.p", "mean.pj",
+    "sigma.res", "rho", "sigma2", "phij", "phia", "omega", "f1", "f2", "N", "Ntot", "lambda")
 
 # MCMC settings
 # ni <- 110000; nb <- 10000; nc <- 3; nt <- 100; na <- 2000
 ni <- 11000; nb <- 1000; nc <- 3; nt <- 10; na <- 200  # ~~~ for testing
 
 # Call JAGS (ART 17 min), check convergence
-out4 <- jags(jags.data, inits, parameters, "model4.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out4 <- jags(jags.data, inits, parameters, "model4.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out4)
 
 # ~~~~ code for modified model ~~~~
@@ -235,7 +235,7 @@ model {
     count[t] ~ dnorm(Ntot[t], tau.res)
   }
   for (t in 1:(n.occasions+K)){
-    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]    # total population size
+    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]        # total population size
   }
 
   # Productivity data (Poisson regression model)
@@ -251,8 +251,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     q[t] <- 1-p[t]
     pr.j[t,t] <- phij[t] * pj[t]

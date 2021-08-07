@@ -1,11 +1,9 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 8 : Integrated population models with density-dependence
 # ----------------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 4 mins, full run 30 mina
-
-library(IPMbook) ; library(jagsUI)
 
 # 8.2 Density-dependence in red-backed shrikes
 # ============================================
@@ -15,27 +13,26 @@ library(IPMbook) ; library(jagsUI)
 # 8.2.2 Modeling density-dependence in survival and productivity
 # --------------------------------------------------------------
 
-# Load the red-backed shrike data and produce data overview
+library(IPMbook); library(jagsUI)
 data(redbacked)
-str(redbacked)    # Not shown
+str(redbacked) # Not shown
 
 # Bundle data
-jags.data <- with(redbacked, list(n.occasions=ncol(marr.a), marr.j=marr.j,
-    marr.a=marr.a, rel.j=rowSums(marr.j), rel.a=rowSums(marr.a),
-    C=count, J=J, B=B, pNinit=dUnif(1, 50), mean.C=mean(count)))
+jags.data <- with(redbacked, list(n.occasions=ncol(marr.a), marr.j=marr.j, marr.a=marr.a,
+    rel.j=rowSums(marr.j), rel.a=rowSums(marr.a), C=count, J=J, B=B, pNinit=dUnif(1, 50),
+    mean.C=mean(count)))
 str(jags.data)
-
 # List of 10
- # $ n.occasions: int 36
- # $ marr.j     : num [1:35, 1:36] 2 0 0 0 0 0 0 0 0 0 ...
- # $ marr.a     : num [1:35, 1:36] 6 0 0 0 0 0 0 0 0 0 ...
- # $ rel.j      : num [1:35] 61 66 45 85 56 120 90 69 54 45 ...
- # $ rel.a      : num [1:35] 35 39 17 34 32 47 45 46 37 27 ...
- # $ C          : num [1:36] 47 62 62 64 72 74 68 65 38 45 ...
- # $ J          : num [1:36] 112 114 88 167 108 223 171 127 102 84 ...
- # $ B          : num [1:36] 29 46 50 56 65 62 63 60 33 41 ...
- # $ pNinit     : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
- # $ mean.C     : num 53.4
+# $ n.occasions: int 36
+# $ marr.j : num [1:35, 1:36] 2 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a : num [1:35, 1:36] 6 0 0 0 0 0 0 0 0 0 ...
+# $ rel.j : num [1:35] 61 66 45 85 56 120 90 69 54 45 ...
+# $ rel.a : num [1:35] 35 39 17 34 32 47 45 46 37 27 ...
+# $ C : num [1:36] 47 62 62 64 72 74 68 65 38 45 ...
+# $ J : num [1:36] 112 114 88 167 108 223 171 127 102 84 ...
+# $ B : num [1:36] 29 46 50 56 65 62 63 60 33 41 ...
+# $ pNinit : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
+# $ mean.C : num 53.4
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -99,20 +96,20 @@ model {
 
   # Population count data (state-space model)
   # Model for initial stage-spec. population sizes: discrete uniform priors
-  R[1] ~ dcat(pNinit)      # Local recruits
-  S[1] ~ dcat(pNinit)      # Surviving adults
-  I[1] ~ dpois(omega[1])   # Immigrants
+  R[1] ~ dcat(pNinit)                             # Local recruits
+  S[1] ~ dcat(pNinit)                             # Surviving adults
+  I[1] ~ dpois(omega[1])                          # Immigrants
 
   # Process model over time: our model of population dynamics
   for (t in 2:n.occasions){
-    R[t] ~ dpois(f[t-1] / 2 * phij[t-1] * N[t-1])   # No. local recruits
-    S[t] ~ dbin(phia[t-1], N[t-1])                  # No. surviving adults
-    I[t] ~ dpois(omega[t])                          # No. immigrants
+    R[t] ~ dpois(f[t-1] / 2 * phij[t-1] * N[t-1]) # No. local recruits
+    S[t] ~ dbin(phia[t-1], N[t-1])                # No. surviving adults
+    I[t] ~ dpois(omega[t])                        # No. immigrants
   }
 
   # Observation model
   for (t in 1:n.occasions){
-    N[t] <- S[t] + R[t] + I[t]            # Total number of breeding females
+    N[t] <- S[t] + R[t] + I[t]                    # Total number of breeding females
     logN[t] <- log(N[t])
     C[t] ~ dlnorm(logN[t], tau)
   }
@@ -124,10 +121,10 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    qj[t] <- 1-pj[t]     # Probability of non-recapture (juv)
-    qa[t] <- 1-pa[t]     # Probability of non-recapture (ad)
+    # Main diagonal
+    qj[t] <- 1-pj[t]                              # Probability of non-recapture (juv)
+    qa[t] <- 1-pa[t]                              # Probability of non-recapture (ad)
     pr.j[t,t] <- phij[t] * pj[t]
     pr.a[t,t] <- phia[t] * pa[t]
     # Above main diagonal
@@ -155,26 +152,22 @@ model {
 ")
 
 # Define initial values
-inits <- function() {list(b0.om=runif(1,0,1), b0.pj=runif(1,0.2,0.7),
-    b0.pa=runif(1,0.1,0.6), sigma.pa=runif(1,0,1), I=rep(10, 36))}
+inits <- function() {list(b0.om=runif(1,0,1), b0.pj=runif(1,0.2,0.7), b0.pa=runif(1,0.1,0.6),
+    sigma.pa=runif(1,0,1), I=rep(10, 36))}
 
 # Define parameters to be monitored
-parameters <- c("phij", "phia", "f", "omega", "b0.om", "b0.pj", "b0.pa",
-    "sigma2.phij", "sigma2.phia", "sigma2.f", "sigma2.om", "sigma2.pj", "sigma2.pa",
-    "R", "S", "I", "N", "pa", "pj", "sigma2", "alpha", "beta")
+parameters <- c("phij", "phia", "f", "omega", "b0.om", "b0.pj", "b0.pa", "sigma2.phij",
+    "sigma2.phia", "sigma2.f", "sigma2.om", "sigma2.pj", "sigma2.pa", "R", "S", "I", "N", "pa", "pj",
+    "sigma2", "alpha", "beta")
 
 # MCMC settings
 # ni <- 30000; nb <- 10000; nc <- 3; nt <- 4; na <- 1000
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000  # ~~~ for testing
 
 # Call JAGS (ART 31 min), check convergence and produce figures
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
-
-# ~~~~ save output for use later ~~~~
-save(out1, file="Shrike-mod1.Rdata")
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Compute the probability that the betas are negative
 mean(out1$sims.list$beta[,1] < 0)
@@ -186,6 +179,10 @@ mean(out1$sims.list$beta[,3] < 0)
 
 # Calculate population growth rate
 lam <- out1$sims.list$N[,-1] / out1$sims.list$N[,-ncol(out1$sims.list$N)]
+
+# ~~~~ save output for use later ~~~~
+save(out1, file="Shrike-mod1.Rdata")
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for figure 8.2 ~~~~
 # load("Shrike-mod1.Rdata")  # if necessary

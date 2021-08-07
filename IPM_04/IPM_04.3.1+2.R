@@ -1,9 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
-
-library(IPMbook) ; library(jagsUI)
+# Code from proofs.
 
 # 4.3 Models for population size surveys
 # ======================================
@@ -12,24 +10,24 @@ library(IPMbook) ; library(jagsUI)
 # ---------------------------------
 
 # Choose constants
-nyears <- 25             # Number of years
-N1 <- 30                 # Abundance at t = 1
-mu.lam <- 1.02           # Mean of the distribution of lambda
-sig2.lam <- 0.02         # Variance of the distribution of lambda
-sig2.y <- 400            # Variance of observation error
+nyears <- 25                 # Number of years
+N1 <- 30                     # Abundance at t = 1
+mu.lam <- 1.02               # Mean of the distribution of lambda
+sig2.lam <- 0.02             # Variance of the distribution of lambda
+sig2.y <- 400                # Variance of observation error
 
 # Simulate true system state
 N <- numeric(nyears)
-N[1] <- N1               # Set initial abundance
-set.seed(1)              # Initialize the RNGs
+N[1] <- N1                   # Set initial abundance
+set.seed(1)                  # Initialize the RNGs
 lambda <- rnorm(nyears-1, mu.lam, sqrt(sig2.lam)) # Draw random lambdas
 for (t in 1:(nyears-1)){
-  N[t+1] <- lambda[t] * N[t] # Propagate population size forwards
+N[t+1] <- lambda[t] * N[t]   # Propagate population size forwards
 }
 
 # Simulate observations
 eps <- rnorm(nyears, 0, sqrt(sig2.y)) # Draw random residuals
-y <- N + eps             # Add residual (error) to value of true state
+y <- N + eps
 
 # ~~~~ code for Figure 4.1 ~~~~
 op <- par(cex=1.25)
@@ -50,20 +48,19 @@ library(IPMbook); library(jagsUI)
 # Data bundle
 jags.data <- list(y=y, T=length(y))
 str(jags.data)
-
 # List of 2
- # $ y: num [1:25] 42.4 26.82 26.11 -3.06 23.27 ...
- # $ T: int 25
+# $ y: num [1:25] 42.4 26.82 26.11 -3.06 23.27 ...
+# $ T: int 25
 
 # Write JAGS model file
 cat(file="model1.txt","
 model {
   # Priors and linear models
-  mu.lam ~ dunif(0, 10)           # Prior for mean growth rate
-  sig.lam ~ dunif(0, 1)           # Prior for sd of growth rate
+  mu.lam ~ dunif(0, 10) # Prior for mean growth rate
+  sig.lam ~ dunif(0, 1) # Prior for sd of growth rate
   sig2.lam <- pow(sig.lam, 2)
   tau.lam <- pow(sig.lam, -2)
-  sig.y ~ dunif(0.1, 100)         # Prior for sd of observation process
+  sig.y ~ dunif(0.1, 100) # Prior for sd of observation process
   sig2.y <- pow(sig.y, 2)
   tau.y <- pow(sig.y, -2)
 
@@ -91,15 +88,14 @@ inits <- function(){list(sig.lam = runif(1, 0, 1))}
 parameters <- c("lambda", "mu.lam", "sig2.y", "sig2.lam", "sig.y", "sig.lam", "N")
 
 # MCMC settings
-ni <- 300000; nb <- 100000; nc <- 3; nt <- 100; na <- 5000
+ni <- 200000; nb <- 10000; nc <- 3; nt <- 100; na <- 5000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out1)   # Not shown
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out1) # Not shown
 print(out1, 3)
-
-              # mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
+#               mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # lambda[1]    1.002  0.156   0.591   1.033   1.264    FALSE 1 1.001  2659
 # lambda[2]    1.012  0.145   0.656   1.035   1.280    FALSE 1 1.002  3990
 # [... output truncated ...]
@@ -132,6 +128,7 @@ points(out1$mean$N, pch=16, type='b', col='blue')
 legend('topleft', c('True value of state', 'Observations', 'Estimate of state'),
     pch=16, col = c('red', 'black', 'blue'), bty='n', lwd=rep(1, 3))
 par(op)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 4.3.2 Effects of ‘evil’ patterns in the measurement error
 #       on a Gaussian state-space model
@@ -145,7 +142,6 @@ y1 <- rbinom(length(N), round(N), p1)
 # Simulate observations in Problem Case 2: p declines from 0.8 to 0.1
 p2 <- seq(0.8, 0.1, length.out=length(N))
 y2 <- rbinom(length(N), round(N), p2)
-
 
 # ~~~~ code for Figure 4.3 ~~~~
 # Plot both cases along with N
@@ -174,15 +170,14 @@ ni <- 100000; nb <- 50000; nc <- 3; nt <- 50; na <- 5000
 
 # Fit the same Gaussian SSM to both new data sets
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-out2 <- jags(jags.data1, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-out3 <- jags(jags.data2, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-
-traceplot(out2)   # Not shown
-traceplot(out3)   # Not shown
-print(out2, 3)                        # Not shown
-print(out3, 3)                        # Not shown
+out2 <- jags(jags.data1, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+out3 <- jags(jags.data2, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out2)              # Not shown
+traceplot(out3)              # Not shown
+print(out2, 3)               # Not shown
+print(out3, 3)               # Not shown
 
 # ~~~~ code for Figure 4.4 ~~~~
 # Plot of true and observed and estimated states
@@ -202,6 +197,7 @@ axis(2, las=1)
 legend('topleft', c('True value of state', 'Observations (Problem case 1)',
     'Observations (Problem case 2)'), pch=c(16, 16, 16),
     col=c('red', co), bty='n', lwd=rep(1, 3))
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~ save output for use in subsequent sections ~~~
 save(out1, out2, out3, file="IPM_04.3.1+2_output.RData")

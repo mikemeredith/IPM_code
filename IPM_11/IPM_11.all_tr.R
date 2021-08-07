@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 11 : Woodchat shrike
 # ----------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for testing 1 min, full run 9 mins
 
@@ -11,14 +11,13 @@
 library(IPMbook); library(jagsUI)
 data(woodchat11)
 str(woodchat11)
-
 # List of 6
- # $ ch   : int [1:1079, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
- # $ age  : num [1:1079] 1 1 1 1 1 1 1 1 1 1 ...
- # $ count: num [1:29] 10 13 25 15 17 16 6 16 7 7 ...
- # $ f    : int [1:365] 5 0 6 0 3 6 6 3 0 3 ...
- # $ d    : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
- # $ year : int [1:365] 1964 1964 1964 1964 1964 1964 1964 1964 1965 1965 ...
+# $ ch : int [1:1079, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
+# $ age : num [1:1079] 1 1 1 1 1 1 1 1 1 1 ...
+# $ count: num [1:29] 10 13 25 15 17 16 6 16 7 7 ...
+# $ f : int [1:365] 5 0 6 0 3 6 6 3 0 3 ...
+# $ d : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
+# $ year : int [1:365] 1964 1964 1964 1964 1964 1964 1964 1964 1965 1965 ...
 
 
 # 11.4.1 Population count data (no code)
@@ -48,33 +47,32 @@ marr <- marrayAge(woodchat11$ch, woodchat11$age)
 rel.j <- rowSums(marr[,,1])
 rel.a <- rowSums(marr[,,2])
 
-recap <- c(1, 2, 3, 4, 5, 6, 7, 8, 19, 9, 10, 11, 12, 19, 19, 19, 19,
-    13, 14, 19, 19, 19, 19, 19, 15, 16, 17, 18)
+recap <- c(1, 2, 3, 4, 5, 6, 7, 8, 19, 9, 10, 11, 12, 19, 19, 19, 19, 13, 14, 19, 19, 19, 19, 19,
+    15, 16, 17, 18)
+
 
 # 11.5 The integrated population model
 # ====================================
 
 # Bundle data and produce data overview
-jags.data <- list(n.years=dim(marr)[2], marr.j=marr[,,1], marr.a=marr[,,2],
-    rel.j=rel.j, rel.a=rel.a, recap=recap, n.recap=max(recap), f=woodchat11$f,
-    d=woodchat11$d, censored=censored, year=woodchat11$year-1963,
-    C=woodchat11$count, pNinit=dUnif(1, 20))
+jags.data <- list(n.years=dim(marr)[2], marr.j=marr[,,1], marr.a=marr[,,2], rel.j=rel.j,
+    rel.a=rel.a, recap=recap, n.recap=max(recap), f=woodchat11$f, d=woodchat11$d,
+    censored=censored, year=woodchat11$year-1963, C=woodchat11$count, pNinit=dUnif(1, 20))
 str(jags.data)
-
 # List of 13
- # $ n.years : int 29
- # $ marr.j  : num [1:28, 1:29] 1 0 0 0 0 0 0 0 0 0 ...
- # $ marr.a  : num [1:28, 1:29] 3 0 0 0 0 0 0 0 0 0 ...
- # $ rel.j   : num [1:28] 27 32 26 32 55 26 22 32 0 25 ...
- # $ rel.a   : num [1:28] 9 14 18 16 15 13 8 17 2 0 ...
- # $ recap   : num [1:28] 1 2 3 4 5 6 7 8 19 9 ...
- # $ n.recap : num 19
- # $ f       : int [1:365] 5 0 6 0 3 6 6 3 0 NA ...
- # $ d       : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
- # $ censored: num [1:365] 6 1 7 1 4 7 7 4 1 3 ...
- # $ year    : num [1:365] 1 1 1 1 1 1 1 1 2 2 ...
- # $ C       : num [1:29] 10 13 25 15 17 16 6 16 7 7 ...
- # $ pNinit  : num [1:20] 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 ...
+# $ n.years : int 29
+# $ marr.j : num [1:28, 1:29] 1 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a : num [1:28, 1:29] 3 0 0 0 0 0 0 0 0 0 ...
+# $ rel.j : num [1:28] 27 32 26 32 55 26 22 32 0 25 ...
+# $ rel.a : num [1:28] 9 14 18 16 15 13 8 17 2 0 ...
+# $ recap : num [1:28] 1 2 3 4 5 6 7 8 19 9 ...
+# $ n.recap : num 19
+# $ f : int [1:365] 5 0 6 0 3 6 6 3 0 NA ...
+# $ d : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
+# $ censored: num [1:365] 6 1 7 1 4 7 7 4 1 3 ...
+# $ year : num [1:365] 1 1 1 1 1 1 1 1 2 2 ...
+# $ C : num [1:29] 10 13 25 15 17 16 6 16 7 7 ...
+# $ pNinit : num [1:20] 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 ...
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -96,7 +94,7 @@ model {
     log.omega[t] ~ dnorm(l.mean.omega, tau.omega)
     omega[t] <- exp(log.omega[t])
   }
-  for (t in 1:(n.recap-1)){          # Recapture probability
+  for (t in 1:(n.recap-1)){ # Recapture probability
     p.j[t] <- mean.p[1]
     p.a[t] <- mean.p[2]
   }
@@ -133,26 +131,27 @@ model {
 
   # Population count data (state-space model)
   # Model for the initial population size: uniform priors
-  R[1] ~ dcat(pNinit)      # Local recruits
-  S[1] ~ dcat(pNinit)      # Surviving adults
-  I[1] ~ dpois(omega[1])   # Immigrants
+  R[1] ~ dcat(pNinit)                       # Local recruits
+  S[1] ~ dcat(pNinit)                       # Surviving adults
+  I[1] ~ dpois(omega[1])                    # Immigrants
 
   # Process model over time: our model of population dynamics
   for (t in 2:n.years){
     R[t] ~ dpois(nu[t-1] * kappa[t-1]/2 * phij[t-1] * N[t-1]) # Local recruits
-    S[t] ~ dbin(phia[t-1], N[t-1])     # Surviving adults
-    I[t] ~ dpois(omega[t])             # Immigrants
+    S[t] ~ dbin(phia[t-1], N[t-1])          # Surviving adults
+    I[t] ~ dpois(omega[t])                  # Immigrants
   }
 
   # Observation model
   for (t in 1:n.years){
-    N[t] <- S[t] + R[t] + I[t]         # Total number of breeding females
+    N[t] <- S[t] + R[t] + I[t] # Total number of breeding females
     C[t] ~ dpois(N[t])
-
     # GoF for population count data: mean absolute percentage error
     C.pred[t] ~ dpois(N[t])
-    disc.C[t] <- pow(((C[t] - N[t]) / C[t]) * ((C[t] - N[t]) / (C[t] + 0.001)), 0.5)   # Add a small number to avoid potential division by 0
-    discN.C[t] <- pow(((C.pred[t] - N[t]) / (C.pred[t] + 0.001)) * ((C.pred[t] - N[t]) / (C.pred[t] + 0.001)), 0.5)
+    disc.C[t] <- pow(((C[t] - N[t]) / C[t]) * ((C[t] - N[t]) / (C[t] +
+        0.001)), 0.5) # Add a small number to avoid potential division by 0
+    discN.C[t] <- pow(((C.pred[t] - N[t]) / (C.pred[t] + 0.001)) *
+        ((C.pred[t] - N[t]) / (C.pred[t] + 0.001)), 0.5)
   }
   fit.C <- 100 / n.years * sum(disc.C)
   fitN.C <- 100 / n.years * sum(discN.C)
@@ -169,7 +168,7 @@ model {
     f.pred[i] ~ dnorm(z.pred[i] * kappa[year[i]], tau.f)
     f.exp[i] <- kappa[year[i]] * nu[year[i]]
 
-    dev[i] <- (f[i]  - f.exp[i]) * (f[i]  - f.exp[i])
+    dev[i] <- (f[i] - f.exp[i]) * (f[i] - f.exp[i])
     devN[i] <- (f.pred[i] - f.exp[i]) * (f.pred[i] - f.exp[i])
   }
   fit.f <- 2 * sum(dev)
@@ -177,13 +176,13 @@ model {
 
   # Capture-recapture data (CJS model with multinomial likelihood)
   # Define the multinomial likelihood
-  for (t in 1:(n.years-1)){
+  for (t in 1: (n.years-1)){
     marr.j[t,1:n.years] ~ dmulti(pr.j[t,], rel.j[t])
     marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.years-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     qa[t] <- 1-pa[t]
     pr.j[t,t] <- phij[t] * pj[t]
@@ -191,7 +190,7 @@ model {
     # Above main diagonal
     for (j in (t+1):(n.years-1)){
       pr.j[t,j] <- phij[t] * prod(phia[(t+1):j]) * qj[t] * prod(qa[t:(j-1)]) * pa[j] / qa[t]
-      pr.a[t,j] <- prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
+      pr.a[t,j] <-prod(phia[t:j]) * prod(qa[t:(j-1)]) * pa[j]
     } #j
     # Below main diagonal
     for (j in 1:(t-1)){
@@ -221,7 +220,6 @@ model {
       E.new.a[t,j] <- pow((pow(marr.a.pred[t,j], 0.5) - pow(marr.aE[t,j], 0.5)), 2)
     } #j
   } #t
-
   fit.CJS <- sum(E.org.j) + sum(E.org.a)
   fitN.CJS <- sum(E.new.j) + sum(E.new.a)
 
@@ -244,21 +242,20 @@ s[woodchat11$f==0] <- 0
 inits <- function() {list(z=s, f=init.Juv)}
 
 # Parameters monitored
-parameters <- c("mean.phij", "mean.phia", "mean.nu", "mean.kappa", "mean.rho",
-    "mean.omega", "sigma.phij", "sigma.phia", "sigma.nu", "sigma.kappa",
-    "sigma.omega", "sigma.f", "mean.p", "fit.C", "fitN.C", "fit.f", "fitN.f",
-    "fit.CJS", "fitN.CJS", "phij", "phia", "nu", "kappa", "omega", "rho",
-    "omega.rate", "R", "S", "I", "N")
+parameters <- c("mean.phij", "mean.phia", "mean.nu", "mean.kappa", "mean.rho", "mean.omega",
+    "sigma.phij", "sigma.phia", "sigma.nu", "sigma.kappa", "sigma.omega", "sigma.f", "mean.p",
+    "fit.C", "fitN.C", "fit.f", "fitN.f", "fit.CJS", "fitN.CJS", "phij", "phia", "nu", "kappa",
+    "omega", "rho", "omega.rate", "R", "S", "I", "N")
 
 # MCMC settings
 # ni <- 30000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000  # ~~~ for testing
 
 # Call JAGS from R (ART 3 min) and check convergence
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+# par(mfrow=c(3, 3)); traceplot(out1)
 traceplot(out1)
-
 
 # 11.6 Results
 # ============
@@ -355,7 +352,6 @@ text(x=z[2], y=z[1], adj=c(1,0),
 axis(1); axis(2)
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 # Compute CRI of juvenile survival and emigration
 sj <- 2 * (1 - out1$sims.list$mean.phia) / out1$sims.list$mean.nu / out1$sims.list$mean.kappa
@@ -541,8 +537,8 @@ model {
     marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.years-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     qa[t] <- 1-pa[t]
     pr.j[t,t] <- phij[t] * pj[t]
@@ -663,8 +659,8 @@ model {
     marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.years-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     qa[t] <- 1-pa[t]
     pr.j[t,t] <- phij[t] * pj[t]
@@ -788,8 +784,8 @@ model {
     marr.a[t,1:n.years] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.years-1)){
+    # Main diagonal
     qj[t] <- 1-pj[t]
     qa[t] <- 1-pa[t]
     pr.j[t,t] <- phij[t] * pj[t]

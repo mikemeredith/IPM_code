@@ -1,12 +1,9 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 7 : Assessment of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from final MS.
 
 # Run time for test script 2 mins, full run 3 hrs
-
-library(IPMbook) ; library(jagsUI)
-
 
 # 7.4 Effects of a mis-specified observation model
 # ================================================
@@ -88,8 +85,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -196,8 +193,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]

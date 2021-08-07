@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 2 mins
 
@@ -23,14 +23,14 @@ jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
 str(jags.data)
 
 # List of 8
- # $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
- # $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
- # $ n.occasions: int 20
- # $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
- # $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
- # $ J          : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
- # $ age        : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
- # $ C          : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
+# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ n.occasions: int 20
+# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ J : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
+# $ age : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ C : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
 
 # Write JAGS model file
 cat(file="model3.txt", "
@@ -79,9 +79,9 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    q[t] <- 1 - p[t]   # Probability of non-recapture
+    # Main diagonal
+    q[t] <- 1 - p[t]                                       # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -123,12 +123,12 @@ parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "N", "sigma", "ann.gro
 ni <- 40000; nb <- 10000; nc <- 3; nt <- 3; na <- 3000
 
 # Call JAGS (ART 2 min), check convergence and summarize posteriors
-out3 <- jags(jags.data, inits, parameters, "model3.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na)
+out3 <- jags(jags.data, inits, parameters, "model3.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na)
 traceplot(out3)
 print(out3, 3)
 
-                        # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
+#                         mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # mean.sj                0.298  0.010    0.279    0.298    0.317    FALSE 1 1.002  1175
 # mean.sa                0.539  0.012    0.515    0.539    0.564    FALSE 1 1.003   857
 # mean.p                 0.608  0.019    0.571    0.608    0.645    FALSE 1 1.000  9184

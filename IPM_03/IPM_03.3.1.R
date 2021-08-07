@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -13,19 +13,18 @@ library(IPMbook) ; library(jagsUI)
 # -----------------------------------------------------------------
 
 # Define the demographic rates
-sj <- 0.3      # Juvenile survival
-sa <- 0.55     # Adult survival
-f1 <- 1.3      # Number of female fledglings per 1-year old female
-fa <- 1.8      # Number of female fledglings per adult female
+sj <- 0.3   # Juvenile survival
+sa <- 0.55  # Adult survival
+f1 <- 1.3   # Number of female fledglings per 1-year old female
+fa <- 1.8   # Number of female fledglings per adult female
 
 # Define the transition matrix A (inspired by Woodchat shrike demography)
-A <- matrix(c(f1 * sj, fa * sj,
-              sa, sa), ncol=2, byrow=TRUE)
+A <- matrix(c(f1 * sj, fa * sj, sa, sa), ncol=2, byrow=TRUE)
 dimnames(A) <- list(c("1y", "ad"), c("1y", "ad"))
-A              # print the matrix
-#       1y   ad
-# 1y  0.39 0.54
-# ad  0.55 0.55
+A # print the matrix
+#      1y   ad
+# 1y 0.39 0.54
+# ad 0.55 0.55
 
 # Asymptotic population growth rate:
 # ''''''''''''''''''''''''''''''''''
@@ -42,7 +41,7 @@ for (t in 2:T){
   gr[2,t-1] <- N[2,t] / N[2,t-1]
   gr[3,t-1] <- (N[1,t] + N[2,t]) / (N[1,t-1] + N[2,t-1])
 }
-sr <- N[1, ] / colSums(N)               # State distribution (prop. 1y)
+sr <- N[1, ] / colSums(N)           # State distribution (prop. 1y)
 
 # ~~~~ extra code for Figure 3.8 ~~~~
 op <- par(las=1, "mfrow")
@@ -85,7 +84,6 @@ par(op)
 # Compute asymptotic population growth rate (lambda)
 lambda <- max(Re(eigen(A)$values))
 # [1] 1.020818
-
 
 # ~~~~ extra code for Figure 3.9 ~~~~
 # Define the demographic rates
@@ -163,7 +161,7 @@ par(op)
 ( revec <- Re(eigen(A)$vectors[,u]) )
 # [1] -0.6503047 -0.7596734
 
-( revec/sum(revec) )
+revec/sum(revec)
 # [1] 0.4612162 0.5387838
 
 # Stage-specific reproductive values:
@@ -171,27 +169,28 @@ par(op)
 
 u <- which.max(Re(eigen(A)$values))
 levec <- Re((eigen(A)$vectors)[u,])
-( levec / sum(levec) )
+levec / sum(levec)
 # [1] 0.4631655 0.5368345
+
 
 # Net reproductive rate:
 # ''''''''''''''''''''''
 
-i <- 1:100             # 100 as our approximation to infinity
+i <- 1:100 # 100 as our approximation to infinity
 ( R0 <- sj * f1 + sj * fa * sum(sa^i) )
 # [1] 1.05
 
 # Generation time
 # '''''''''''''''
 
-Q <- 100                      # Our approximation to infinity
+Q <- 100 # Our approximation to infinity
 i <- 2:Q
-# G <- sj * f1 / lambda + sj * fa * sum(I * sa^(i-1) * lambda^(-i))
 ( G <- sj * f1 / lambda + sj * fa * sum(i * sa^(i-1) * lambda^(-i)) )
 # [1] 2.339834
 
 ( GT <- log(R0) / log(lambda) )
 # [1] 2.368012
+
 
 # Sensitivity and elasticity (perturbation analysis):
 # '''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -207,8 +206,8 @@ i <- 2:Q
 # ad 0.2640904 0.3085053
 
 derivmat <- matrix(c(f1, fa, 0, 0), ncol=2, byrow=TRUE)
-ssj <- sum(senmat * derivmat)     # Sensitivity
-esj <- sj / lambda * ssj          # Elasticity
+ssj <- sum(senmat * derivmat)  # Sensitivity
+esj <- sj / lambda * ssj       # Elasticity
 ssj; esj
 # [1] 1.439
 # [1] 0.4228963

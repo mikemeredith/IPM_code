@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 70 secs, full run 11 mins
 
@@ -17,25 +17,25 @@ library(IPMbook) ; library(jagsUI)
 # '''''''''''''''''''''''''''''''
 
 # Choose constants in simulation
-nmarked <- 100           # Number of marked individuals at each occasion
-nyears <- 11             # Number of years
-s <- 0.8                 # Survival probability
-r <- 0.2                 # Recovery probability
+nmarked <- 100                          # Number of marked individuals at each occasion
+nyears <- 11                            # Number of years
+s <- 0.8                                # Survival probability
+r <- 0.2                                # Recovery probability
 
 # Determine occasion when an individual first captured and marked
 f <- rep(1:(nyears-1), each=nmarked)
-nind <- length(f)     # Total number of marked individuals
+nind <- length(f)                       # Total number of marked individuals
 
 # State or ecological process
 # Simulate true system state
-z <- array(NA, dim=c(nind, nyears)) # Empty dead/alive matrix
+z <- array(NA, dim=c(nind, nyears))     # Empty dead/alive matrix
 
 # Initial conditions: all individuals alive at f(i)
 for (i in 1:nind){
   z[i,f[i]] <- 1
 }
 
-set.seed(3)              # Initialize the RNGs in R
+set.seed(3) # Initialize the RNGs in R
 # Propagate dead/alive process forwards via transition rule
 # Alive individuals survive with probability phi
 for (i in 1:nind){
@@ -43,7 +43,7 @@ for (i in 1:nind){
     z[i,t] <- rbinom(1, 1, z[i,t-1] * s)
   } #t
 } #i
-z     # Look at the true state (not shown, but insightful)
+z                                       # Look at the true state (not shown, but insightful)
 
 # Observation process: simulate observations
 y <- array(0, dim=c(nind, nyears))
@@ -54,7 +54,7 @@ for (i in 1:nind){
   } #t
 } #i
 
-y       # Complete simulated data set
+y # Complete simulated data set
 
 # Compute the total number of dead recoveries
 sum(rowSums(y, na.rm=TRUE)==2)
@@ -63,24 +63,22 @@ sum(rowSums(y, na.rm=TRUE)==2)
 # Data bundle
 jags.data <- list(y=y, f=f, nind=nind, nyears=ncol(y))
 str(jags.data)
-
 # List of 4
- # $ y     : num [1:1000, 1:11] 1 1 1 1 1 1 1 1 1 1 ...
- # $ f     : int [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
- # $ nind  : int 1000
- # $ nyears: num 11
+# $ y     : num [1:1000, 1:11] 1 1 1 1 1 1 1 1 1 1 ...
+# $ f     : int [1:1000] 1 1 1 1 1 1 1 1 1 1 ...
+# $ nind  : int 1000
+# $ nyears: num 11
 
 # Write JAGS model file
 cat(file="model20.txt", "
 model {
   # Priors and linear models
-  s.const ~ dunif(0, 1)          # Vague prior for constant s
-  r.const ~ dunif(0, 1)          # Vague prior for constant r
-
-  for (i in 1:nind){             # Loop over individuals
-    for (t in f[i]:(nyears-1)){  # Loop over time intervals/occasions
-      s[i,t] <- s.const          # Here model pattern in s ...
-      r[i,t] <- r.const          # ... and r
+  s.const ~ dunif(0, 1)                 # Vague prior for constant s
+  r.const ~ dunif(0, 1)                 # Vague prior for constant r
+  for (i in 1:nind){                    # Loop over individuals
+    for (t in f[i]:(nyears-1)){         # Loop over time intervals/occasions
+      s[i,t] <- s.const                 # Here model pattern in s ...
+      r[i,t] <- r.const                 # ... and r
     } #t
   } #i
 
@@ -99,7 +97,7 @@ model {
 ")
 
 # Initial values
-inits <- function(){list(z=zInitDR(y))}   # Function in IPMbook package
+inits <- function(){list(z=zInitDR(y))} # Function in IPMbook package
 
 # Parameters monitored
 parameters <- c("s.const", "r.const")
@@ -109,13 +107,12 @@ parameters <- c("s.const", "r.const")
 ni <- 3000; nb <- 500; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 13 min), check convergence and summarize posteriors
-out23 <- jags(jags.data, inits, parameters, "model20.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out23)                 # Not shown
-acf(out23$sims.list$s.const)     # Check out autocorrelation for s (not shown)
+out23 <- jags(jags.data, inits, parameters, "model20.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out23)                        # Not shown
+acf(out23$sims.list$s.const)            # Check out autocorrelation for s (not shown)
 print(out23, 3)
-
-            # mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
+#             mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # s.const    0.777  0.037   0.709   0.775   0.852    FALSE 1 1.015  1992
 # r.const    0.198  0.024   0.159   0.195   0.256    FALSE 1 1.015   811
 
@@ -128,22 +125,21 @@ marr <- marrayDead(y)
 # Data bundle
 jags.data <- list(marr=marr, rel=rowSums(marr), nyears=ncol(y))
 str(jags.data)
-
 # List of 3
- # $ marr  : num [1:10, 1:11] 4 0 0 0 0 0 0 0 0 0 ...
- # $ rel   : num [1:10] 100 100 100 100 100 100 100 100 100 100
- # $ nyears: int 11
+# $ marr  : num [1:10, 1:11] 4 0 0 0 0 0 0 0 0 0 ...
+# $ rel   : num [1:10] 100 100 100 100 100 100 100 100 100 100
+# $ nyears: int 11
 
 # Write JAGS model file
 cat(file="model21.txt", "
 model {
   # Priors and linear models
-  s.const ~ dunif(0, 1)       # Vague prior for constant s
-  r.const ~ dunif(0, 1)       # Vague prior for constant r
+  s.const ~ dunif(0, 1)                 # Vague prior for constant s
+  r.const ~ dunif(0, 1)                 # Vague prior for constant r
 
-  for (t in 1:(nyears-1)){     # Loop over time intervals/occasions
-    s[t] <- s.const           # Here model pattern in s ...
-    r[t] <- r.const           # ... and r
+  for (t in 1:(nyears-1)){              # Loop over time intervals/occasions
+    s[t] <- s.const                     # Here model pattern in s ...
+    r[t] <- r.const                     # ... and r
   } #t
 
   # Likelihood
@@ -151,8 +147,8 @@ model {
     marr[t,1:nyears] ~ dmulti(pi[t,], rel[t])
   }
   # Define the cell probabilities of the m-array
-  # Main diagonal
   for (t in 1:(nyears-1)){
+    # Main diagonal
     pi[t,t] <- (1-s[t])*r[t]
     # Above main diagonal
     for (j in (t+1):(nyears-1)){
@@ -180,11 +176,10 @@ parameters <- c("s.const", "r.const")
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 3000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-out24 <- jags(jags.data, inits, parameters, "model21.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out24)              # Not shown
+out24 <- jags(jags.data, inits, parameters, "model21.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+  n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out24)                        # Not shown
 print(out24)
-
-            # mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
+#             mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # s.const    0.771 0.035   0.701   0.771   0.840    FALSE 1 1.001  3343
 # r.const    0.195 0.022   0.157   0.193   0.244    FALSE 1 1.001  4078

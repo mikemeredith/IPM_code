@@ -1,9 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
-# Code from MS submitted to publisher.
-
-library(IPMbook) ; library(jagsUI)
+# Code from proofs.
 
 # 5.2 Feeding demographic data into the analysis of a matrix population model
 # ===========================================================================
@@ -11,16 +9,16 @@ library(IPMbook) ; library(jagsUI)
 # 5.2.1 Using capture-recapture data in a matrix population model
 # ---------------------------------------------------------------
 
+library(IPMbook); library(jagsUI)
 data(woodchat5)
 str(woodchat5)
-
- # $ ch   : num [1:1902, 1:20] 1 1 1 1 1 1 1 1 1 1 ...
- # $ age  : num [1:1902] 2 2 2 2 2 2 2 2 2 2 ...
- # $ repro: num [1:929, 1:3] 6 2 2 5 3 5 3 2 3 2 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : NULL
-  # .. ..$ : chr [1:3] "Reproduction" "Year" "Age of mother"
- # $ count: num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
+# $ ch : num [1:1902, 1:20] 1 1 1 1 1 1 1 1 1 1 ...
+# $ age : num [1:1902] 2 2 2 2 2 2 2 2 2 2 ...
+# $ repro: num [1:929, 1:3] 6 2 2 5 3 5 3 2 3 2 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : NULL
+# .. ..$ : chr [1:3] "Reproduction" "Year" "Age of mother"
+# $ count: num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
 
 marr <- marrayAge(woodchat5$ch, woodchat5$age)
 
@@ -28,15 +26,14 @@ marr <- marrayAge(woodchat5$ch, woodchat5$age)
 jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     rel.j=rowSums(marr[,,1]), rel.a=rowSums(marr[,,2]), mean.f=c(2.6, 3.6), T=15)
 str(jags.data)
-
 # List of 7
- # $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
- # $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
- # $ n.occasions: int 20
- # $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
- # $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
- # $ mean.f     : num [1:2] 2.6 3.6
- # $ T          : num 15
+# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ n.occasions: int 20
+# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ mean.f : num [1:2] 2.6 3.6
+# $ T : num 15
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -59,9 +56,9 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    q[t] <- 1 - p[t]            # Probability of non-recapture
+    # Main diagonal
+    q[t] <- 1 - p[t] # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -108,12 +105,12 @@ parameters <- c("mean.sj", "mean.sa", "mean.p", "lambda")
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
 # Call JAGS (ART <1 min), check convergence and summarize posteriors
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na)
-traceplot(out1, layout=c(2,3))
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na)
+# par(mfrow=c(2, 3)); traceplot(out1)
+traceplot(out1)
 print(out1, 3)
-
-            # mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
+#             mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # mean.sj    0.304 0.016   0.274   0.304   0.336    FALSE 1 1.001  6000
 # mean.sa    0.542 0.014   0.514   0.542   0.569    FALSE 1 1.001  2640
 # mean.p     0.604 0.021   0.563   0.604   0.644    FALSE 1 1.001  6000
@@ -129,16 +126,15 @@ jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     rel.j=rowSums(marr[,,1]), rel.a=rowSums(marr[,,2]), J=woodchat5$repro[,1],
     age=woodchat5$repro[,3], T=15)
 str(jags.data)
-
 # List of 8
- # $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
- # $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
- # $ n.occasions: int 20
- # $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
- # $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
- # $ J          : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
- # $ age        : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
- # $ T          : num 15
+# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ n.occasions: int 20
+# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ J : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
+# $ age : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ T : num 15
 
 # Write JAGS model file
 cat(file="model2.txt", "
@@ -168,9 +164,9 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
-    q[t] <- 1 - p[t]            # Probability of non-recapture
+    # Main diagonal
+    q[t] <- 1 - p[t]              # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -217,12 +213,11 @@ parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "lambda")
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
 # Call JAGS (ART <1 min), check convergence and summarize posteriors
-out2 <- jags(jags.data, inits, parameters, "model2.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na)
+out2 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na)
 traceplot(out2)
 print(out2, 3)
-
-              # mean    sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
+#               mean    sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # mean.sj      0.304 0.016    0.273    0.304    0.337    FALSE 1 1.000  6000
 # mean.sa      0.542 0.014    0.514    0.542    0.570    FALSE 1 1.002  1998
 # mean.p       0.604 0.021    0.562    0.604    0.643    FALSE 1 1.001  6000

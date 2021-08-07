@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 library(IPMbook)
 
@@ -12,17 +12,17 @@ library(IPMbook)
 # ------------------------------------------------------------------------
 
 # Read the data for the tadpole experiment into R
-N <- 50             # Number of tadpoles released initially
-y <- 20             # Number of tadpoles detected later
+N <- 50    # Number of tadpoles released initially
+y <- 20    # Number of tadpoles detected later
 
 # 2.3 Maximum likelihood estimation in a nutshell
 # ===============================================
 
 # Fig. 2.3
-all.possible <- 0:50           # All possible values
-pmf1 <- dbinom(all.possible, size=50, prob=0.1)  # pmf 1
-pmf2 <- dbinom(all.possible, size=50, prob=0.5)  # pmf 2
-pmf3 <- dbinom(all.possible, size=50, prob=0.9)  # pmf 3
+all.possible <- 0:50 # All possible values
+pmf1 <- dbinom(all.possible, size=50, prob=0.1) # pmf 1
+pmf2 <- dbinom(all.possible, size=50, prob=0.5) # pmf 2
+pmf3 <- dbinom(all.possible, size=50, prob=0.9) # pmf 3
 
 # ~~~~ additional code for the plot ~~~~
 op <- par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5, cex.main=2, las=1)
@@ -39,13 +39,13 @@ par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Use RNG to obtain binomial density for pmf 3
-hist(rbinom(10^6, size=50, prob=0.9), freq=FALSE, xlim=c(0, 50)) # Not shown
+hist(rbinom(10^6, size=50, prob=0.9), freq=FALSE, xlim=c(0, 50))  # Not shown
 
 # Brute-force search for MLE of theta for the tadpole data set (Fig. 2.4)
-try.theta <- seq(0, 1, by=0.01)                    # Values to try out
-like <- dbinom(20, 50, try.theta, log=FALSE)       # Likelihood
-loglike <- dbinom(20, 50, try.theta, log=TRUE)     # Log-Likelihood
-negloglike <- -dbinom(20, 50, try.theta, log=TRUE) # NLL
+try.theta <- seq(0, 1, by=0.01)                                   # Values to try out
+like <- dbinom(20, 50, try.theta, log=FALSE)                      # Likelihood
+loglike <- dbinom(20, 50, try.theta, log=TRUE)                    # Log-Likelihood
+negloglike <- -dbinom(20, 50, try.theta, log=TRUE)                # NLL
 
 op <- par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5)
 plot(x=try.theta, y=like, xlab=expression(paste("Detection probability (", theta, ")")),
@@ -78,6 +78,7 @@ post0 <- dbeta(theta.vals, 20 + 1, 30 + 1)
 post1 <- dbeta(theta.vals, 20 + 4, 30 + 6)
 post2 <- dbeta(theta.vals, 20 + 40, 30 + 60)
 post3 <- dbeta(theta.vals, 20 + 60, 30 + 40)
+
 
 # ~~~~ additional code for plotting Fig 2.5 ~~~~
 sc.like <- like * (50 + 1)     # Scale likelihood. Multiplied by n + 1
@@ -138,20 +139,20 @@ legend(0.6, 0.9, c("Complete ignorance", "Improved state of knowledge",
 # ========================
 
 # Choose initial value for logit(theta) and tuning parameters
-ltheta1 <- 1        # Initial value for tadpole detection prob.
-sigma_prop <- 1     # SD of Gaussian proposal distribution
+ltheta1 <- 1                      # Initial value for tadpole detection prob.
+sigma_prop <- 1                   # SD of Gaussian proposal distribution
 
 # Array to hold the MCMC samples
 ltheta <- numeric()
 
 # Initial value becomes first (and 'current') value in the chain
 ltheta[1] <- ltheta1
-ltheta              # Our posterior sample up to now (not shown)
+ltheta                            # Our posterior sample up to now (not shown)
 
 # Randomly perturb the current value
-set.seed(1)         # To initalize your RNGs identically to ours
+set.seed(1)                       # To initalize your RNGs identically to ours
 ( ltheta_star <- rnorm(1, ltheta[1], sigma_prop) )
- # [1] 0.3735462
+# [1] 0.3735462
 
 # Compute likelihood times prior evaluated for the proposed new value of ltheta
 ( pd_star <- dbinom(20, 50, plogis(ltheta_star)) * dbeta(plogis(ltheta_star), 1, 1) )
@@ -163,11 +164,11 @@ set.seed(1)         # To initalize your RNGs identically to ours
 
 # Compute posterior density ratio R
 ( R <- pd_star / pd_1 )
- # [1] 3908.518
+# [1] 3908.518
 
 # Add theta_star into MCMC sample
 ltheta[2] <- ltheta_star
-ltheta              # Our posterior sample up to now (not shown)
+ltheta                                      # Our posterior sample up to now (not shown)
 
 ( ltheta_star <- rnorm(1, ltheta[2], sigma_prop) )
 # [1] 0.5571895
@@ -181,42 +182,43 @@ pd_t <- dbinom(20, 50, plogis(ltheta[2])) * dbeta(plogis(ltheta[2]), 1, 1)
 # [1] 0
 
 ltheta[3] <- ltheta[2]
-ltheta              # Our posterior sample up to now (not shown)
+ltheta                                      # Our posterior sample up to now (not shown)
 
 # Iteration 4 to T of RW-MH algorithm
-T <- 60000            # Choose chain length
-for (t in 4:T){       # Continue where we left off
+T <- 60000                                  # Choose chain length
+for (t in 4:T){                             # Continue where we left off
   ltheta_star <- rnorm(1, ltheta[t-1], sigma_prop)
   pd_star <- dbinom(20, 50, plogis(ltheta_star)) * dbeta(plogis(ltheta_star), 1, 1)
   pd_t <- dbinom(20, 50, plogis(ltheta[t-1])) * dbeta(plogis(ltheta[t-1]), 1, 1)
-  R <- min(1, pd_star / pd_t)  # Note more general solution here
+  R <- min(1, pd_star / pd_t)               # Note more general solution here
   keep.ltheta_star <- rbinom(1, 1, R)
   ltheta[t] <- ifelse(keep.ltheta_star == 1, ltheta_star, ltheta[t-1])
-  # ltheta              # Our posterior sample up to now (not shown)
 }
+
 
 # ~~~~ code for Fig. 2.7 (left) ~~~~
 op <- par(mfrow=c(1, 3), mar=c(6, 7, 6, 3), cex.lab=2, cex.axis=2, cex.main=2, las=1)
 plot(1:10, plogis(ltheta[1:10]), xlab='Iteration', ylab=expression(theta),
     type='l', frame=FALSE, lwd=3, main='First ten iterations')
-abline(h=0.4, col='red', lwd=2) # The maximum likelihood estimate
+abline(h=0.4, col='red', lwd=2)             # The maximum likelihood estimate
 abline(h=mean(plogis(ltheta[1:10])), lty=2, col='blue', lwd=2)
 
 # Update trace-plot of time series of posterior draws (Fig. 2-7 middle)
 plot(1:T, plogis(ltheta), xlab='Iteration', ylab= expression(theta), type='l',
     frame=FALSE, lwd=1, main='All iterations')
-abline(h=0.4, col='red', lwd=3) # The maximum likelihood estimate
+abline(h=0.4, col='red', lwd=3)             # The maximum likelihood estimate
 abline(h=mean(plogis(ltheta)), lty=2, col='blue', lwd=3)
 
 # Plot histogram of posterior samples of tadpole detection probability
 # Fig. 2-7 right
 hist(plogis(ltheta), breaks=50, col='lightgray', xlab=expression(theta),
     main=expression(bold(paste('Posterior distribution of ', theta))), border=NA)
-abline(v=0.4, col='red', lwd=3)    # The maximum likelihood estimate
+abline(v=0.4, col='red', lwd=3)             # The maximum likelihood estimate
 abline(v=mean(plogis(ltheta)), lty=2, col='blue', lwd=3) # Posterior mean
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~
 
+library(IPMbook)
 out <- demoMCMC(y=20, N=50, niter=25000, mu.ltheta=0, sd.ltheta=100, prop.sd=1, init=0)
     # produces Fig 2.8
 
@@ -253,7 +255,6 @@ str(out <- demoMCMC(prop.s = 1))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 str(out)
-
 # List of 7
  # $ y        : num 20
  # $ N        : num 50
@@ -264,28 +265,27 @@ str(out)
  # $ acc.prob : num 0.34
 
 # Measures of central tendency to serve as point estimates
-library(MCMCglmm)           # For function for mode
-mean(plogis(out$ltheta))    # Posterior mean
-# [1] 0.4007489               # Your result will differ slightly
-
-median(plogis(out$ltheta))  # Posterior median
-# [1] 0.4001582               # Your result will differ
-
-posterior.mode(mcmc(plogis(out$ltheta))) # Posterior mode (ditto)
-#      var1
+library(MCMCglmm)                          # For function for mode
+mean(plogis(out$ltheta))                   # Posterior mean
+# [1] 0.4007489                            # Your result will differ slightly
+median(plogis(out$ltheta))                 # Posterior median
+# [1] 0.4001582                            # Your result will differ
+posterior.mode(mcmc(plogis(out$ltheta)))   # Posterior mode (ditto)
+# var1
 # 0.4152145
 
 # Measures of spread:
 # - Bayesian 'variant' of standard error (= posterior SD)
 # - two Bayesian credible intervals (CRI and HPDI)
-sd(plogis(out$ltheta))      # Posterior SD
-# [1] 0.06950494              # Your result will differ
+sd(plogis(out$ltheta))                      # Posterior SD
+# [1] 0.06950494                            # Your result will differ
 
 quantile(plogis(out$ltheta), prob=c(0.025, 0.975)) # Symmetrical Bayesian CRI (your result will differ)
-#     2.5%     97.5%
+# 2.5% 97.5%
 # 0.2705029 0.5383629
 
-HPDinterval(mcmc(plogis(out$ltheta)))  # Highest posterior density credible interval (HPDI); your result will differ
+HPDinterval(mcmc(plogis(out$ltheta)))       # Highest posterior density credible
+                                            #  interval(HPDI); your result will differ
 #          lower     upper
 # var1 0.2672082 0.5349586
 # attr(,"Probability")

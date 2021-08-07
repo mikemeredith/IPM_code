@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -13,22 +13,19 @@ library(IPMbook) ; library(jagsUI)
 # ----------------------------------------------------------------------
 
 # Define mean and SD of the demographic parameters
-mean.sj <- 0.3       # Point estimate of juv. survival
-se.sj.e <- 0.03      # Uncertainty of juv. survival as SE on natural scale
-mean.sa <- 0.55      # Point estimate of ad. survival
-se.sa.e <- 0.015     # Uncertainty of ad. survival as SE on natural scale
-mean.f1 <- 1.3       # Point estimate of productivity of 1y females
-se.f1.e <- 0.3       # Uncertainty of productivity as SE on natural scale
-mean.fa <- 1.8       # Point estimate of productivity of adult females
-se.fa.e <- 0.1       # Uncertainty of productivity as SE on natural scale
+mean.sj <- 0.3    # Point estimate of juv. survival
+se.sj.e <- 0.03   # Uncertainty of juv. survival as SE on natural scale
+mean.sa <- 0.55   # Point estimate of ad. survival
+se.sa.e <- 0.015  # Uncertainty of ad. survival as SE on natural scale
+mean.f1 <- 1.3    # Point estimate of productivity of 1y females
+se.f1.e <- 0.3    # Uncertainty of productivity as SE on natural scale
+mean.fa <- 1.8    # Point estimate of productivity of adult females
+se.fa.e <- 0.1    # Uncertainty of productivity as SE on natural scale
 
 # Bundle data
-jags.data <- list(alpha.sj=getBeta2Par(mean.sj, se.sj.e)[1],
-    beta.sj=getBeta2Par(mean.sj, se.sj.e)[2],
-    alpha.sa=getBeta2Par(mean.sa, se.sa.e)[1],
-    beta.sa=getBeta2Par(mean.sa, se.sa.e)[2],
-    mean.f1=mean.f1, tau.f1=1/se.f1.e^2, mean.fa=mean.fa,
-    tau.fa=1/se.fa.e^2, T=50)
+jags.data <- list(alpha.sj=getBeta2Par(mean.sj, se.sj.e)[1], beta.sj=getBeta2Par(mean.sj,
+    se.sj.e)[2], alpha.sa=getBeta2Par(mean.sa, se.sa.e)[1], beta.sa=getBeta2Par(mean.sa, se.sa.e)[2],
+    mean.f1=mean.f1, tau.f1=1/se.f1.e^2, mean.fa=mean.fa, tau.fa=1/se.fa.e^2, T=50)
 
 # Write JAGS model file
 cat(file="model3.txt", "
@@ -60,7 +57,7 @@ model {
   stable.stage.distr <- stage.distr[,T]
 
   # Sensitivity and elasticity of lambda to changes in sj
-  delta <- 0.001                     # size of perturbation
+  delta <- 0.001 # size of perturbation
   N.star[1,1] <- 1
   N.star[2,1] <- 1
   for (t in 1:T){
@@ -89,8 +86,8 @@ parameters <- c("lambda", "stable.stage.distr", "s.sj", "e.sj", "R0", "GT")
 ni <- 100000; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out3 <- jags(jags.data, NULL, parameters, "model3.txt", n.adapt=na,
-    n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
+out3 <- jags(jags.data, NULL, parameters, "model3.txt", n.adapt=na, n.chains=nc, n.thin=nt,
+    n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out3, 4)
 
                         # mean     sd   2.5%    50%  97.5% overlap0 f

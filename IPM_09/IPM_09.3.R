@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 9 : Retrospective population analyses
 # ---------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -13,48 +13,44 @@ load("ResultsHoopoe.Rdata")
 # ===================================
 
 # Calculation of growth rate sensitivities
-delta <- 0.001                      # (Small) size of perturbation
-T <- 5                              # Number of years with projections
-n.draws <- out1$mcmc.info$n.samples # Number of MCMC draws
+delta <- 0.001                            # (Small) size of perturbation
+T <- 5                                    # Number of years with projections
+n.draws <- out1$mcmc.info$n.samples       # Number of MCMC draws
 
 # Define arrays to store output
-N.ref <- N.star.phij <- N.star.phia <- N.star.om <- N.star.f1 <-
-    N.star.f2 <- array(NA, dim=c(n.draws, 3, T))
-N.ref[,,1] <- N.star.phij[,,1] <- N.star.phia[,,1] <- N.star.om[,,1] <-
-    N.star.f1[,,1] <- N.star.f2[,,1] <- 1
-r.annual.ref <- r.annual.star.phij <- r.annual.star.phia <-
-    r.annual.star.om <- r.annual.star.f1 <- r.annual.star.f2 <-
-    matrix(NA, nrow=n.draws, ncol=T)
+N.ref <- N.star.phij <- N.star.phia <- N.star.om <- N.star.f1 <- N.star.f2 <- array(NA,
+    dim=c(n.draws, 3, T))
+N.ref[,,1] <- N.star.phij[,,1] <- N.star.phia[,,1] <- N.star.om[,,1] <- N.star.f1[,,1] <-
+    N.star.f2[,,1] <- 1
+r.annual.ref <- r.annual.star.phij <- r.annual.star.phia <- r.annual.star.om <- r.annual.star.f1 <-
+    r.annual.star.f2 <- matrix(NA, nrow=n.draws, ncol=T)
 lambda <- numeric()
 sens <- matrix(NA, nrow=n.draws, ncol=5)
-draws <- out1$sims.list   # store MCMC draws in a new object to simplify calculation
+draws <- out1$sims.list                   # store MCMC draws in a new object to simplify calculation
 
 # Loop over all MCMC draws and project in time
 for (s in 1:n.draws){                     # Loop over all MCMC draws
-  for (t in 1:(T-1)){                    # Loop over all time steps
+  for (t in 1:(T-1)){                     # Loop over all time steps
     # Calculate asymptotic population growth rate based on stage-specific population sizes
-    N.ref[s,1,t+1] <- draws$mean.phij[s] * (draws$mean.f1[s] * (N.ref[s,1,t] +
-        N.ref[s,3,t]) + draws$mean.f2[s] * N.ref[s,2,t]) / 2
+    N.ref[s,1,t+1] <- draws$mean.phij[s] * (draws$mean.f1[s] *
+        (N.ref[s,1,t] + N.ref[s,3,t]) + draws$mean.f2[s] * N.ref[s,2,t]) / 2
     N.ref[s,2,t+1] <- draws$mean.phia[s] * sum(N.ref[s,,t])
     N.ref[s,3,t+1] <- draws$mean.omega[s] * sum(N.ref[s,,t])
     r.annual.ref[s,t] <- log(sum(N.ref[s,,t+1])) - log(sum(N.ref[s,,t]))
 
     # Sensitivity with respect to juvenile survival
-    N.star.phij[s,1,t+1] <- (draws$mean.phij[s] + delta) / 2 *
-        (draws$mean.f1[s] * (N.star.phij[s,1,t] + N.star.phij[s,3,t]) +
-        draws$mean.f2[s] * N.star.phij[s,2,t])
+    N.star.phij[s,1,t+1] <- (draws$mean.phij[s] + delta) / 2 * (draws$mean.f1[s] *
+        (N.star.phij[s,1,t] + N.star.phij[s,3,t]) + draws$mean.f2[s] * N.star.phij[s,2,t])
     N.star.phij[s,2,t+1] <- draws$mean.phia[s] * sum(N.star.phij[s,,t])
     N.star.phij[s,3,t+1] <- draws$mean.omega[s] * sum(N.star.phij[s,,t])
     r.annual.star.phij[s,t] <- log(sum(N.star.phij[s,,t+1])) - log(sum(N.star.phij[s,,t]))
 
     # Sensitivity with respect to adult survival
-    N.star.phia[s,1,t+1] <- draws$mean.phij[s] / 2 * (draws$mean.f1[s] * (N.star.phia[s,1,t] +
-        N.star.phia[s,3,t]) + draws$mean.f2[s] * N.star.phia[s,2,t])
+    N.star.phia[s,1,t+1] <- draws$mean.phij[s] / 2 * (draws$mean.f1[s] *
+        (N.star.phia[s,1,t] + N.star.phia[s,3,t]) + draws$mean.f2[s] * N.star.phia[s,2,t])
     N.star.phia[s,2,t+1] <- (draws$mean.phia[s] + delta) * sum(N.star.phia[s,,t])
     N.star.phia[s,3,t+1] <- draws$mean.omega[s] * sum(N.star.phia[s,,t])
     r.annual.star.phia[s,t] <- log(sum(N.star.phia[s,,t+1])) - log(sum(N.star.phia[s,,t]))
-
-    # Sensitivity with respect to immigration
     N.star.om[s,1,t+1] <- draws$mean.phij[s] / 2 * (draws$mean.f1[s] * (N.star.om[s,1,t] +
         N.star.om[s,3,t]) + draws$mean.f2[s] * N.star.om[s,2,t])
     N.star.om[s,2,t+1] <- draws$mean.phia[s] * sum(N.star.om[s,,t])
@@ -69,8 +65,8 @@ for (s in 1:n.draws){                     # Loop over all MCMC draws
     r.annual.star.f1[s,t] <- log(sum(N.star.f1[s,,t+1])) - log(sum(N.star.f1[s,,t]))
 
     # Sensitivity with respect to productivity ad
-    N.star.f2[s,1,t+1] <- draws$mean.phij[s] / 2 * (draws$mean.f1[s] *
-        (N.star.f2[s,1,t] + N.star.f2[s,3,t]) + (draws$mean.f2[s]  + delta) * N.star.f2[s,2,t])
+    N.star.f2[s,1,t+1] <- draws$mean.phij[s] / 2 * (draws$mean.f1[s] * (N.star.f2[s,1,t] +
+        N.star.f2[s,3,t]) + (draws$mean.f2[s] + delta) * N.star.f2[s,2,t])
     N.star.f2[s,2,t+1] <- draws$mean.phia[s] * sum(N.star.f2[s,,t])
     N.star.f2[s,3,t+1] <- draws$mean.omega[s] * sum(N.star.f2[s,,t])
     r.annual.star.f2[s,t] <- log(sum(N.star.f2[s,,t+1])) - log(sum(N.star.f2[s,,t]))
@@ -89,8 +85,8 @@ for (s in 1:n.draws){                     # Loop over all MCMC draws
 # Calculate variance-covariance matrix of the demographic rates
 vcov <- array(NA, dim=c(n.draws, 5, 5))
 for (s in 1:n.draws){
-  vcov[s,,] <- var(cbind(draws$phij[s,], draws$phia[s,], draws$omega[s,],
-      draws$f1[s,1:15], draws$f2[s,1:15]))
+  vcov[s,,] <- var(cbind(draws$phij[s,], draws$phia[s,], draws$omega[s,], draws$f1[s,1:15],
+      draws$f2[s,1:15]))
 }
 
 # Calculate contribution matrix for every posterior draw

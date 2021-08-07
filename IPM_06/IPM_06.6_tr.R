@@ -1,11 +1,9 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 6 : Benefits of integrated population modeling
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 2 mins, full run 20 mins
-
-library(IPMbook) ; library(jagsUI)
 
 # 6.6 Flexibility
 # ===============
@@ -16,15 +14,15 @@ library(IPMbook) ; library(jagsUI)
 #       in certain years
 # -------------------------------------------------------------
 
+library(IPMbook); library(jagsUI)
 data(woodchat66)
 marr <- marrayAge(woodchat66$ch, woodchat66$age)
 
 # Bundle data
 jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], rel.j=rowSums(marr[,,1]),
-    rel.a=rowSums(marr[,,2]), C=woodchat66$count, J=woodchat66$J, B=woodchat66$B,
-    n.occasionsT=20, n.occasionsC=length(woodchat66$count),
-    n.occasionsCR=dim(marr)[2], n.occasionsP=length(woodchat66$J),
-    recap=c(rep(1,3),2,rep(1,5)))
+    rel.a=rowSums(marr[,,2]), C=woodchat66$count, J=woodchat66$J, B=woodchat66$B, n.occasionsT=20,
+    n.occasionsC=length(woodchat66$count), n.occasionsCR=dim(marr)[2],
+    n.occasionsP=length(woodchat66$J), recap=c(rep(1,3),2,rep(1,5)))
 
 # Write JAGS model file
 cat(file="model5.txt", "
@@ -43,8 +41,8 @@ model {
   for (t in 1:(n.occasionsCR-1)){
     p[t] <- mean.p[recap[t]]
   }
-  mean.p[1] ~ dunif(0, 1)       # Prior for years with recapture
-  mean.p[2] <- 0                # Fix to zero for year without recaptures
+  mean.p[1] ~ dunif(0, 1)                                  # Prior for years with recapture
+  mean.p[2] <- 0                                           # Fix to zero for year without recaptures
 
   mu[1] <- logit(mean.sj)
   mu[2] <- logit(mean.sa)
@@ -73,12 +71,10 @@ model {
     N[1,t+1] <- f[t] / 2 * sj[t] * (N[1,t] + N[2,t])
     N[2,t+1] <- sa[t] * (N[1,t] + N[2,t])
   }
-
   # Observation model (for years with counts only)
   for (t in 1:n.occasionsC){
     C[t] ~ dnorm(N[1,t] + N[2,t], tau)
   }
-
   # Capture-recapture data (CJS model with multinomial likelihood)
   # For years with CR data only
   for (t in 1:(n.occasionsCR-1)){
@@ -86,11 +82,11 @@ model {
     marr.a[t,1:n.occasionsCR] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasionsCR-1)){
-    q[t] <- 1 - p[t]   # Probability of non-recapture
-    pr.j[t,t] <- sj[t+10] * p[t]   # increase index of survival
-    pr.a[t,t] <- sa[t+10] * p[t]   # to match with population model
+    # Main diagonal
+    q[t] <- 1 - p[t] # Probability of non-recapture
+    pr.j[t,t] <- sj[t+10] * p[t]                           # increase index of survival
+    pr.a[t,t] <- sa[t+10] * p[t]                           # to match with population model
     # Above main diagonal
     for (j in (t+1):(n.occasionsCR-1)){
       pr.j[t,j] <- sj[t+10] * prod(sa[((t+1):j)+10]) * prod(q[t:(j-1)]) * p[j]
@@ -125,18 +121,16 @@ model {
 inits <- function(){list(mean.p=c(runif(1, 0, 0.5), NA))}
 
 # Parameters monitored
-parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "sigma.sj",
-    "sigma.sa", "sigma.f", "sigma", "sj", "sa", "f", "N", "Ntot")
+parameters <- c("mean.sj", "mean.sa", "mean.p", "mean.f", "sigma.sj", "sigma.sa", "sigma.f", "sigma",
+    "sj", "sa", "f", "N", "Ntot")
 
 # MCMC settings
-# ni <- 40000; nb <- 10000; nc <- 3; nt <- 30; na <- 2000
-ni <- 4000; nb <- 1000; nc <- 3; nt <- 3; na <- 200  # ~~~ for testing
+ni <- 40000; nb <- 10000; nc <- 3; nt <- 30; na <- 2000
 
 # Call JAGS (ART <1 min), check convergence and produce figure
-out5 <- jags(jags.data, inits, parameters, "model5.txt", n.iter=ni,
-    n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
+out5 <- jags(jags.data, inits, parameters, "model5.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out5)
-
 
 # ~~~ code for  Fig. 6.7 ~~~~
 av.count <- 1:20
@@ -287,8 +281,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -386,8 +380,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -414,7 +408,6 @@ model {
   }
 }
 ")
-
 
 # Initial values
 inits <- function(){list(mean.p=runif(1, 0, 0.5))}
@@ -493,8 +486,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -624,8 +617,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -652,7 +645,6 @@ model {
   }
 }
 ")
-
 
 # Initial values
 inits <- function(){list(mean.p=runif(1, 0, 0.5))}
@@ -722,8 +714,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -770,7 +762,6 @@ out20 <- jags(jags.data, inits, parameters, "model20.txt",
 jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     rel.j=rowSums(marr[,,1]), rel.a=rowSums(marr[,,2]), logC=log(woodchat64$count),
     J= woodchat64$J, B= woodchat64$B)
-
 
 # Write JAGS model code
 cat(file="model21.txt", "
@@ -829,8 +820,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]

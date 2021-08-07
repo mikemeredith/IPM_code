@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 1 min
 
@@ -42,7 +42,8 @@ model {
     # Population model
     N[1,t+1] ~ dpois(sj * (f1 * N[1,t] + fa * N[2,t]))
     N[2,t+1] ~ dbin(sa, (N[1,t] + N[2,t]))
-    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0)   # Determines whether population is still thriving (extinct = 0) or went extinct (extinct = 1)
+    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0) # Determines whether
+        # population is still thriving (extinct = 0) or went extinct (extinct = 1)
   }
 }
 ")
@@ -59,8 +60,8 @@ parameters <- c("N", "extinct")
 ni <- 50000; nt <- 1; nb <- 0; nc <- 1; na <- 0
 
 # Call JAGS (ART <1 min) and summarize results
-out6 <- jags(jags.data, inits, parameters, "model6.txt",
-    n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, DIC=FALSE)
+out6 <- jags(jags.data, inits, parameters, "model6.txt", n.chains=nc, n.thin=nt, n.iter=ni,
+    n.burnin=nb, DIC=FALSE)
 print(out6, 4)
 
                  # mean       sd 2.5%   50%    97.5% overlap0 f
@@ -77,25 +78,24 @@ print(out6, 4)
 # extinct[199]   0.2876   0.4527    0   0.0    1.000     TRUE 1
 # extinct[200]   0.2878   0.4527    0   0.0    1.000     TRUE 1
 
-# Calculation of the stochastic population growth rate and of the
-#   extinction probability outside JAGS
+# Calculation of the stochastic population growth rate and of the extinction probability
+# outside JAGS
 dimensions <- dim(out6$sims.list$extinct)
 r.annual <- matrix(NA, nrow=dimensions[2], ncol=dimensions[1])
 r <- lambda <- numeric(dimensions[1])
 for (s in 1:dimensions[1]){
   for (t in 1:dimensions[2]){
     # Calculate annual growth rate on log scale
-    if (out6$sims.list$extinct[s,t] == 1)
-        break
+    if (out6$sims.list$extinct[s,t] == 1) break
     r.annual[t,s] <- log(out6$sims.list$N[s,1,t+1] + out6$sims.list$N[s,2,t+1]) -
-        log(out6$sims.list$N[s,1,t] + out6$sims.list$N[s,2,t])
+    log(out6$sims.list$N[s,1,t] + out6$sims.list$N[s,2,t])
   } #t
   r[s] <- mean(r.annual[which(out6$sims.list$extinct[s,] == 0),s])
   lambda[s] <- exp(r[s])
 } #s
 
 mean(r)
- # [1] -0.008533999
+# [1] -0.008533999
 sd(r)
 # [1] 0.05592566
 

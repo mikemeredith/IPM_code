@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 6 : Benefits of integrated population modeling
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from final MS.
 
 # Run time testing 3 mins, full run 14 hrs
 
@@ -60,8 +60,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -141,8 +141,8 @@ model {
       marr.a[t,1:n.occasions,k] ~ dmulti(pr.a[t,,k], rel.a[t,k])
     } #t
     # Define the cell probabilities of the m-arrays
-    # Main diagonal
     for (t in 1:(n.occasions-1)){
+      # Main diagonal
       q[t,k] <- 1 - p[t]   # Probability of non-recapture
       pr.j[t,t,k] <- sj[t] * p[t]
       pr.a[t,t,k] <- sa[t] * p[t]
@@ -223,8 +223,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
@@ -304,8 +304,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1 - p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]

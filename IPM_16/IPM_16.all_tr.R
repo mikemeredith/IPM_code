@@ -1,44 +1,43 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 16 : Barn swallow
 # -------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time for test script 5 mins, full run 40 mins
-
-library(IPMbook) ; library(jagsUI)
 
 # 16.4 Component data likelihoods
 # =============================================
 
+library(IPMbook); library(jagsUI)
 data(swallow)
 str(swallow)
-
 # List of 5
- # $ marr.j      : num [1:9, 1:6, 1:7] 0 0 0 0 1 NA NA NA NA 0 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
-  # .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
- # $ marr.a      : num [1:9, 1:6, 1:7] 19 7 9 8 9 NA NA NA NA 0 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
-  # .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
- # $ counts      : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
- # $ productivity: num [1:2, 1:9, 1:7, 1:3] 359 208 233 79 183 93 92 48 ...
-  # ..- attr(*, "dimnames")=List of 4
-  # .. ..$ : chr [1:2] "First" "Second"
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
-  # .. ..$ : chr [1:3] "Eggs" "Fledglings" "Broods"
- # $ second      : num [1:9, 1:7, 1:2] 77 52 39 20 17 0 0 0 0 80 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
-  # .. ..$ : chr [1:2] "First broods" "Second broods"
+# $ marr.j : num [1:9, 1:6, 1:7] 0 0 0 0 1 NA NA NA NA 0 ...
+# ..- attr(*, "dimnames")=List of 3
+# .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
+# .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
+# .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
+# $ marr.a : num [1:9, 1:6, 1:7] 19 7 9 8 9 NA NA NA NA 0 ...
+# ..- attr(*, "dimnames")=List of 3
+# .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
+# .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
+# .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
+# $ counts : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
+# ..- attr(*, "dimnames")=List of 2
+# .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
+# .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
+# $ productivity: num [1:2, 1:9, 1:7, 1:3] 359 208 233 79 183 93 92 48 ...
+# ..- attr(*, "dimnames")=List of 4
+# .. ..$ : chr [1:2] "First" "Second"
+# .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
+# .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
+# .. ..$ : chr [1:3] "Eggs" "Fledglings" "Broods"
+# $ second : num [1:9, 1:7, 1:2] 77 52 39 20 17 0 0 0 0 80 ...
+# ..- attr(*, "dimnames")=List of 3
+# .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
+# .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
+# .. ..$ : chr [1:2] "First broods" "Second broods"
+
 
 # 16.4.1 Population count data (no code)
 # 16.4.2 Productivity data (no code)
@@ -58,64 +57,26 @@ rel.a <- apply(swallow$marr.a, c(1,2), sum, na.rm=TRUE)
 pinit <- dUnif(lower=rep(1,9), upper=apply(swallow$counts, 1, max, na.rm=TRUE))
 
 # Bundle data and produce data overview
-jags.data <- with(swallow, list(marr.j=marr.j, rel.j=rel.j, marr.a=marr.a,
-    rel.a=rel.a, y=counts, c=productivity[,,,'Eggs'],
-    b=productivity[,,,'Broods'], f=productivity[,,,'Fledglings'],
-    v=second[,,'First broods'], w=second[,,'Second broods'], pinit=pinit,
-    nsites=9, nyears=7, start=start))
+jags.data <- with(swallow, list(marr.j=marr.j, rel.j=rel.j, marr.a=marr.a, rel.a=rel.a, y=counts,
+    c=productivity[,,,'Eggs'], b=productivity[,,,'Broods'], f=productivity[,,,'Fledglings'],
+    v=second[,,'First broods'], w=second[,,'Second broods'], pinit=pinit, nsites=9,
+    nyears=7, start=start))
 str(jags.data)
-
 # List of 14
- # $ marr.j: num [1:9, 1:6, 1:7] 0 0 0 0 1 NA NA NA NA 0 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
-  # .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
- # $ rel.j : num [1:9, 1:6] 229 161 128 66 92 0 0 0 0 269 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
- # $ marr.a: num [1:9, 1:6, 1:7] 19 7 9 8 9 NA NA NA NA 0 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
-  # .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
- # $ rel.a : num [1:9, 1:6] 57 44 31 19 29 0 0 0 0 62 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
- # $ y     : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
- # $ c     : num [1:2, 1:9, 1:7] 359 208 233 79 183 93 92 48 71 4 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:2] "First" "Second"
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
- # $ b     : num [1:2, 1:9, 1:7] 77 47 52 18 39 21 20 12 17 1 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:2] "First" "Second"
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
- # $ f     : num [1:2, 1:9, 1:7] 281 179 178 61 148 78 66 37 60 4 ...
-  # ..- attr(*, "dimnames")=List of 3
-  # .. ..$ : chr [1:2] "First" "Second"
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
- # $ v     : num [1:9, 1:7] 77 52 39 20 17 0 0 0 0 80 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
- # $ w     : num [1:9, 1:7] 47 18 21 12 1 0 0 0 0 55 ...
-  # ..- attr(*, "dimnames")=List of 2
-  # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
-  # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
- # $ pinit : num [1:9, 1:115] 0.0116 0.013 0.0227 0.0161 0.0256 ...
- # $ nsites: num 9
- # $ nyears: num 7
- # $ start : num [1:9] 1 1 1 1 1 3 3 3 4
-
+# $ marr.j: num [1:9, 1:6, 1:7] 0 0 0 0 1 NA NA NA NA 0 ...
+# $ rel.j : num [1:9, 1:6] 229 161 128 66 92 0 0 0 0 269 ...
+# $ marr.a: num [1:9, 1:6, 1:7] 19 7 9 8 9 NA NA NA NA 0 ...
+# $ rel.a : num [1:9, 1:6] 57 44 31 19 29 0 0 0 0 62 ...
+# $ y : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
+# $ c : num [1:2, 1:9, 1:7] 359 208 233 79 183 93 92 48 71 4 ...
+# $ b : num [1:2, 1:9, 1:7] 77 47 52 18 39 21 20 12 17 1 ...
+# $ f : num [1:2, 1:9, 1:7] 281 179 178 61 148 78 66 37 60 4 ...
+# $ v : num [1:9, 1:7] 77 52 39 20 17 0 0 0 0 80 ...
+# $ w : num [1:9, 1:7] 47 18 21 12 1 0 0 0 0 55 ...
+# $ pinit : num [1:9, 1:115] 0.0116 0.013 0.0227 0.0161 0.0256 ...
+# $ nsites: num 9
+# $ nyears: num 7
+# $ start : num [1:9] 1 1 1 1 1 3 3 3 4
 
 # Write JAGS model file
 cat(file = "model1.txt", "
@@ -209,14 +170,15 @@ model {
   # Population count data (state-space model)
   # Model for the initial population size: uniform priors
   for (s in 1:nsites){
-    R[s,start[s]] ~ dcat(pinit[s,])   # Local recruits
-    S[s,start[s]] ~ dcat(pinit[s,])   # Surviving adults
-    I[s,start[s]] ~ dcat(pinit[s,])   # Immigrants
+    R[s,start[s]] ~ dcat(pinit[s,]) # Local recruits
+    S[s,start[s]] ~ dcat(pinit[s,]) # Surviving adults
+    I[s,start[s]] ~ dcat(pinit[s,]) # Immigrants
   }
   # Process model over time: our model of population dynamics
   for (s in 1:nsites){
     for (t in (start[s]+1):nyears){
-      R[s,t] ~ dpois((rho[1,s,t-1] * zeta[1,s,t-1] + kappa[s,t-1] * rho[2,s,t-1] * zeta[2,s,t-1]) * 0.5 * phij[s,t-1] * N[s,t-1])
+      R[s,t] ~ dpois((rho[1,s,t-1] * zeta[1,s,t-1] + kappa[s,t-1] * rho[2,s,t-1] * zeta[2,s,t-1]) *
+      0.5 * phij[s,t-1] * N[s,t-1])
       S[s,t] ~ dbin(phia[s,t-1], N[s,t-1])
       I[s,t] ~ dpois(N[s,t-1] * omega[s,t-1])
     } #t
@@ -255,26 +217,27 @@ model {
       marr.a[s,t,start[s]:nyears] ~ dmulti(pr.a[s,t,start[s]:nyears], rel.a[s,t])
     } #t
     # Define the cell probabilities of the m-arrays
-    # Main diagonal
     for (t in start[s]:(nyears-1)){
-       qj[s,t] <- 1-pj[s,t]
-       qa[s,t] <- 1-pa[s,t]
-       pr.j[s,t,t] <- phij[s,t] * pj[s,t]
-       pr.a[s,t,t] <- phia[s,t] * pa[s,t]
-       # Above main diagonal
-       for (j in (t+1):(nyears-1)){
-         pr.j[s,t,j] <- phij[s,t] * prod(phia[s,(t+1):j]) * qj[s,t] * prod(qa[s,t:(j-1)]) * pa[s,j] / qa[s,t]
-         pr.a[s,t,j] <- prod(phia[s,t:j]) * prod(qa[s,t:(j-1)]) * pa[s,j]
-       } #j
-       # Below main diagonal
-       for (j in 1:(t-1)){
-         pr.j[s,t,j] <- 0
-         pr.a[s,t,j] <- 0
-       } #j
-       # Last column: probability of non-recapture
-       pr.j[s,t,nyears] <- 1-sum(pr.j[s,t,start[s]:(nyears-1)])
-       pr.a[s,t,nyears] <- 1-sum(pr.a[s,t,start[s]:(nyears-1)])
-     } #t
+      # Main diagonal
+      qj[s,t] <- 1-pj[s,t]
+      qa[s,t] <- 1-pa[s,t]
+      pr.j[s,t,t] <- phij[s,t] * pj[s,t]
+      pr.a[s,t,t] <- phia[s,t] * pa[s,t]
+      # Above main diagonal
+      for (j in (t+1):(nyears-1)){
+        pr.j[s,t,j] <- phij[s,t] * prod(phia[s,(t+1):j]) * qj[s,t] * prod(qa[s,t:(j-1)]) *
+        pa[s,j] / qa[s,t]
+        pr.a[s,t,j] <- prod(phia[s,t:j]) * prod(qa[s,t:(j-1)]) * pa[s,j]
+      } #j
+      # Below main diagonal
+      for (j in 1:(t-1)){
+        pr.j[s,t,j] <- 0
+        pr.a[s,t,j] <- 0
+      } #j
+      # Last column: probability of non-recapture
+      pr.j[s,t,nyears] <- 1-sum(pr.j[s,t,start[s]:(nyears-1)])
+      pr.a[s,t,nyears] <- 1-sum(pr.a[s,t,start[s]:(nyears-1)])
+    } #t
   } #s
 }
 ")
@@ -283,19 +246,21 @@ model {
 inits <- function(){list(mu.phia=runif(9, -1, 0))}
 
 # Parameters monitored
-parameters <- c("phij", "phia", "omega", "rho", "zeta", "kappa", "pj", "pa",
-    "R", "S", "I", "N", "overall.mean", "eps.phij", "eps.phia", "eps.omega",
-    "eps.rho", "eps.zeta", "eps.kappa", "eta.phij", "eta.phia", "eta.omega",
-    "eta.rho", "eta.zeta", "eta.kappa", "tau2", "ypsilon2", "ICC", "sigma2")
+parameters <- c("phij", "phia", "omega", "rho", "zeta", "kappa", "pj", "pa", "R", "S", "I", "N",
+    "overall.mean", "eps.phij", "eps.phia", "eps.omega", "eps.rho", "eps.zeta", "eps.kappa", "eta.phij",
+    "eta.phia", "eta.omega", "eta.rho", "eta.zeta", "eta.kappa", "tau2", "ypsilon2", "ICC", "sigma2")
 
 # MCMC settings
 # ni <- 50000; nt <- 40; nb <- 10000; nc <- 3; na <- 5000
 ni <- 5000; nt <- 4; nb <- 1000; nc <- 3; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 12 min) and check convergence
-out1 <- jags(jags.data, inits, parameters, "model1.txt",
-    n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, n.adapt=na, parallel=TRUE)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.chains=nc, n.thin=nt, n.iter=ni,
+    n.burnin=nb, n.adapt=na, parallel=T)
 traceplot(out1)
+
+# ICC for the population growth rate
+# ''''''''''''''''''''''''''''''''''
 
 # Bundle data
 # Calculate population growth rate
@@ -317,7 +282,7 @@ model {
 
   # Priors for precisions
   tau.t ~ dgamma(0.001, 0.001)
-  tau.ts ~ dgamma(0.001, 0.001)  # Residual, site-time variation
+  tau.ts ~ dgamma(0.001, 0.001) # Residual, site-time variation
 
   # Likelihood
   for (i in 1:nsamp){
@@ -349,11 +314,9 @@ parameters <- c("ICC", "tau2", "ypsilon2", "mu")
 ni <- 1000; nt <- 1; nb <- 500; nc <- 3; na <- 200  # ~~~ for testing
 
 # Call JAGS from R (ART 54 min) and check convergence
-out2 <- jags(jags.data, inits, parameters, "model2.txt",
-    n.chains=nc, n.thin=nt, n.iter=ni, n.burnin=nb, n.adapt=na, parallel=TRUE)
+out2 <- jags(jags.data, inits, parameters, "model2.txt", n.chains=nc, n.thin=nt, n.iter=ni,
+    n.burnin=nb, n.adapt=na, parallel=TRUE)
 traceplot(out2)
-save(out1, out2, file="SwallowResults.Rdata")
-
 
 # 16.6 Results
 # ============

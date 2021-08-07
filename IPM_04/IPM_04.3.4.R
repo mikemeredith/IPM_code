@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 # Run time approx. 90 secs
 
@@ -15,13 +15,13 @@ library(IPMbook) ; library(jagsUI)
 # ------------------------------------------------------
 
 # Choose constants in simulation
-nterritory <- 100        # Number of territories (= sites)
-nvisit <- 2              # Number of short-term replicate visits
-nyear <- 12              # Number of years
-psi <- 0.66              # Initial occupancy probability
-phi <- 0.9               # Persistence probability
-gamma <- 0.2             # Colonization probability
-p <- 0.4                 # Detection probability (per visit)
+nterritory <- 100            # Number of territories (= sites)
+nvisit <- 2                  # Number of short-term replicate visits
+nyear <- 12                  # Number of years
+psi <- 0.66                  # Initial occupancy probability
+phi <- 0.9                   # Persistence probability
+gamma <- 0.2                 # Colonization probability
+p <- 0.4                     # Detection probability (per visit)
 
 # State or ecological process
 z <- array(NA, dim=c(nterritory, nyear)) # Empty presence/absence matrix
@@ -29,7 +29,6 @@ z <- array(NA, dim=c(nterritory, nyear)) # Empty presence/absence matrix
 # Set initial presence/absence (in year 1)
 set.seed(24)
 z[,1] <- rbinom(nterritory, 1, psi)
-head(z, 11)      # Look at first 11 sites (not shown)
 
 # Propagate presence/absence forwards via transition rule
 for (i in 1:nterritory){
@@ -37,12 +36,11 @@ for (i in 1:nterritory){
     z[i,t+1] <- rbinom(1, 1, z[i,t] * phi + (1-z[i,t]) * gamma)
   } #t
 } #i
-head(z, 11)      # Look at first 11 sites (not shown)
 
 # Plot the true presence/absence pattern (Fig. 4.6)
 mapPalette <- colorRampPalette(c("white", "#C7B76BFF"))
-image(x = 1:nyear, y=1:nterritory, z=t(z), col=mapPalette(10),
-    axes=TRUE, xlab="Year", ylab="Territory")
+image(x = 1:nyear, y=1:nterritory, z=t(z), col=mapPalette(10), axes=TRUE, xlab="Year",
+    ylab="Territory")
 
 # Observation process (1): Imperfect detection
 y1 <- array(NA, dim=c(nterritory, nvisit, nyear))
@@ -51,19 +49,18 @@ for (i in 1:nterritory){
     y1[i,,t] <- rbinom(nvisit, 1, z[i,t] * p)
   } #t
 } #i
-y1[1:11,,1:3]      # Look at data from first 11 sites and 3 years
 
 # Observation process (2): Incomplete coverage of territory
-pvisit <- seq(0.3, 0.9, length.out=nyear) # Visitation probability
-y2 <- y1                                  # Make a copy
+pvisit <- seq(0.3, 0.9, length.out=nyear)   # Visitation probability
+y2 <- y1                                    # Make a copy
 for (i in 1:nterritory){
   for (t in 1:nyear){
-    visit <- rbinom(1, 1, pvisit[t])      # 1 if visit takes place
+    visit <- rbinom(1, 1, pvisit[t])        # 1 if visit takes place
     y2[i,,t] <- y1[i,,t] / visit
   } #t
 } #i
 y2[!is.finite(y2)] <- NA
-y2[1:11,,1:3]      # Look at data from first 11 sites and 3 years
+y2[1:11,,1:3]                               # Look at data from first 11 sites and 3 years
 
 # True population size (= number of occupied territories)
 trueN <- apply(z, 2, sum)
@@ -89,14 +86,17 @@ legend(y=110, x=4, c("True population size", "Observed, imperfect detection (y1)
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Fit the model to our first data set
+# '''''''''''''''''''''''''''''''''''
+
 # Data bundle
 jags.data <- list(y=y1, nterritory=nterritory, nvisit=nvisit, nyear=nyear)
 str(jags.data)
 # List of 4
- # $ y         : num [1:100, 1:2, 1:12] 0 0 0 0 0 0 0 ...
- # $ nterritory: num 100
- # $ nvisit    : num 2
- # $ nyear     : num 12
+# $ y         : num [1:100, 1:2, 1:12] NA NA NA NA NA NA NA NA 1 NA ...
+# $ nterritory: num 100
+# $ nvisit    : num 2
+# $ nyear     : num 12
 
 # Write JAGS model file
 cat(file = "model5.txt", "
@@ -125,7 +125,6 @@ model {
       } #t
     } #j
   } #i
-
   # Derived quantities: population size
   # correcting for both coverage bias and nondetection bias
   for (t in 1:nyear){
@@ -145,19 +144,22 @@ parameters <- c("psi", "phi", "gamma", "p", "ntot", "z")
 ni <- 6000; nb <- 1000; nc <- 3; nt <- 5; na <- 1000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-out7 <- jags(jags.data, inits, parameters, "model5.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out7)    # Not shown
+out7 <- jags(jags.data, inits, parameters, "model5.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out7)              # Not shown
 print(out7, 3)
+
+# Fit the same model to our second data set
+# '''''''''''''''''''''''''''''''''''''''''
 
 # Data bundle
 jags.data <- list(y=y2, nterritory=nterritory, nvisit=nvisit, nyear=nyear)
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-out8 <- jags(jags.data, inits, parameters, "model5.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out8)     # Not shown
-print(out8, 3)                          # Not shown
+out8 <- jags(jags.data, inits, parameters, "model5.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out8)              # Not shown
+print(out8, 3)               # Not shown
 
 # ~~~~ Plot the estimates (add lower panel of Fig. 4.7) ~~~~
 plot(trueN, type='b', lty=1, pch=16, col='red', ylim=c(0, 100),

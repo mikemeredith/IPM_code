@@ -115,8 +115,8 @@ model {
     # F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t]) # Correction 2021-07-28
     F[t] ~ dpois(Nls[2,1,t] * rho[t])
     # Allocate chicks to a sex
-    Nls[1,1,t] ~ dbin(gamma, F[t])    # Female chicks
-    Nls[1,2,t] <- F[t] - Nls[1,1,t]   # Male chicks
+    Nls[1,1,t] ~ dbin(gamma, F[t]) # Female chicks
+    Nls[1,2,t] <- F[t] - Nls[1,1,t] # Male chicks
     # Survival
     Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t])) # ≥1y females
     Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t])) # ≥1y males
@@ -332,7 +332,6 @@ parameters <- c("s", "ann.s", "mean.rho", "gamma", "mean.p", "sigma.rho",
     "sigma.p", "rho", "p", "Nsp", "Nls", "fit1", "fit2", "fit3", "fit4", "fit5")
 
 # MCMC settings
-# ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
 ni <- 120000; nb <- 20000; nc <- 3; nt <- 20; na <- 10000
 
 # Call JAGS (ART 5 min), check convergence and summarize posteriors

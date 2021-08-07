@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -13,29 +13,29 @@ library(IPMbook) ; library(jagsUI)
 # --------------------------------------------------------------------
 
 # Set constants in simulation
-npop <- 10           # Number of populations
-grand.mean <- 200    # Grand mean of mass
-sigma.pop <- 10      # SD of population variability in snake mass
-beta <- -30          # Slope of mass on elevation
-sigma.snake <- 50    # SD of individual variability of snake mass
+npop <- 10                                            # Number of populations
+grand.mean <- 200                                     # Grand mean of mass
+sigma.pop <- 10                                       # SD of population variability in snake mass
+beta <- -30                                           # Slope of mass on elevation
+sigma.snake <- 50                                     # SD of individual variability of snake mass
 
 # Simulate new snake mass data
 set.seed(39)
 
 # Simulate population-level data
-mean.mass <- round(rnorm(npop, grand.mean, sigma.pop))
-    # Average mass (g) in each population at average elevation
-elevPop <- sort(runif(npop, 200, 2000)) # 200 m to 2000 m elevation
+mean.mass <- round(rnorm(npop, grand.mean, sigma.pop)) # Average mass (g) in each population at
+                                                       #  average elevation
+elevPop <- sort(runif(npop, 200, 2000))                # 200 m to 2000 m elevation
 elevPopSc <- as.numeric(scale(elevPop))
 mean.pop.mass <- mean.mass + beta * elevPopSc
-plot(mean.pop.mass, elevPop, pch=16) # Not shown: population-level plot
+plot(mean.pop.mass, elevPop, pch=16)                   # Not shown: population-level plot
 
 # Simulate snake-level data
-nsnakes <- rpois(npop, 20)  # Number of snakes caught per population
+nsnakes <- rpois(npop, 20)                             # Number of snakes caught per population
 mass <- numeric()
 for (j in 1:npop){
-  massPop <- rnorm(nsnakes[j], mean.pop.mass[j], sigma.snake)
-  mass <- c(mass, massPop)
+massPop <- rnorm(nsnakes[j], mean.pop.mass[j], sigma.snake)
+mass <- c(mass, massPop)
 }
 
 # Create individual-level elevation covariate and population factor
@@ -45,12 +45,13 @@ head(cbind(pop, elev, mass))
 
 # ~~~~ code to plot mass (Fig. 2.18) ~~~~
 op <- par(las=1, mar=c(4.1, 4.5, 2, 2), cex=1.5)
-plot(mass ~ rep(elevPop, nsnakes), axes=FALSE, pch=16, col=rgb(0,0,0,0.4), xlab='Elevation (m)', ylab="Mass (g)", xlim=c(200, 1800), ylim=c(0, 350))
+plot(mass ~ rep(elevPop, nsnakes), axes=FALSE, pch=16, col=rgb(0,0,0,0.4), xlab='Elevation (m)',
+    ylab="Mass (g)", xlim=c(200, 1800), ylim=c(0, 350))
 axis(1)
 axis(1, at=seq(200, 1700, by=100), tcl=-0.25, labels=NA)
 axis(2)
 for (i in 1:10){
-   segments(elevPop[i]-30, mean.pop.mass[i], elevPop[i]+30, mean.pop.mass[i], col='red', lwd= 2)
+  segments(elevPop[i]-30, mean.pop.mass[i], elevPop[i]+30, mean.pop.mass[i], col='red', lwd= 2)
 }
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,31 +59,30 @@ par(op)
 # Bundle data
 jags.data <- list(y=mass, pop=pop, elev=elev, npop=npop, n=length(mass))
 str(jags.data)
-
 # List of 5
- # $ y   : num [1:178] 214 155 203 214 348 ...
- # $ pop : int [1:178] 1 1 1 1 1 1 1 1 1 1 ...
- # $ elev: num [1:178] -1.45 -1.45 -1.45 -1.45 -1.45 ...
- # $ npop: num 10
- # $ n   : int 178
-
+# $ y   : num [1:178] 214 155 203 214 348 ...
+# $ pop : int [1:178] 1 1 1 1 1 1 1 1 1 1 ...
+# $ elev: num [1:178] -1.45 -1.45 -1.45 -1.45 -1.45 ...
+# $ npop: num 10
+# $ n   : int 178
 
 # Write JAGS model file
 cat(file="model8.txt", "
 model {
   # Priors and linear models
   for (j in 1:npop){
-    alpha[j] ~ dnorm(mu.alpha, tau.alpha)   # Random effects
+    alpha[j] ~ dnorm(mu.alpha, tau.alpha)        # Random effects
   }
+
   # Priors for hyper-parameters
-  mu.alpha ~ dnorm(0, 1.0E-06)  # Hyperprior for mean hyperparam
+  mu.alpha ~ dnorm(0, 1.0E-06)                   # Hyperprior for mean hyperparam
   tau.alpha <- pow(sd.alpha, -2)
-  sd.alpha ~ dunif(0, 100)      # Hyperprior for sd hyperparam
+  sd.alpha ~ dunif(0, 100)                       # Hyperprior for sd hyperparam
 
   # Other priors
-  beta ~ dnorm(0, 1.0E-06)      # Slope of mass on elevation
+  beta ~ dnorm(0, 1.0E-06)                       # Slope of mass on elevation
   tau <- pow(sd, -2)
-  sd ~ dunif(0, 1000)           # 1/residual variance
+  sd ~ dunif(0, 1000)                            # 1/residual variance
 
   # 'Likelihood'
   for (i in 1:n){
@@ -102,9 +102,9 @@ parameters <- c("mu.alpha", "sd.alpha", "alpha", "beta", "sd")
 ni <- 110000; nb <- 10000; nc <- 3; nt <- 2; na <- 1000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
-out9 <- jags(jags.data, inits, parameters, "model8.txt",
-    n.iter=ni, n.burnin=nb, n.chains=nc, n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out9, layout=c(2,2))     # Not shown
+out9 <- jags(jags.data, inits, parameters, "model8.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out9) # Not shown
 print(out9, 2)
 
 #              mean    sd    2.5%     50%   97.5% overlap0 f Rhat  n.eff
@@ -130,14 +130,8 @@ mean.mass
 # Get frequentist restricted MLEs for comparison
 library(lme4)
 fm <- lmer(mass ~ elev + (1 | as.factor(pop)), REML=TRUE) # Fit model
-summary(fm) # Show summary
-ranef(fm)   # Give estimates of population mean deviations (not shown)
-
-# REML criterion at convergence: 1872.3
-
-# Scaled residuals:
-    # Min      1Q  Median      3Q     Max
-# -2.4950 -0.7496  0.0293  0.6420  2.6016
+summary(fm)                                               # Show summary
+ranef(fm)                                                 # Give estimates of population mean deviations (not shown)
 
 # Random effects:
  # Groups         Name        Variance Std.Dev.
@@ -149,7 +143,3 @@ ranef(fm)   # Give estimates of population mean deviations (not shown)
             # Estimate Std. Error t value
 # (Intercept)  195.664      4.767  41.048
 # elev         -30.777      4.933  -6.239
-
-# Correlation of Fixed Effects:
-     # (Intr)
-# elev -0.0036

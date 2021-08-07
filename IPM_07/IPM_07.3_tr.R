@@ -1,7 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 7 : Assessment of integrated population models
 # ------------------------------------------------------
-# Code from MS submitted to publisher.
+# Code from final MS.
 
 # Run time for test script 10 mins, full run 19 hrs
 
@@ -92,8 +92,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -210,8 +210,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -328,8 +328,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -436,8 +436,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -541,8 +541,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -646,8 +646,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -700,7 +700,6 @@ model {
 modfile3 <- c("model8.txt", "model20.txt", "model21.txt", "model22.txt")
 modfile2 <- c("model9.txt", "model23.txt", "model24.txt", "model25.txt")
 
-####
 
 # Simulations
 

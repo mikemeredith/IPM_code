@@ -1,9 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
-
-library(IPMbook) ; library(jagsUI)
+# Code from final MS.
 
 # 3.2 Age- and stage-structured population models
 # ===============================================

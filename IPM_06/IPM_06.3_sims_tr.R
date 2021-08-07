@@ -60,8 +60,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]
@@ -137,8 +137,8 @@ model {
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
   # Define the cell probabilities of the m-arrays
-  # Main diagonal
   for (t in 1:(n.occasions-1)){
+    # Main diagonal
     q[t] <- 1-p[t]   # Probability of non-recapture
     pr.j[t,t] <- sj[t]*p[t]
     pr.a[t,t] <- sa[t]*p[t]

@@ -1,9 +1,7 @@
 # Schaub & Kery (2021) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from MS submitted to publisher.
-
-library(IPMbook) ; library(jagsUI)
+# Code from proofs.
 
 # 3.3 Classical analysis of a matrix population model
 # ===================================================
@@ -15,11 +13,12 @@ library(IPMbook) ; library(jagsUI)
 # Define means of the demographic rates and strength of density-dependence
 mean.sj <- 0.3
 mean.sa <- 0.55
-f1.int <- 2.3       # Productivity of 1y females when population size is 0
-f1.beta <- -0.02    # Strength of density-dependence on productivity of 1y
-                    # This is simply the slope of the regression of f1 on N
-fa.int <- 2.3       # Productivity of adult females when population size is 0
-fa.beta <- -0.01    # Strength of density-dependence on productivity of adults
+f1.int <- 2.3     # Productivity of 1y females when population size is 0
+f1.beta <- -0.02  # Strength of density-dependence on productivity of 1y
+
+# This is simply the slope of the regression of f1 on N
+fa.int <- 2.3     # Productivity of adult females when population size is 0
+fa.beta <- -0.01  # Strength of density-dependence on productivity of adults
 
 # Define the number of years with predictions
 T <- 200
@@ -32,7 +31,7 @@ r <- f1 <- fa <- matrix(NA, nrow=T, ncol=nsim)
 
 # Project population
 for (s in 1:nsim){
-  if(s %% 100 == 0) {cat(paste("*** Simrep", s, "***\n")) }  # Counter
+  if(s %% 100 == 0) {cat(paste("*** Simrep", s, "***\n")) } # Counter
   for (t in 1:T){
     f1[t,s] <- f1.int + f1.beta * sum(N[,t,s])
     fa[t,s] <- fa.int + fa.beta * sum(N[,t,s])
