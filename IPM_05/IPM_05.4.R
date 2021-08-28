@@ -1,4 +1,4 @@
-# Schaub & Kery (2021) Integrated Population Models
+# Schaub & Kéry (2022) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
 # Code from proofs.

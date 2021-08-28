@@ -2,6 +2,10 @@
 
 # MAJOR CHANGES
 
+## 2021-08-28
+
+Changed the official date of publication of "Integrated Population Models" to 2022 everywhere (though the book should be shipping Q3 2021).
+
 ## 2021-08-07
 
 Code to appear in the book replaced with code from the proofs. Additional code not to be printed unchanged.
