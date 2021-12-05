@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time testing 3 mins, full run 40 mins
 
@@ -19,7 +18,7 @@ nvisit <- 2                             # Number of short-term replicate visits
 nyear <- 12                             # Number of years
 gamma <- 5                              # Initial expected abundance
 phi <- 0.82                             # Apparent survival probability
-rho <- 0.22                             # Recruitment rate (per capita)
+rho <- 0.22                             # Recruitment rate (per-capita)
 p <- 0.4                                # Detection probability (per individual)
 
 # State or ecological process
@@ -50,11 +49,11 @@ for (i in 1:nsite){
   } #t
 } #i
 
-# Look at data in year 6 and compare with truth (not shown)
+# Look at data in year 6 and compare with truth (for illustration; not shown)
 cbind(Truth=N[,6], 'Count 1'=C[,1,6], 'Count 2'=C[,2,6])
 
-trueN <- apply(N, 2, sum) # True number of pairs
-obsN <- apply(apply(C, c(1, 3), max), 2, sum) # Obs. number of pairs
+trueN <- apply(N, 2, sum)                       # True number of pairs
+obsN <- apply(apply(C, c(1, 3), max), 2, sum)   # Observed number of pairs
 
 # ~~~~ Plot true and observed population size (not shown) ~~~~
 matplot(1:nyear, cbind(trueN, obsN), type='b', lty=1, pch=16, col=c('red', 'black'),
@@ -104,7 +103,7 @@ model {
 
   # Derived quantities
   for (t in 1:nyear){
-    ntot[t] <- sum(N[,t]) # Total abundance across all sites
+    ntot[t] <- sum(N[,t])               # Total abundance across all sites
   }
 }
 ")
@@ -113,7 +112,7 @@ model {
 # Need to get inits for N that do not contradict model and data!
 Nst <- apply(C, c(1,3), max) + 5
 Nst[,2:nyear] <- NA
-Rst <- apply(C, c(1,3), max) +1         # Observed max. counts + 1 as inits
+Rst <- apply(C, c(1,3), max) + 1        # Observed max. counts + 1 as inits
 Rst[,1] <- NA
 inits <- function(){list(N=Nst, R=Rst)}
 
@@ -128,11 +127,12 @@ ni <- 10000; nb <- 5000; nc <- 3; nt <- 5; na <- 500         # ~~~ for testing, 
 out10 <- jags(jags.data, inits, parameters, "model7.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out10, c("gamma", "phi", "rho", "p", "ntot"))
-print(out10)                            # Not shown
+print(out10)    # Not shown
 
 # Compare truth and estimates
 truth <- c('gamma'=gamma, 'phi'=phi, 'rho'=rho, 'p'=p, Ntot=apply(N, 2, sum))
 print(cbind(truth, out10$summary[1:16,c(1:3, 7)]), 3)
+
 #         truth    mean      sd    2.5%   97.5%
 # gamma    5.00   4.919  0.3520   4.240   5.646
 # phi      0.82   0.800  0.0264   0.744   0.847

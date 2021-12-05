@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 6 : Benefits of integrated population modeling
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 5 mins
 
@@ -32,6 +31,7 @@ model {
   mu[1] <- logit(mean.sj)
   mu[2] <- logit(mean.sa)
   mu[3] <- log(mean.f)
+
   mean.sj ~ dunif(0, 1)
   mean.sa ~ dunif(0, 1)
   mean.f ~ dunif(0, 10)
@@ -53,6 +53,7 @@ model {
     sigma[i] ~ dunif(0, 5)
     rho[i] ~ dunif(-1,1)
   }
+
   sigma.res ~ dunif(0.5, 100)
   tau.res <- pow(sigma.res, -2)
 
@@ -123,7 +124,6 @@ out4 <- jags(jags.data, inits, parameters, "model4.txt", n.iter=ni, n.burnin=nb,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out4)
 print(out4, 3)
-
 #                mean     sd    2.5%     50%   97.5% overlap0     f  Rhat n.eff
 # [ ...output truncated... ]
 # sigma.res    11.305  4.138   3.261  11.057  20.272    FALSE 1.000 1.004   563
@@ -140,7 +140,7 @@ print(out4, 3)
 # rho[2]        0.030  0.307  -0.548   0.029   0.637     TRUE 0.534 1.004   582
 # rho[3]        0.406  0.309  -0.267   0.440   0.905     TRUE 0.890 1.008   255
 
-round(out4$mean$sigma2, 3) # Posterior means of var-covar matrix
+round(out4$mean$sigma2, 3)              # Posterior means of var-covar matrix
 #       [,1]  [,2]  [,3]
 # [1,] 0.044 0.019 0.001
 # [2,] 0.019 0.045 0.017

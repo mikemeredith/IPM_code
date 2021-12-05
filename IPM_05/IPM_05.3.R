@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 2 mins
 
@@ -21,16 +20,15 @@ jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     rel.j=rowSums(marr[,,1]), rel.a=rowSums(marr[,,2]), J=woodchat5$repro[,1],
     age=woodchat5$repro[,3], C=woodchat5$count)
 str(jags.data)
-
 # List of 8
-# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
-# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
 # $ n.occasions: int 20
-# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
-# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
-# $ J : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
-# $ age : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
-# $ C : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
+# $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ J          : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
+# $ age        : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ C          : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
 
 # Write JAGS model file
 cat(file="model3.txt", "
@@ -81,7 +79,7 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    q[t] <- 1 - p[t]                                       # Probability of non-recapture
+    q[t] <- 1 - p[t]                    # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -124,10 +122,10 @@ ni <- 40000; nb <- 10000; nc <- 3; nt <- 3; na <- 3000
 
 # Call JAGS (ART 2 min), check convergence and summarize posteriors
 out3 <- jags(jags.data, inits, parameters, "model3.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
-    n.thin=nt, n.adapt=na)
+    # n.thin=nt, n.adapt=na)
+    n.thin=nt, n.adapt=na, parallel=TRUE)  # ~~~ for testing
 traceplot(out3)
 print(out3, 3)
-
 #                         mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # mean.sj                0.298  0.010    0.279    0.298    0.317    FALSE 1 1.002  1175
 # mean.sa                0.539  0.012    0.515    0.539    0.564    FALSE 1 1.003   857
@@ -152,6 +150,7 @@ print(out3, 3)
 # [ ...output truncated... ]
 # Ntot[19]             147.325  7.114  133.524  147.263  161.763    FALSE 1 1.000 30000
 # Ntot[20]             149.720  7.854  134.538  149.609  165.765    FALSE 1 1.000 30000
+
 
 # ~~~~ code for Figure 5.2 ~~~~
 mag <- 1.25

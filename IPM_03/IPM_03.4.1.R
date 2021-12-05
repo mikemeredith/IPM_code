@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -32,12 +31,11 @@ model {
     # Population projection
     N[1,t+1] <- sj * (f1 * N[1,t] + fa * N[2,t])
     N[2,t+1] <- sa * (N[1,t] + N[2,t])
-
     # Calculation of population quantities
     # Annual (realized) population growth rate
     ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
   }
-  lambda <- ann.growth.rate[T]  # gr in final interval is our estimate of lambda
+  lambda <- ann.growth.rate[T] # gr in final interval is our estimate of lambda
 }
 ")
 
@@ -51,7 +49,6 @@ ni <- 1; nt <- 1; nb <- 0; nc <- 1; na <- 0
 out1 <- jags(jags.data, NULL, parameters, "model1.txt", n.adapt=na, n.chains=nc, n.thin=nt,
     n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out1, 3)
-
 #                     mean sd  2.5%   50% 97.5% overlap0 f
 # ann.growth.rate[1] 1.015 NA 1.015 1.015 1.015    FALSE 1
 # ann.growth.rate[2] 1.021 NA 1.021 1.021 1.021    FALSE 1
@@ -66,6 +63,7 @@ print(out1, 3)
 # [ ...output truncated... ]
 # N[1,6]             1.017 NA 1.017 1.017 1.017    FALSE 1
 # N[2,6]             1.188 NA 1.188 1.188 1.188    FALSE 1
+
 
 # Write JAGS model file
 cat(file="model2.txt", "
@@ -92,7 +90,7 @@ model {
   stable.stage.distr <- stage.distr[,T]
 
   # Sensitivity and elasticity of lambda to changes in sj
-  delta <- 0.001 # Size of perturbation
+  delta <- 0.001                                              # Size of perturbation
   N.star[1,1] <- 1
   N.star[2,1] <- 1
   for (t in 1:T){

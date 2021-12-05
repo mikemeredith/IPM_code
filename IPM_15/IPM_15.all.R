@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 15 : Black grouse
 # -------------------------
-# Code from corrected proofs.
 
 # Run time 8 mins
 
@@ -12,17 +11,16 @@ library(IPMbook); library(jagsUI)
 data(grouse)
 str(grouse)
 # List of 10
-# $ ch : int [1:96, 1:128] 1 1 NA NA NA NA NA NA NA NA ...
-# $ age : num [1:96, 1:127] 2 2 NA NA NA NA NA NA NA NA ...
-# $ sex : int [1:96] 2 2 2 2 2 2 2 2 2 2 ...
-# $ season : int [1:128] 1 1 2 2 2 3 3 4 4 4 ...
+# $ ch       : int [1:96, 1:128] 1 1 NA NA NA NA NA NA NA NA ...
+# $ age      : num [1:96, 1:127] 2 2 NA NA NA NA NA NA NA NA ...
+# $ sex      : int [1:96] 2 2 2 2 2 2 2 2 2 2 ...
+# $ season   : int [1:128] 1 1 2 2 2 3 3 4 4 4 ...
 # $ count.sp : int [1:20] 36 45 52 64 46 49 50 35 36 39 ...
 # $ count.lsM: int [1:20] 15 11 14 14 14 5 16 19 19 16 ...
 # $ count.lsF: int [1:20] 23 32 29 20 19 18 28 21 31 39 ...
 # $ count.lsC: int [1:20] 44 86 76 28 18 24 99 53 101 82 ...
-# $ v : int [1:20] 30 39 21 10 11 6 67 32 65 55 ...
-# $ u : int [1:20] 18 22 11 5 4 2 25 15 29 26 ...
-
+# $ v        : int [1:20] 30 39 21 10 11 6 67 32 65 55 ...
+# $ u        : int [1:20] 18 22 11 5 4 2 25 15 29 26 ...
 
 # 15.4.1 Population count data (no code)
 # 15.4.2 Radio tracking data (no code)
@@ -33,8 +31,7 @@ str(grouse)
 # ====================================
 
 # Bundle data
-getLast <- function(x) max(which(!is.na(x))) # Last occasion function
-
+getLast <- function(x) max(which(!is.na(x)))              # Last occasion function
 jags.data <- with(grouse, list(ch=ch, age=age, sex=sex, season=season, f=getFirst(ch),
     k=apply(ch, 1, getLast), C.sp=count.sp, C.lsM=count.lsM, C.lsF=count.lsF, C.lsC=count.lsC,
     u=u, v=v, nind=nrow(ch), ny=length(count.sp), pinit=dUnif(1, 100)))
@@ -61,9 +58,9 @@ cat(file="model1.txt", "
 model {
   # Priors and linear models
   # Survival
-  for (a in 1:2){       # age
-    for (j in 1:2){     # sex
-      for (m in 1:4){   # season
+  for (a in 1:2){                                         # age
+    for (j in 1:2){                                       # sex
+      for (m in 1:4){                                     # season
         s[a,j,m] ~ dbeta(1, 1)
       } #m
     } #j
@@ -104,6 +101,7 @@ model {
     # Females
     Nsp[1,1,t+1] ~ dbin(s[1,1,2]^0.5 * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1], Nls[1,1,t]) # 1y
     Nsp[2,1,t+1] ~ dbin(s[2,1,2]^0.5 * s[2,1,3]^2 * s[2,1,4]^5 * s[2,1,1], Nls[2,1,t]) # >1y
+
     # Males
     Nsp[1,2,t+1] ~ dbin(s[1,2,2]^0.5 * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1], Nls[1,2,t]) # 1y
     Nsp[2,2,t+1] ~ dbin(s[2,2,2]^0.5 * s[2,2,3]^2 * s[2,2,4]^5 * s[2,2,1], Nls[2,2,t]) # >1y
@@ -112,11 +110,10 @@ model {
   # Process model: population sizes in late summer
   for (t in 1:ny){
     # Total number of chicks
-    # F[t] ~ dpois((Nsp[1,2,t] + Nsp[2,2,t]) * s[2,2,1] * rho[t]) # Correction 2021-07-28
     F[t] ~ dpois(Nls[2,1,t] * rho[t])
     # Allocate chicks to a sex
-    Nls[1,1,t] ~ dbin(gamma, F[t]) # Female chicks
-    Nls[1,2,t] <- F[t] - Nls[1,1,t] # Male chicks
+    Nls[1,1,t] ~ dbin(gamma, F[t])                        # Female chicks
+    Nls[1,2,t] <- F[t] - Nls[1,1,t]                       # Male chicks
     # Survival
     Nls[2,1,t] ~ dbin(s[2,1,1] * s[2,1,2]^2.5, (Nsp[1,1,t] + Nsp[2,1,t])) # ≥1y females
     Nls[2,2,t] ~ dbin(s[2,2,1] * s[2,2,2]^2.5, (Nsp[1,2,t] + Nsp[2,2,t])) # ≥1y males
@@ -130,7 +127,6 @@ model {
     C.lsF[t] ~ dbin(p[t], Nls[2,1,t])
     C.lsM[t] ~ dbin(p[t], Nls[2,2,t])
   }
-
   # Radio tracking data (Bernoulli model)
   for (i in 1:nind){
     for (t in (f[i]+1):k[i]){
@@ -142,17 +138,16 @@ model {
   for (t in 1:ny){
     C.lsC[t] ~ dpois(C.lsF[t] * rho[t])
   }
-
   # Chick sex ratio data (binomial model)
   for (t in 1:ny){
     u[t] ~ dbin(gamma, v[t])
   }
 
   # Derived quantities: annual survival
-  ann.s[1,1] <- s[1,1,2] * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1]      # juv females
-  ann.s[2,1] <- s[2,1,1]^2 * s[2,1,2]^3 * s[2,1,3]^2 * s[2,1,4]^5  # ad females
-  ann.s[1,2] <- s[1,2,2] * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1]      # juv males
-  ann.s[2,2] <- s[2,2,1]^2 * s[2,2,2]^3 * s[2,2,3]^2 * s[2,2,4]^5  # ad males
+  ann.s[1,1] <- s[1,1,2] * s[1,1,3]^2 * s[1,1,4]^5 * s[2,1,1]       # juv females
+  ann.s[2,1] <- s[2,1,1]^2 * s[2,1,2]^3 * s[2,1,3]^2 * s[2,1,4]^5   # ad females
+  ann.s[1,2] <- s[1,2,2] * s[1,2,3]^2 * s[1,2,4]^5 * s[2,2,1]       # juv males
+  ann.s[2,2] <- s[2,2,1]^2 * s[2,2,2]^3 * s[2,2,3]^2 * s[2,2,4]^5   # ad males
 }
 ")
 
@@ -160,7 +155,6 @@ model {
 inits <- function(){
   Nsp <- array(NA, dim=c(2, 2, 20))
   Nsp[,,1] <- round(runif(4, 30, 40))
-  # s <- array(runif(2*2*4, 0.90, 0.97), dim=c(2, 2, 4)) # Correction 2021-07-28
   s <- array(runif(2*2*4, 0.94, 0.97), dim=c(2, 2, 4))
   list(Nsp=Nsp, s=s)
 }
@@ -170,11 +164,11 @@ parameters <- c("s", "ann.s", "mean.rho", "gamma", "mean.p", "sigma.rho", "sigma
     "Nsp", "Nls")
 
 # MCMC settings
-# ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000
-ni <- 120000; nb <- 20000; nc <- 3; nt <- 20; na <- 10000
+# ni <- 120000; nb <- 20000; nc <- 3; nt <- 20; na <- 10000
+ni <- 30000; nb <- 10000; nc <- 3; nt <- 5; na <- 5000  # ~~~ for testing
 
 # Call JAGS (ART 8 min), check convergence and summarize posteriors
-set.seed(101)    # Reproducible results without crashing
+set.seed(101)                                             # Reproducible results without crashing
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
@@ -345,7 +339,7 @@ save(out1, out2, file="Grouse.Results.Rdata")
 # 15.6 Results
 # ============
 
-print(out1, 3)  # Corrected 2021-07-28
+print(out1, 3)
 #                 mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # s[1,1,1]       0.501  0.290    0.024    0.503    0.976    FALSE 1 1.000 15000
 # s[2,1,1]       0.943  0.018    0.904    0.944    0.972    FALSE 1 1.000 15000

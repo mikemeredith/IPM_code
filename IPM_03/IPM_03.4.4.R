@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 1 min
 
@@ -42,7 +41,7 @@ model {
     # Population model
     N[1,t+1] ~ dpois(sj * (f1 * N[1,t] + fa * N[2,t]))
     N[2,t+1] ~ dbin(sa, (N[1,t] + N[2,t]))
-    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0) # Determines whether
+    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0)      # Determines whether
         # population is still thriving (extinct = 0) or went extinct (extinct = 1)
   }
 }
@@ -64,7 +63,7 @@ out6 <- jags(jags.data, inits, parameters, "model6.txt", n.chains=nc, n.thin=nt,
     n.burnin=nb, DIC=FALSE)
 print(out6, 4)
 
-                 # mean       sd 2.5%   50%    97.5% overlap0 f
+#                  mean       sd 2.5%   50%    97.5% overlap0 f
 # N[1,1]        10.0000   0.0000   10  10.0   10.000    FALSE 1
 # N[2,1]        10.0000   0.0000   10  10.0   10.000    FALSE 1
 # N[1,2]         9.3110   3.0491    4   9.0   16.000    FALSE 1

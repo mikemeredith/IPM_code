@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook)
 
@@ -12,17 +11,17 @@ library(IPMbook)
 # ------------------------------------------------------------------------
 
 # Read the data for the tadpole experiment into R
-N <- 50    # Number of tadpoles released initially
-y <- 20    # Number of tadpoles detected later
+N <- 50     # Number of tadpoles released initially
+y <- 20     # Number of tadpoles detected later
 
 # 2.3 Maximum likelihood estimation in a nutshell
 # ===============================================
 
-# Fig. 2.3
-all.possible <- 0:50 # All possible values
-pmf1 <- dbinom(all.possible, size=50, prob=0.1) # pmf 1
-pmf2 <- dbinom(all.possible, size=50, prob=0.5) # pmf 2
-pmf3 <- dbinom(all.possible, size=50, prob=0.9) # pmf 3
+# Data for Fig. 2.3
+all.possible <- 0:50                              # All possible values
+pmf1 <- dbinom(all.possible, size=50, prob=0.1)   # pmf 1
+pmf2 <- dbinom(all.possible, size=50, prob=0.5)   # pmf 2
+pmf3 <- dbinom(all.possible, size=50, prob=0.9)   # pmf 3
 
 # ~~~~ additional code for the plot ~~~~
 op <- par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5, cex.main=2, las=1)
@@ -38,14 +37,14 @@ abline(v=20, col="blue", lwd=2)
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# Use RNG to obtain binomial density for pmf 3
-hist(rbinom(10^6, size=50, prob=0.9), freq=FALSE, xlim=c(0, 50))  # Not shown
+# Use RNG to obtain binomial density for pmf3
+hist(rbinom(10^6, size=50, prob=0.9), freq=FALSE, xlim=c(0, 50)) # Not shown
 
 # Brute-force search for MLE of theta for the tadpole data set (Fig. 2.4)
-try.theta <- seq(0, 1, by=0.01)                                   # Values to try out
-like <- dbinom(20, 50, try.theta, log=FALSE)                      # Likelihood
-loglike <- dbinom(20, 50, try.theta, log=TRUE)                    # Log-Likelihood
-negloglike <- -dbinom(20, 50, try.theta, log=TRUE)                # NLL
+try.theta <- seq(0, 1, by=0.01)                     # Values to try out
+like <- dbinom(20, 50, try.theta, log=FALSE)        # Likelihood
+loglike <- dbinom(20, 50, try.theta, log=TRUE)      # Log-Likelihood
+negloglike <- -dbinom(20, 50, try.theta, log=TRUE)  # Negative log-likelihood (NLL)
 
 op <- par(mfrow=c(1, 3), mar=c(5, 5, 4, 1), cex.lab=1.5, cex.axis=1.5)
 plot(x=try.theta, y=like, xlab=expression(paste("Detection probability (", theta, ")")),
@@ -168,7 +167,7 @@ set.seed(1)                       # To initalize your RNGs identically to ours
 
 # Add theta_star into MCMC sample
 ltheta[2] <- ltheta_star
-ltheta                                      # Our posterior sample up to now (not shown)
+ltheta                            # Our posterior sample up to now (not shown)
 
 ( ltheta_star <- rnorm(1, ltheta[2], sigma_prop) )
 # [1] 0.5571895
@@ -182,15 +181,15 @@ pd_t <- dbinom(20, 50, plogis(ltheta[2])) * dbeta(plogis(ltheta[2]), 1, 1)
 # [1] 0
 
 ltheta[3] <- ltheta[2]
-ltheta                                      # Our posterior sample up to now (not shown)
+ltheta                            # Our posterior sample up to now (not shown)
 
 # Iteration 4 to T of RW-MH algorithm
-T <- 60000                                  # Choose chain length
-for (t in 4:T){                             # Continue where we left off
+T <- 60000                        # Choose chain length
+for (t in 4:T){                   # Continue where we left off
   ltheta_star <- rnorm(1, ltheta[t-1], sigma_prop)
   pd_star <- dbinom(20, 50, plogis(ltheta_star)) * dbeta(plogis(ltheta_star), 1, 1)
   pd_t <- dbinom(20, 50, plogis(ltheta[t-1])) * dbeta(plogis(ltheta[t-1]), 1, 1)
-  R <- min(1, pd_star / pd_t)               # Note more general solution here
+  R <- min(1, pd_star / pd_t)     # Note more general solution here
   keep.ltheta_star <- rbinom(1, 1, R)
   ltheta[t] <- ifelse(keep.ltheta_star == 1, ltheta_star, ltheta[t-1])
 }
@@ -234,6 +233,7 @@ tmp <- demoMCMC(y=20, N=50, niter=25000, mu.ltheta=0, sd.ltheta=100, prop.sd=0.1
 # ... and you get convergence within 2500 iters with longer step length
 tmp <- demoMCMC(y=20, N=50, niter=2500, mu.ltheta=0, sd.ltheta=100, prop.sd=1, init=100)
 
+
 # ~~~~ extra code to explore step size ~~~~
 # Very, very small step size: very inefficient MCMC
 str(out <- demoMCMC(prop.s = 0.01))
@@ -255,41 +255,45 @@ str(out <- demoMCMC(prop.s = 1))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 str(out)
+
 # List of 7
- # $ y        : num 20
- # $ N        : num 50
- # $ mu.ltheta: num 0
- # $ sd.ltheta: num 100
- # $ prop.sd  : num 1
- # $ ltheta   : num [1:25000] 0 0 -0.0519 -0.0519 -0.7637 ...
- # $ acc.prob : num 0.34
+# $ y        : num 20
+# $ N        : num 50
+# $ mu.ltheta: num 0
+# $ sd.ltheta: num 100
+# $ prop.sd  : num 1
+# $ ltheta   : num [1:25000] 0 0 -0.0519 -0.0519 -0.7637 ...
+# $ acc.prob : num 0.34
 
 # Measures of central tendency to serve as point estimates
-library(MCMCglmm)                          # For function for mode
-mean(plogis(out$ltheta))                   # Posterior mean
-# [1] 0.4007489                            # Your result will differ slightly
-median(plogis(out$ltheta))                 # Posterior median
-# [1] 0.4001582                            # Your result will differ
-posterior.mode(mcmc(plogis(out$ltheta)))   # Posterior mode (ditto)
-# var1
+library(MCMCglmm)                                   # For function for mode
+mean(plogis(out$ltheta))                            # Posterior mean
+# [1] 0.4007489                                     # Your result will differ slightly
+
+median(plogis(out$ltheta))                          # Posterior median
+# [1] 0.4001582                                     # Your result will differ
+
+posterior.mode(mcmc(plogis(out$ltheta)))            # Posterior mode (ditto)
+#      var1
 # 0.4152145
 
 # Measures of spread:
 # - Bayesian 'variant' of standard error (= posterior SD)
 # - two Bayesian credible intervals (CRI and HPDI)
-sd(plogis(out$ltheta))                      # Posterior SD
-# [1] 0.06950494                            # Your result will differ
+sd(plogis(out$ltheta))                              # Posterior SD
+# [1] 0.06950494                                    # Your result will differ
 
-quantile(plogis(out$ltheta), prob=c(0.025, 0.975)) # Symmetrical Bayesian CRI (your result will differ)
-# 2.5% 97.5%
+quantile(plogis(out$ltheta), prob=c(0.025, 0.975))  # Symmetrical Bayesian CRI (your result will differ)
+#      2.5%     97.5%
 # 0.2705029 0.5383629
 
-HPDinterval(mcmc(plogis(out$ltheta)))       # Highest posterior density credible
-                                            #  interval(HPDI); your result will differ
+HPDinterval(mcmc(plogis(out$ltheta)))               # Highest posterior density credible
+                                                    # interval(HPDI); your result will differ
 #          lower     upper
 # var1 0.2672082 0.5349586
 # attr(,"Probability")
 # [1] 0.95
+
 
 # Compute p(theta > 0.5)
 mean(plogis(out$ltheta) > 0.5)

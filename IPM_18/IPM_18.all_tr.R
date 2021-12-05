@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 18 : Cormorant
 # ----------------------
-# Code from proofs.
 
 # Run time for test script 8 mins, full run 3 hrs
 
@@ -11,6 +10,7 @@
 library(IPMbook); library(jagsUI)
 data(cormorant)
 str(cormorant)
+# List of 2
 # $ count: int [1:3, 1:14] 5048 1982 804 4321 1860 1350 4634 2170 1848 4318 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : chr [1:3] "V" "M" "S"
@@ -34,10 +34,11 @@ A <- matrix(c(
     phi[2] * kappa, phi[2]), byrow=TRUE, ncol=2)
 z <- which.max(Re(eigen(A)$values))
 revec <- Re(eigen(A)$vectors[,z])
-matrix(revec / sum(revec))                       # Standardized right eigenvector
+matrix(revec / sum(revec))                                # Standardized right eigenvector
 #           [,1]
 # [1,] 0.5657415
 # [2,] 0.4342585
+
 
 # 18.4.2 Multistate capture-recapture data (no code)
 
@@ -50,13 +51,13 @@ jags.data <- list(marr=marr, n.years=ncol(cormorant$ms.ch), rel=rowSums(marr), n
     zero=matrix(0, ncol=9, nrow=9), ones=diag(9), C=cormorant$count)
 str(jags.data)
 # List of 7
-# $ marr : num [1:117, 1:118] 0 0 0 0 0 0 0 0 0 0 ...
+# $ marr   : num [1:117, 1:118] 0 0 0 0 0 0 0 0 0 0 ...
 # $ n.years: int 14
-# $ rel : num [1:117] 379 0 0 532 39 0 0 0 0 375 ...
-# $ ns : num 9
-# $ zero : num [1:9, 1:9] 0 0 0 0 0 0 0 0 0 0 ...
-# $ ones : num [1:9, 1:9] 1 0 0 0 0 0 0 0 0 0 ...
-# $ C : int [1:3, 1:14] 5048 1982 804 4321 1860 1350 4634 2170 ...
+# $ rel    : num [1:117] 379 0 0 532 39 0 0 0 0 375 ...
+# $ ns     : num 9
+# $ zero   : num [1:9, 1:9] 0 0 0 0 0 0 0 0 0 0 ...
+# $ ones   : num [1:9, 1:9] 1 0 0 0 0 0 0 0 0 0 ...
+# $ C      : int [1:3, 1:14] 5048 1982 804 4321 1860 1350 4634 2170 ...
 
 # Write JAGS model file
 cat(file = "model1.txt", "
@@ -73,6 +74,7 @@ model {
   # rho[site, time]: productivity
   # p[site, time]: recapture probability
   # -------------------------------------------------
+
   # Priors and linear models
   # Productivity
   for (t in 1:n.years){
@@ -112,7 +114,7 @@ model {
   } #t
 
   # Multinomial logit link to impose the constraint that natal dispersal does
-  #  only depend on the site of departure
+  # only depend on the site of departure
   logit.mean.eta[1,2] ~ dnorm(0, 0.01)
   logit.mean.eta[1,3] <- logit.mean.eta[1,2]
   mean.eta[1,2] <- exp(logit.mean.eta[1,2]) / (1 + exp(logit.mean.eta[1,2]) +
@@ -136,7 +138,7 @@ model {
   mean.eta[3,3] <- 1 - mean.eta[3,1] - mean.eta[3,2]
 
   # Multinomial logit link to impose the constraint that breeding dispersal does only depend on the
-  #   site of arrival
+  # site of arrival
   logit.mean.nu[1,2] ~ dnorm(0, 0.01)
   logit.mean.nu[1,3] ~ dnorm(0, 0.01)
   logit.mean.nu[2,1] ~ dnorm(0, 0.01)
@@ -205,7 +207,7 @@ model {
   } #t
 
   # Multistate capture-recapture data (with multinomial likelihood)
-  # Define state-transition and reencounter probabilities
+  # Define state-transition and re-encounter probabilities
   for (t in 1:(n.years-1)){
     psi[1,t,1] <- 0
     psi[1,t,2] <- 0
@@ -300,7 +302,7 @@ model {
     po[9,t] <- 0
 
     # Calculate probability of non-encounter (dq) and reshape the array for the encounter
-    #  probabilities
+    # probabilities
     for (s in 1:ns){
       dp[s,t,s] <- po[s,t]
       dq[s,t,s] <- 1-po[s,t]
@@ -328,8 +330,8 @@ model {
   for (t in 1:(n.years-2)){
     U[(t-1)*ns+(1:ns), (t-1)*ns+(1:ns)] <- ones
     for (j in (t+1):(n.years-1)){
-      U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-2)*ns+(1:ns)] %*% psi[,t,]
-          %*% dq[,t,]
+      U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-2)*ns+(1:ns)] %*%
+          psi[,t,] %*% dq[,t,]
     } #j
   } #t
   U[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- ones
@@ -340,8 +342,8 @@ model {
         %*% psi[,t,] %*% dp[,t,]
     # Above main diagonal
     for (j in (t+1):(n.years-1)){
-      pr[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] %*% psi[,j,]
-          %*% dp[,j,]
+      pr[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] <- U[(t-1)*ns+(1:ns), (j-1)*ns+(1:ns)] %*%
+          psi[,j,] %*% dp[,j,]
     } #j
   } #t
   pr[(n.years-2)*ns+(1:ns), (n.years-2)*ns+(1:ns)] <- psi[,n.years-1,] %*% dp[,n.years-1,]
@@ -361,7 +363,7 @@ model {
 ")
 
 # Initial values
-inits <- function(cc = cormorant$count){
+inits <- function(cc=cormorant$count){
   B <- array(NA, dim=c(3, 14))
   B[1,1] <- rpois(1, cc[1,1])
   B[2,1] <- rpois(1, cc[2,1])
@@ -375,14 +377,14 @@ parameters <- c("beta.phi", "phi", "mu.kappa", "kappa", "p", "mean.eta", "mean.n
     "N", "B")
 
 # MCMC settings
-# ni <- 150000; nb <- 50000; nt <- 100; nc <- 3; na <- 3000
+# ni <- 150000; nb <- 50000; nc <- 3; nt <- 100; na <- 3000
 ni <- 3000; nb <- 1000; nt <- 1; nc <- 3; na <- 3000  # ~~~ for testing
-
 
 # Call JAGS from R (ART 143 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
+
 
 # 18.6. Results
 # =============

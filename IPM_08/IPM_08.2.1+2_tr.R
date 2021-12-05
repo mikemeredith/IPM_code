@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 8 : Integrated population models with density-dependence
 # ----------------------------------------------------------------
-# Code from proofs.
 
 # Run time for test script 4 mins, full run 30 mina
 
@@ -13,6 +12,7 @@
 # 8.2.2 Modeling density-dependence in survival and productivity
 # --------------------------------------------------------------
 
+# Load the red-backed shrike data and produce data overview
 library(IPMbook); library(jagsUI)
 data(redbacked)
 str(redbacked) # Not shown
@@ -24,15 +24,15 @@ jags.data <- with(redbacked, list(n.occasions=ncol(marr.a), marr.j=marr.j, marr.
 str(jags.data)
 # List of 10
 # $ n.occasions: int 36
-# $ marr.j : num [1:35, 1:36] 2 0 0 0 0 0 0 0 0 0 ...
-# $ marr.a : num [1:35, 1:36] 6 0 0 0 0 0 0 0 0 0 ...
-# $ rel.j : num [1:35] 61 66 45 85 56 120 90 69 54 45 ...
-# $ rel.a : num [1:35] 35 39 17 34 32 47 45 46 37 27 ...
-# $ C : num [1:36] 47 62 62 64 72 74 68 65 38 45 ...
-# $ J : num [1:36] 112 114 88 167 108 223 171 127 102 84 ...
-# $ B : num [1:36] 29 46 50 56 65 62 63 60 33 41 ...
-# $ pNinit : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
-# $ mean.C : num 53.4
+# $ marr.j     : num [1:35, 1:36] 2 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a     : num [1:35, 1:36] 6 0 0 0 0 0 0 0 0 0 ...
+# $ rel.j      : num [1:35] 61 66 45 85 56 120 90 69 54 45 ...
+# $ rel.a      : num [1:35] 35 39 17 34 32 47 45 46 37 27 ...
+# $ C          : num [1:36] 47 62 62 64 72 74 68 65 38 45 ...
+# $ J          : num [1:36] 112 114 88 167 108 223 171 127 102 84 ...
+# $ B          : num [1:36] 29 46 50 56 65 62 63 60 33 41 ...
+# $ pNinit     : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
+# $ mean.C     : num 53.4
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -78,7 +78,7 @@ model {
   tau ~ dgamma(0.001, 0.001)
   sigma2 <- 1 / tau
 
-  # Priors for the mean of demographic and resighting rates
+  # Priors for the mean of immigration and resighting rates
   b0.om ~ dunif(0, 75)
   b0.pj ~ dunif(0, 1)
   b0.pa ~ dunif(0, 1)
@@ -162,7 +162,7 @@ parameters <- c("phij", "phia", "f", "omega", "b0.om", "b0.pj", "b0.pa", "sigma2
 
 # MCMC settings
 # ni <- 30000; nb <- 10000; nc <- 3; nt <- 4; na <- 1000
-ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000  # ~~~ for testing
+ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000  # ~~~ for testing, 3.5 mins
 
 # Call JAGS (ART 31 min), check convergence and produce figures
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,

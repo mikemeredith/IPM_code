@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 16 : Barn swallow
 # -------------------------
-# Code from proofs.
 
 # Run time for test script 5 mins, full run 40 mins
 
@@ -12,17 +11,17 @@ library(IPMbook); library(jagsUI)
 data(swallow)
 str(swallow)
 # List of 5
-# $ marr.j : num [1:9, 1:6, 1:7] 0 0 0 0 1 NA NA NA NA 0 ...
+# $ marr.j      : num [1:9, 1:6, 1:7] 0 0 0 0 1 NA NA NA NA 0 ...
 # ..- attr(*, "dimnames")=List of 3
 # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
 # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
 # .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
-# $ marr.a : num [1:9, 1:6, 1:7] 19 7 9 8 9 NA NA NA NA 0 ...
+# $ marr.a      : num [1:9, 1:6, 1:7] 19 7 9 8 9 NA NA NA NA 0 ...
 # ..- attr(*, "dimnames")=List of 3
 # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
 # .. ..$ : chr [1:6] "1997" "1998" "1999" "2000" ...
 # .. ..$ : chr [1:7] "1998" "1999" "2000" "2001" ...
-# $ counts : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
+# $ counts      : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
 # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
@@ -32,7 +31,7 @@ str(swallow)
 # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
 # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
 # .. ..$ : chr [1:3] "Eggs" "Fledglings" "Broods"
-# $ second : num [1:9, 1:7, 1:2] 77 52 39 20 17 0 0 0 0 80 ...
+# $ second      : num [1:9, 1:7, 1:2] 77 52 39 20 17 0 0 0 0 80 ...
 # ..- attr(*, "dimnames")=List of 3
 # .. ..$ : chr [1:9] "Buus" "Baulmes" "Tavannes" "Riviera" ...
 # .. ..$ : chr [1:7] "1997" "1998" "1999" "2000" ...
@@ -67,12 +66,12 @@ str(jags.data)
 # $ rel.j : num [1:9, 1:6] 229 161 128 66 92 0 0 0 0 269 ...
 # $ marr.a: num [1:9, 1:6, 1:7] 19 7 9 8 9 NA NA NA NA 0 ...
 # $ rel.a : num [1:9, 1:6] 57 44 31 19 29 0 0 0 0 62 ...
-# $ y : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
-# $ c : num [1:2, 1:9, 1:7] 359 208 233 79 183 93 92 48 71 4 ...
-# $ b : num [1:2, 1:9, 1:7] 77 47 52 18 39 21 20 12 17 1 ...
-# $ f : num [1:2, 1:9, 1:7] 281 179 178 61 148 78 66 37 60 4 ...
-# $ v : num [1:9, 1:7] 77 52 39 20 17 0 0 0 0 80 ...
-# $ w : num [1:9, 1:7] 47 18 21 12 1 0 0 0 0 55 ...
+# $ y     : num [1:9, 1:7] 75 NA 43 NA 39 NA NA NA NA 77 ...
+# $ c     : num [1:2, 1:9, 1:7] 359 208 233 79 183 93 92 48 71 4 ...
+# $ b     : num [1:2, 1:9, 1:7] 77 47 52 18 39 21 20 12 17 1 ...
+# $ f     : num [1:2, 1:9, 1:7] 281 179 178 61 148 78 66 37 60 4 ...
+# $ v     : num [1:9, 1:7] 77 52 39 20 17 0 0 0 0 80 ...
+# $ w     : num [1:9, 1:7] 47 18 21 12 1 0 0 0 0 55 ...
 # $ pinit : num [1:9, 1:115] 0.0116 0.013 0.0227 0.0161 0.0256 ...
 # $ nsites: num 9
 # $ nyears: num 7
@@ -82,7 +81,7 @@ str(jags.data)
 cat(file = "model1.txt", "
 model {
   # Priors and linear models
-  # Linear models for the 8 demographic parameters
+  # Linear models for the eight demographic parameters
   for (s in 1:nsites){
     for (t in start[s]:(nyears-1)){
       logit(phij[s,t]) <- mu.phij[s] + eps.phij[t] + eta.phij[s,t]
@@ -100,7 +99,7 @@ model {
     } #t
   } #s
 
-  # Priors for the means of the 8 demographic parameters
+  # Priors for the means of the eight demographic parameters
   for (s in 1:nsites){
     mu.phij[s] ~ dnorm(0, 0.001)
     overall.mean[1,s] <- ilogit(mu.phij[s])
@@ -150,17 +149,15 @@ model {
     } #t
   } #s
 
-  # Priors for precisions of the 8 demographic parameters
+  # Priors for precisions of the eight demographic parameters
   for (i in 1:8){
     tau.t[i] ~ dgamma(0.001, 0.001)
     tau2[i] <- 1 / tau.t[i]
     tau.st[i] ~ dgamma(0.001, 0.001)
     ypsilon2[i] <- 1 / tau.st[i]
-
-    # Intra-class corrections
+    # Intraclass correlation coefficients (ICC)
     ICC[i] <- tau2[i] / (tau2[i] + ypsilon2[i])
   }
-
   # Observation error for state-space model
   for (s in 1:nsites){
     tau.y[s] ~ dgamma(0.001, 0.001)
@@ -174,11 +171,12 @@ model {
     S[s,start[s]] ~ dcat(pinit[s,]) # Surviving adults
     I[s,start[s]] ~ dcat(pinit[s,]) # Immigrants
   }
+
   # Process model over time: our model of population dynamics
   for (s in 1:nsites){
     for (t in (start[s]+1):nyears){
       R[s,t] ~ dpois((rho[1,s,t-1] * zeta[1,s,t-1] + kappa[s,t-1] * rho[2,s,t-1] * zeta[2,s,t-1]) *
-      0.5 * phij[s,t-1] * N[s,t-1])
+          0.5 * phij[s,t-1] * N[s,t-1])
       S[s,t] ~ dbin(phia[s,t-1], N[s,t-1])
       I[s,t] ~ dpois(N[s,t-1] * omega[s,t-1])
     } #t
@@ -199,11 +197,9 @@ model {
       # Clutch size and fledging success of first brood
       c[1,s,t] ~ dpois(rho[1,s,t] * b[1,s,t])
       f[1,s,t] ~ dbin(zeta[1,s,t], c[1,s,t])
-
       # Clutch size and fledging success of second brood
       c[2,s,t] ~ dpois(rho[2,s,t] * b[2,s,t])
       f[2,s,t] ~ dbin(zeta[2,s,t], c[2,s,t])
-
       # Probability to conduct a second brood
       w[s,t] ~ dbin(kappa[s,t], v[s,t])
     } #t
@@ -226,7 +222,7 @@ model {
       # Above main diagonal
       for (j in (t+1):(nyears-1)){
         pr.j[s,t,j] <- phij[s,t] * prod(phia[s,(t+1):j]) * qj[s,t] * prod(qa[s,t:(j-1)]) *
-        pa[s,j] / qa[s,t]
+            pa[s,j] / qa[s,t]
         pr.a[s,t,j] <- prod(phia[s,t:j]) * prod(qa[s,t:(j-1)]) * pa[s,j]
       } #j
       # Below main diagonal
@@ -251,13 +247,14 @@ parameters <- c("phij", "phia", "omega", "rho", "zeta", "kappa", "pj", "pa", "R"
     "eta.phia", "eta.omega", "eta.rho", "eta.zeta", "eta.kappa", "tau2", "ypsilon2", "ICC", "sigma2")
 
 # MCMC settings
-# ni <- 50000; nt <- 40; nb <- 10000; nc <- 3; na <- 5000
+# ni <- 50000; nb <- 10000; nc <- 3; nt <- 40; na <- 5000
 ni <- 5000; nt <- 4; nb <- 1000; nc <- 3; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 12 min) and check convergence
-out1 <- jags(jags.data, inits, parameters, "model1.txt", n.chains=nc, n.thin=nt, n.iter=ni,
-    n.burnin=nb, n.adapt=na, parallel=T)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
+
 
 # ICC for the population growth rate
 # ''''''''''''''''''''''''''''''''''
@@ -282,7 +279,7 @@ model {
 
   # Priors for precisions
   tau.t ~ dgamma(0.001, 0.001)
-  tau.ts ~ dgamma(0.001, 0.001) # Residual, site-time variation
+  tau.ts ~ dgamma(0.001, 0.001)                   # Residual, site-time variation
 
   # Likelihood
   for (i in 1:nsamp){
@@ -298,25 +295,26 @@ model {
   tau2 <- 1 / tau.t
   ypsilon2 <- 1 / tau.ts
 
-  # Intra-class correction
+  # Intraclass correlation coefficient (ICC)
   ICC <- tau2 / (tau2 + ypsilon2)
 }
 ")
 
 # Initial values
-inits <- function(){list(tau.t = 0.01)}
+inits <- function(){list(tau.t=0.01)}
 
 # Parameters monitored
 parameters <- c("ICC", "tau2", "ypsilon2", "mu")
 
 # MCMC settings
-# ni <- 10000; nt <- 1; nb <- 5000; nc <- 3; na <- 2000
+# ni <- 10000; nb <- 5000; nc <- 3; nt <- 1; na <- 2000
 ni <- 1000; nt <- 1; nb <- 500; nc <- 3; na <- 200  # ~~~ for testing
 
 # Call JAGS from R (ART 54 min) and check convergence
-out2 <- jags(jags.data, inits, parameters, "model2.txt", n.chains=nc, n.thin=nt, n.iter=ni,
-    n.burnin=nb, n.adapt=na, parallel=TRUE)
+out2 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out2)
+
 
 # 16.6 Results
 # ============
@@ -337,7 +335,8 @@ print(out1, 3)
 # phij[1,3]        0.005  0.003    0.001    0.004    0.012    FALSE 1.000 1.002  1109
 # phij[2,3]        0.005  0.004    0.000    0.004    0.013    FALSE 1.000 1.001  1383
 # phij[3,3]        0.000  0.000    0.000    0.000    0.001    FALSE 1.000 1.026  3000
-# phij[4,3]        0.006  0.005    0.001    0.005    0.017    FALSE 1.000 1.002  3000 [... output truncated ...]
+# phij[4,3]        0.006  0.005    0.001    0.005    0.017    FALSE 1.000 1.002  3000
+# [... output truncated ...]
 
 print(out2, 3)
 

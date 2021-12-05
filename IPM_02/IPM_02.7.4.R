@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -18,7 +17,7 @@ nsites <- 1000                          # Number of sites
 # Simulate a habitat data set by drawing multinomial response with stated cell probs pi
 set.seed(48)
 hab.types <- c("cliff top", "forest edge", "rocky pasture", "scree")
-pi <- c(0.09, 0.32, 0.17, 0.42)                  # Relative probabilities, sum to 1
+pi <- c(0.09, 0.32, 0.17, 0.42)             # Relative probabilities, must sum to 1
 habitat <- rmultinom(1, nsites, pi)
 dimnames(habitat) <- list(hab.types, "Number of sites")
 habitat
@@ -43,11 +42,10 @@ cat(file="model4.txt", "
 model {
   # Priors and linear models
   # Cell probabilities for the multinomial
-  for (i in 1:k){                   # Loop over all cells in the multinomial
+  for (i in 1:k){                           # Loop over all cells in the multinomial
     d[i] ~ dgamma(1, 1)
     pi[i] <- d[i] / sum(d[])
   }
-
   # Likelihood for set of multinomial counts
   C ~ dmulti(pi, N)
 }
@@ -79,10 +77,10 @@ save(out5, file="IPM_02.7.4_out5.RData")
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Simulate survival data: individual encounter histories
-library(AHMbook); library(IPMbook)
+library(AHMbook)
 set.seed(39)
 dat <- simCJS(n.occ=4, n.marked=30, phi=0.7, p=0.4, show.plot=TRUE)
-dat$ch                                           # Look at these encounter history data (not shown)
+dat$ch                                      # Look at these encounter history data (not shown)
 
 # Produce the m-array from encounter histories
 Cmat <- marray(dat$ch)
@@ -107,32 +105,32 @@ str(jags.data)
 cat(file="model5.txt", "
 model {
   # Priors and linear models
-  phi ~ dunif(0, 1)                    # Apparent survival probability
-  p ~ dunif(0, 1)                      # Recapture probability
+  phi ~ dunif(0, 1)                         # Apparent survival probability
+  p ~ dunif(0, 1)                           # Recapture probability
 
   # Vectors of cell probabilities in the three multinomials
   # Release cohort 1
-  pi1[1] <- phi * p                    # First recaptured in recap year 2
-  pi1[2] <- phi^2 * (1-p) * p          # First recaptured in recap year 3
-  pi1[3] <- phi^3 * (1-p)^2 * p        # First recaptured in recap year 4
-  pi1[4] <- 1 - sum(pi1[1:3])          # Never recaptured
+  pi1[1] <- phi * p                         # First recaptured in recap year 2
+  pi1[2] <- phi^2 * (1-p) * p               # First recaptured in recap year 3
+  pi1[3] <- phi^3 * (1-p)^2 * p             # First recaptured in recap year 4
+  pi1[4] <- 1 - sum(pi1[1:3])               # Never recaptured
 
   # Release cohort 2
-  pi2[1] <- 0                          # Takes account of structural zero counts
+  pi2[1] <- 0                               # Takes account of structural zero counts
   pi2[2] <- phi * p
   pi2[3] <- phi^2 * (1-p) * p
   pi2[4] <- 1 - sum(pi2[1:3])
 
   # Release cohort 3
-  pi3[1] <- 0                          # Accounts for structural zero counts
-  pi3[2] <- 0                          # Accounts for structural zero counts
+  pi3[1] <- 0                               # Accounts for structural zero counts
+  pi3[2] <- 0                               # Accounts for structural zero counts
   pi3[3] <- phi * p
   pi3[4] <- 1 - sum(pi3[1:3])
 
   # Likelihood: one multinomial for each row in the m-array
-  marray[1,] ~ dmulti(pi1, R[1])       # MN for release cohort 1
-  marray[2,] ~ dmulti(pi2, R[2])       # MN for release cohort 2
-  marray[3,] ~ dmulti(pi3, R[3])       # MN for release cohort 3
+  marray[1,] ~ dmulti(pi1, R[1])            # MN for release cohort 1
+  marray[2,] ~ dmulti(pi2, R[2])            # MN for release cohort 2
+  marray[3,] ~ dmulti(pi3, R[3])            # MN for release cohort 3
 }
 ")
 
@@ -162,7 +160,6 @@ print(out6, 3)
 
 # Print the pi matrix: cell probabilities for all 3 release cohorts
 print(rbind(out6$mean$pi1, out6$mean$pi2, out6$mean$pi3), 3)
-
 #      [,1]  [,2]   [,3]  [,4]
 # [1,] 0.29 0.141 0.0723 0.497
 # [2,] 0.00 0.290 0.1410 0.569

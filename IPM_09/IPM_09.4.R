@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 9 : Retrospective population analyses
 # ---------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -16,7 +15,8 @@ draws <- out1$sims.list
 # =============================================
 
 lambda <- expression(((n1 + n3) * 0.5 * phij * f1 + n2 * 0.5 * phij * f2 + (phia + om) *
-    (n1 + n2 + n3))/ (n1 + n2 + n3)) # Define lambda
+    (n1 + n2 + n3)) / (n1 + n2 + n3))             # Define lambda
+
 D(lambda, "phij") # Get derivative for juvenile apparent survival
 # ((n1 + n3) * 0.5 * f1 + n2 * 0.5 * f2)/(n1 + n2 + n3)
 
@@ -29,6 +29,7 @@ n3 <- draws$N[, 3, 1:n.years] / draws$Ntot[, 1:n.years]
 # Extract the mean demographic rates and population sizes and store them in a list
 mu <- list(phij=draws$mean.phij, phia=draws$mean.phia, om=draws$mean.omega, f1=draws$mean.f1,
     f2=draws$mean.f2, n1=apply(n1, 1, mean), n2=apply(n2, 1, mean), n3=apply(n3, 1, mean))
+
 # Calculate sensitivities
 sens <- matrix(NA, n.draws, 8)
 colnames(sens) <- c("phij", "phia", "om", "f1", "f2", "n1", "n2", "n3")
@@ -49,8 +50,8 @@ colnames(cont) <- c("phij", "phia", "om", "f1", "f2", "n1", "n2", "n3")
 for (s in 1:n.draws){
   dp_stoch <- cbind(draws$phij[s,], draws$phia[s,], draws$omega[s,], draws$f1[s,1:n.years],
       draws$f2[s,1:n.years], n1[s,], n2[s,], n3[s,])
-  # Derive process variance and covariance among demographic parameters using shrunken estimates of
-  #   demographic rates and proportional pop. sizes
+  # Derive process variance and covariance among demographic parameters using shrunk estimates of
+  #     demographic rates and proportional pop. sizes
   dp_varcov <- var(dp_stoch)
   sensvec <- sens[s, ]
   # Calculate demographic contributions
@@ -72,6 +73,7 @@ a <- barplot(colMeans(cont), names.arg=names.arg, ylab="Contribution", las=1,
 segments(a, CRI[1,], a, CRI[2,], lwd=1.5)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 # Compute differences and means of demographic rates and population structure between successive years
 diff <- array(NA, dim=c(n.draws, n.years-1, 8))
 dimnames(diff)[[3]] <- c("phij", "phia", "om", "f1", "f2", "n1", "n2", "n3")
@@ -90,9 +92,10 @@ diff[,,"n3"] <- getDiff(draws$N[,3,])
 
 # Function to compute means over successive time steps, store them in a list
 getMn <- function(x) (x[,2:n.years] + x[,1:(n.years-1)]) / 2
-means <- list(phij=getMn(draws$phij),
-    phia=getMn(draws$phia), om=getMn(draws$om), f1=getMn(draws$f1), f2=getMn(draws$f2),
-    n1=getMn(draws$N[,1,]), n2=getMn(draws$N[,2,]), n3=getMn(draws$N[,3,]))
+
+means <- list(phij=getMn(draws$phij), phia=getMn(draws$phia), om=getMn(draws$om),
+    f1=getMn(draws$f1), f2=getMn(draws$f2), n1=getMn(draws$N[,1,]), n2=getMn(draws$N[,2,]),
+    n3=getMn(draws$N[,3,]))
 
 # Compute sensitivities
 senss <- array(NA, dim=c(n.draws, n.years-1, 8))

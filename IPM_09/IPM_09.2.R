@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 9 : Retrospective population analyses
 # ---------------------------------------------
-# Code from proofs.
 
 # Run time approx. 1 min
 
@@ -13,12 +12,12 @@ library(IPMbook); library(jagsUI)
 data(hoopoe)
 str(hoopoe)
 # List of 5
-# $ ch : int [1:3844, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
+# $ ch       : int [1:3844, 1:16] 0 0 0 0 0 0 0 0 0 0 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : NULL
 # .. ..$ : chr [1:16] "2002" "2003" "2004" "2005" ...
-# $ age : int [1:3844] 1 1 1 1 1 1 1 1 1 1 ...
-# $ count : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
+# $ age      : int [1:3844] 1 1 1 1 1 1 1 1 1 1 ...
+# $ count    : num [1:16] 34 46 68 93 88 87 85 78 82 84 ...
 # $ reproAgg:List of 4
 # ..$ J1: num [1:16] 73 188 243 320 261 222 206 154 278 220 ...
 # ..$ J2: num [1:16] 51 83 101 182 256 226 206 278 237 244 ...
@@ -38,7 +37,7 @@ marr.a <- marr[,,2]
 jags.data <- with(hoopoe$reproAgg, list(marr.j=marr.j, marr.a=marr.a, n.occasions=ncol(marr.j),
     rel.j=rowSums(marr.j), rel.a=rowSums(marr.a), J1=J1, B1=B1, J2=J2, B2=B2, count=hoopoe$count,
     pNinit=dUnif(1, 50)))
-str(jags.data)                            # Remind ourselves of how the data look like
+str(jags.data)                                    # Remind ourselves of how the data look like
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -57,7 +56,6 @@ model {
   mean.omega ~ dunif(0, 3)
   mean.p ~ dunif(0, 1)
   mean.pj ~ dunif(0, 1)
-
   sigma.phij ~ dunif(0, 3)
   tau.phij <- pow(sigma.phij, -2)
   sigma.phia ~ dunif(0, 3)
@@ -68,8 +66,7 @@ model {
   tau.f1 <- pow(sigma.f1, -2)
   sigma.f2 ~ dunif(0, 3)
   tau.f2 <- pow(sigma.f2, -2)
-
-  sigma ~ dunif(0.4, 20)                  # lower bound > 0
+  sigma ~ dunif(0.4, 20)                          # lower bound >0
   tau <- pow(sigma, -2)
 
   # Linear models for demographic parameters
@@ -106,7 +103,7 @@ model {
   # Observation model
   for (t in 1:n.occasions){
     count[t] ~ dnorm(Ntot[t], tau)
-    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]   # total population size
+    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]           # total population size
   }
 
   # Productivity data (Poisson regression model)
@@ -216,9 +213,9 @@ print(out1, 3)
 save(out1, file="ResultsHoopoe.Rdata")
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-n.draws <- out1$mcmc.info$n.samples # Determine number of MCMC draws
-corr <- matrix(NA, ncol=5, nrow=n.draws) # Create object to hold results
-draws <- out1$sims.list # Dig out MCMC samples
+n.draws <- out1$mcmc.info$n.samples               # Determine number of MCMC draws
+corr <- matrix(NA, ncol=5, nrow=n.draws)          # Create object to hold results
+draws <- out1$sims.list                           # Dig out MCMC samples
 for (s in 1:n.draws){ # Loop over all MCMC draws and get correlations
   corr[s,1] <- cor(draws$phij[s,], draws$lambda[s,])
   corr[s,2] <- cor(draws$phia[s,], draws$lambda[s,])

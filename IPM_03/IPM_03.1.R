@@ -3,7 +3,6 @@
 # ----------------------------------------------------
 # Code from final MS.
 
-library(IPMbook) ; library(jagsUI)
 
 # 3.1 Introduction
 # ================
@@ -18,6 +17,7 @@ for (t in 1:T){                     # Loop over years
     N[t+1,k] <- lambda[k] * N[t,k]  # Project pop. one time step forward
   } #k
 } #t
+
 op <- par(cex=1.4)
 plot(N[,1], type="l", ylim=range(N), ylab="Population size", xlab="Year", axes=FALSE, lwd=2.5)
 lines(N[,2], lwd=2.5)

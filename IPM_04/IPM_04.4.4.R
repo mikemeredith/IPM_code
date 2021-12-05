@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -20,6 +19,7 @@ C <- rpois(nbrood, expNyoung)
 # 4.4.4 Censoring in brood size data
 # ----------------------------------
 
+# Simulate right-censored Poisson observations
 set.seed(1)
 C3 <- C                                         # Make another copy of the data set
 sum(C3 >= 2)                                    # How many broods 2 or greater ? -- 439
@@ -31,7 +31,7 @@ mean(C3)                                        # Mean of C3 biased low
 # [1] 1.529
 # [1] 1.229
 
-C4 <- C3 # Make another copy
+C4 <- C3                                        # Make another copy
 C4[censored.broods] <- NA                       # Censored are NA'd out
 d <- as.numeric(is.na(C4))                      # Binary censoring indicator
 
@@ -40,8 +40,8 @@ d <- as.numeric(is.na(C4))                      # Binary censoring indicator
 # Equal to observed value plus some small value for non-censored
 cens.threshold <- C3
 cens.threshold[d==0] <- C3[d==0] + 0.1
-# Look at first 6 rows
 cbind('Truth'=C, 'Obs w/cens'=C3, 'Modelled data (C4)'=C4, 'Cens. indicator (d)'=d, cens.threshold)[1:6,]
+              # Look at first 6 rows
 #      Truth Obs w/cens Modelled data (C4) Cens. indicator (d) cens.threshold
 # [1,]     0          0                  0                   0            0.1
 # [2,]     0          0                  0                   0            0.1
@@ -88,8 +88,9 @@ ni <- 2000; nb <- 1000; nc <- 3; nt <- 2; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out14 <- jags(jags.data, inits, parameters, "model11.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out14)                        # Not shown
+traceplot(out14) # Not shown
 print(out14, 3)
+
 #                         mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # rho                    1.446  0.042    1.363    1.445    1.531    FALSE 1 1.001  1500
 # C4[1]                  0.000  0.000    0.000    0.000    0.000    FALSE 1    NA     1
@@ -104,10 +105,10 @@ print(out14, 3)
 mean(C3)
 # [1] 1.229
 
-C5 <- C # Make another copy of the data
+C5 <- C                                         # Make another copy of the data
 # Assume last 200 broods only known to be a success or failure
-C5part1 <- C5[1:800]                    # The normal counts
-C5part2 <- as.numeric(C5[801:1000]>0)   # Success/failure indicators
+C5part1 <- C5[1:800]                            # The unaltered counts
+C5part2 <- as.numeric(C5[801:1000]>0)           # Success/failure indicators
 
 # Data bundle
 jags.data <- list(C5part1copy=C5part1, C5part1=C5part1, C5part2=C5part2)
@@ -121,8 +122,8 @@ str(jags.data)
 cat(file="model12.txt", "
 model {
   # Priors
-  rho1 ~ dunif(0, 5)                    # for model part 1
-  rho2 ~ dunif(0, 5)                    # for model part 2
+  rho1 ~ dunif(0, 5)                            # For model part 1
+  rho2 ~ dunif(0, 5)                            # For model part 2
 
   # Likelihood
   # First model: Poisson GLM for C5 (part 1)
@@ -132,10 +133,10 @@ model {
 
   # Second, integrated model: Poisson GLM for C5 (part 1) plus a Bernoulli GLM for C5 (part 2) with
   # appropriate definition of the success probability as a function of the same rho
-  for (i in 1:800){                     # Submodel for part 1 of the data
+  for (i in 1:800){                             # Submodel for part 1 of the data
     C5part1[i] ~ dpois(rho2)
   }
-    for (i in 1:200){                   # Submodel for part 2 of the data
+  for (i in 1:200){                             # Submodel for part 2 of the data
     C5part2[i] ~ dbern(1 - exp(-rho2))
   }
 }
@@ -155,6 +156,7 @@ out15 <- jags(jags.data, inits, parameters, "model12.txt", n.iter=ni, n.burnin=n
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out15) # Not shown
 print(out15, 3)
+
 #              mean    sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # rho1        1.545 0.045    1.461    1.545    1.638    FALSE 1 1.001  1173
 # rho2        1.526 0.041    1.445    1.526    1.608    FALSE 1 1.001  1053

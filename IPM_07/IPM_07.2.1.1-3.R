@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 7 : Assessment of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 8 mins
 
@@ -82,8 +81,8 @@ model {
   # 1. Compute fit statistic for observed data
   # 1.1. Discrepancy measure: mean absolute error
   for (t in 1:n.occasions){
-    C.exp[t] <- N[1,t] + N[2,t]                            # Expected counts
-    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])           # Discrepancy measure
+    C.exp[t] <- N[1,t] + N[2,t]                       # Expected counts
+    Dssm.obs[t] <- abs((C[t] - C.exp[t]) / C[t])      # Discrepancy measure
   }
   Dmape.obs <- sum(Dssm.obs)
   # 1.2. Test statistic: number of turns
@@ -97,8 +96,8 @@ model {
   # 2. Compute fit statistic for replicate data
   # 2.1. Discrepancy measure: mean absolute error
   for (t in 1:n.occasions){
-    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)                 # Generate replicate data
-    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t])   # Discrepancy measure
+    C.rep[t] ~ dnorm(N[1,t] + N[2,t], tau)                # Generate replicate data
+    Dssm.rep[t] <- abs((C.rep[t] - C.exp[t]) / C.rep[t])  # Discrepancy measure
   }
   Dmape.rep <- sum(Dssm.rep)
   # 2.2. Test statistic: number of turns
@@ -118,16 +117,17 @@ model {
   # 1. Compute fit statistic for observed data
   # 1.1. Discrepancy measure: deviance
   for (i in 1:length(J)){
-    J.exp[i] <- f[age[i],year[i]]                          # Expected data
+    J.exp[i] <- f[age[i],year[i]]                     # Expected data
     D.obs[i] <- J[i] * log(J[i]/J.exp[i]) - (J[i] - J.exp[i])
   }
   Dd.obs <- sum(D.obs)
   # 1.2. Compute test statistic variance-mean ratio
   Tvm.obs <- pow(sd(J),2) / mean(J)
+
   # 2. Compute fit statistic for replicate data
   # 2.1. Discrepancy measure: mean absolute error
   for (i in 1:length(J)){
-    J.rep[i] ~ dpois(f[age[i], year[i]])                   # Generate replicate data
+    J.rep[i] ~ dpois(f[age[i], year[i]])              # Generate replicate data
     D.rep[i] <- J.rep[i] * log(J.rep[i]/J.exp[i]) - (J.rep[i] - J.exp[i])
   }
   Dd.rep <- sum(D.rep)
@@ -168,8 +168,8 @@ model {
   # 1.1. Discrepancy measure: Freeman-Tukey statistic
   for (t in 1:(n.occasions-1)){
     for (j in 1:n.occasions){
-      marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]              # Expected values
-      marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]              # Expected values
+      marr.j.exp[t,j] <- pr.j[t,j] * rel.j[t]         # Expected values
+      marr.a.exp[t,j] <- pr.a[t,j] * rel.a[t]         # Expected values
       Dcjs.obs[t,j] <- pow(pow(marr.j[t,j], 0.5) - pow(marr.j.exp[t,j], 0.5), 2)
       Dcjs.obs[t+n.occasions-1,j] <- pow(pow(marr.a[t,j], 0.5) - pow(marr.a.exp[t,j], 0.5), 2)
     } #j
@@ -229,7 +229,6 @@ print(out1, 3)
 # DFT.obs     40.387  1.377   38.306   40.197   43.570    FALSE 1 1.001  2632
 # DFT.rep     44.305  4.988   35.164   44.060   54.851    FALSE 1 1.000  7500
 # deviance  4291.706  7.552 4276.959 4291.616 4306.746    FALSE 1 1.000  7500
-
 
 # ~~~~ Plotting function for section 7.2.1 ~~~~
 

@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from proofs.
 
 # 3.3 Classical analysis of a matrix population model
 # ===================================================
@@ -10,15 +9,14 @@
 #       demographic stochasticity
 # -----------------------------------------------------------
 
-# Define means of the demographic rates and strength of density-dependence
+# Define means of the demographic rates and strength of density dependence
 mean.sj <- 0.3
 mean.sa <- 0.55
-f1.int <- 2.3     # Productivity of 1y females when population size is 0
-f1.beta <- -0.02  # Strength of density-dependence on productivity of 1y
-
-# This is simply the slope of the regression of f1 on N
-fa.int <- 2.3     # Productivity of adult females when population size is 0
-fa.beta <- -0.01  # Strength of density-dependence on productivity of adults
+f1.int <- 2.3         # Productivity of 1y females when population size is 0
+f1.beta <- -0.02      # Strength of density dependence on productivity of 1y
+                      # This is simply the slope of the regression of f1 on N
+fa.int <- 2.3         # Productivity of adult females when population size is 0
+fa.beta <- -0.01      # Strength of density dependence on productivity of adults
 
 # Define the number of years with predictions
 T <- 200
@@ -76,7 +74,7 @@ mtext("C", at=1, cex=1.5)
 par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-mean(Nall[T+1,])
+mean(N[1,T+1,] + N[2,T+1,])
 # [1] 52.687
 
 mean(f1[T,], na.rm=TRUE)
@@ -84,5 +82,5 @@ mean(f1[T,], na.rm=TRUE)
 mean(fa[T,], na.rm=TRUE)
 # [1] 1.768969
 
-mean(Nall[201,] == 0)
+mean(N[1,T+1,] + N[2,T+1,] == 0)
 # [1] 0.001

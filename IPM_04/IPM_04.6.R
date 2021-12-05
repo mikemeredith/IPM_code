@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 8 mins
 
@@ -10,17 +9,18 @@ library(IPMbook) ; library(jagsUI)
 # 4.6 Brief introduction to spatial capture-recapture (SCR) modeling
 # ==================================================================
 
+# ~~~ This does not work with current versions of R ~~~
 # library(scrbook)                      # From sites.google.com/site/spatialcapturerecapture/
 # ?simSCR0                              # Open help page
 
 # str(dat <- simSCR0(N=100, K=20, discard0=TRUE, array3d=FALSE, rnd=2013))
 
-N <- 100                                # Population size: number of ind. living in state space
+N <- 100                                # Population size: number of individuals living in state space
 K <- 20                                 # Number of trap nights
 rnd <- 2013                             # Random number seed
 
 traplocs <- cbind(sort(rep(1:5, 5)), rep(1:5, 5)) # Set up trapping grid
-J <- nrow(traplocs)                     # Number of traps (ntraps)
+J <- nrow(traplocs)                               # Number of traps (ntraps)
 
 # Set up state space
 buffer <- 2                             # Buffer size = 2 units
@@ -28,13 +28,7 @@ Xl <- min(traplocs[, 1] - buffer)       # X lower
 Xu <- max(traplocs[, 1] + buffer)       # X upper
 Yl <- min(traplocs[, 2] - buffer)       # Y lower
 Yu <- max(traplocs[, 2] + buffer)       # Y upper
-# ~~~~ plot it ~~~~
-plot(traplocs,
-    main="Plot of state-space in our simulation: \ni.e., the 5x5 trapping array, with a 2-unit buffer",
-    xlim=c(Xl, Xu), ylim=c(Yl, Yu), pch=16, frame=FALSE, xlab='x-coord', ylab='y-coord')     # not shown
-# ~~~~~~~~~~~~~~~~~~
 
-# Simulate point process by generating coordinates of ACs
 set.seed(rnd)                           # Set seed
 sx <- runif(N, Xl, Xu)
 sy <- runif(N, Yl, Yu)
@@ -85,12 +79,12 @@ par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Define parameters of detection probability
-alpha0 <- -2.5                          # Logit(baseline detection prob, right on a trap)
-plogis(alpha0)                          # p0: detection prob for AC right ON a trap: 0.0758
+alpha0 <- -2.5                          # Logit(baseline detection probability right on a trap)
+plogis(alpha0)                          # p0: detection probability for AC right ON a trap: 0.0758
 sigma <- 0.5                            # Scale parameter of half-normal kernel
 alpha1 <- 1 / (2 * sigma^2)             # Coefficient on distance
 
-# Compute probability of detection for each combo of animal and trap
+# Compute probability of detection for each combination of animal and trap
 probcap <- plogis(alpha0) * exp(-alpha1 * D^2)
 str(probcap)                            # This is a 100 x 25 matrix
 
@@ -107,10 +101,10 @@ exp(-alpha1 * sigma^2)                  # Drop to about 60% of max(p), which is 
 # [1] 0.6065307
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-y3d <- array(NA, dim=c(N, J, K)) # Dim is ind. x trap X night
-for (i in 1:nrow(y3d)){                     # Loop over individuals
-  for (j in 1:J){                           # Loop over traps
-    y3d[i,j,] <- rbinom(K, 1, probcap[i,j]) # Bernoulli trials
+y3d <- array(NA, dim=c(N, J, K))                  # Dimension is individual x trap x night
+for (i in 1:nrow(y3d)){                           # Loop over individuals
+  for (j in 1:J){                                 # Loop over traps
+    y3d[i,j,] <- rbinom(K, 1, probcap[i,j])       # Bernoulli trials
   } #j
 } #i
 
@@ -165,24 +159,24 @@ str(y)
 # ..$ : chr [1:35] "1" "2" "3" "4" ...
 # ..$ : chr [1:25] "trap1" "trap2" "trap3" "trap4" ...
 
-Sobs <- S[totalcaps > 0,] # Activity center coordinates of detected animals
+Sobs <- S[totalcaps > 0,]               # Activity center coordinates of detected animals
 # op <- par(ask=TRUE)
-op <- par(ask=dev.interactive(orNone=TRUE))   # ~~~ for testing
-for (i in 1:nrow(y)){                         # Loop over individuals
-plot(traplocs, xlim=c(Xl, Xu), ylim=c(Yl, Yu), pch=16, xlab='x-coordinate', ylab='y-coordinate',
-frame=FALSE)
-points(S[totalcaps == 0,], col='red', pch=1)  # Never captured
-points(S[totalcaps > 0,], col='red', pch=16)  # Captured >0 times
-for (k in 1:i){
-tmp <- which(y[k,] > 0)                       # Detected by which trap
-for (j in 1:length(tmp)){
-segments(Sobs[k,1], Sobs[k,2], traplocs[tmp,1], traplocs[tmp,2], col='gray', lty=1)
-} #j
-} #k
-for (j in 1:length(tmp)){
-segments(Sobs[i,1], Sobs[i,2], traplocs[tmp,1], traplocs[tmp,2], col='red', lwd=2)
-} #j
-title(main=paste('Lynx', i, 'caught in: ', paste(names(tmp), collapse=", ")))
+op <- par(ask=dev.interactive(orNone=TRUE))     # ~~~ for testing
+for (i in 1:nrow(y)){                           # Loop over individuals
+  plot(traplocs, xlim=c(Xl, Xu), ylim=c(Yl, Yu), pch=16, xlab='x-coordinate', ylab='y-coordinate',
+      frame=FALSE)
+  points(S[totalcaps == 0,], col='red', pch=1)  # Never captured
+  points(S[totalcaps > 0,], col='red', pch=16)  # Captured >0 times
+  for (k in 1:i){
+    tmp <- which(y[k,] > 0)                     # Detected by which trap
+    for (j in 1:length(tmp)){
+      segments(Sobs[k,1], Sobs[k,2], traplocs[tmp,1], traplocs[tmp,2], col='gray', lty=1)
+    } #j
+  } #k
+  for (j in 1:length(tmp)){
+    segments(Sobs[i,1], Sobs[i,2], traplocs[tmp,1], traplocs[tmp,2], col='red', lwd=2)
+  } #j
+  title(main=paste('Lynx', i, 'caught in: ', paste(names(tmp), collapse=", ")))
 } #i
 par(op)
 
@@ -193,7 +187,7 @@ ylim <- c(Yl, Yu)                                       # y limits of state-spac
 A <- (max(xlim) - min(xlim)) * (max(ylim) - min(ylim))  # State-space area
 
 # Data augmentation
-M <- 200                                                # Allow for up to M-35=175 undetected lynx
+M <- 200                                                # Allow for up to M-35=165 undetected lynx
 y <- rbind(y, matrix(0, nrow=M - nind, ncol=ncol(y)))
 
 # Bundle data
@@ -214,10 +208,9 @@ cat(file="model23.txt", "
 model {
   # Priors and linear models
   p0 ~ dunif(0, 1)                      # Baseline detection probability
-  alpha0 <- logit(p0)
-  alpha1 ~ dnorm(0, 0.1)                # 1 / (2*sigma^2) (coef of distance)
-  sigma <- sqrt(1 / (2 * alpha1))       # Half-normal scale
-  psi ~ dunif(0, 1)                     # Data augmentation
+  alpha ~ dnorm(0, 0.1)                 # 1 / (2*sigma^2) (coef of distance)
+  sigma <- sqrt(1 / (2 * alpha))        # Half-normal scale
+  psi ~ dunif(0, 1)                     # Data augmentation parameter
 
   # Likelihood
   for (i in 1:M){                       # Loop over all M=200 individuals
@@ -228,7 +221,7 @@ model {
     # Observation model: p ~ distance between trap and estimated AC
     for (j in 1:J){                     # Loop over all traps
       d2[i,j] <- pow(s[i,1] - traplocs[j,1], 2) + pow(s[i,2] - traplocs[j,2], 2) # Distance squared
-      p[i,j] <- z[i] * p0 * exp(-alpha1 * d2[i,j]) # Detection prob.
+      p[i,j] <- z[i] * p0 * exp(-alpha * d2[i,j]) # Detection prob.
       y[i,j] ~ dbin(p[i,j],K)           # Observed detection frequencies
     } #j
   } #i
@@ -248,10 +241,10 @@ for (i in 1:nind){
   sst[i, 2] <- mean(traplocs[y[i, ] > 0, 2])
 }
 zst <- c(rep(1, nind), rep(0, M - nind))
-inits <- function() {list(p0=runif(1), alpha1=runif(1, 1, 2), s=sst, z=zst)}
+inits <- function() {list(p0=runif(1), alpha=runif(1, 1, 2), s=sst, z=zst)}
 
 # Parameters to save
-parameters <- c("alpha0", "alpha1", "sigma", "N", "D", "s", "z")
+parameters <- c("alpha", "sigma", "N", "D", "s", "z")
 
 # MCMC settings
 ni <- 15000; nb <- 5000; nc <- 3; nt <- 5; na <- 1000
@@ -259,18 +252,18 @@ ni <- 15000; nb <- 5000; nc <- 3; nt <- 5; na <- 1000
 # Call JAGS (ART 7 min), check convergence and summarize posteriors
 out26 <- jags(jags.data, inits, parameters, "model23.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out26)                        # Not shown
+traceplot(out26) # Not shown
 print(out26, 3)
-#             mean     sd    2.5%     50%   97.5% overlap0     f  Rhat n.eff
-# alpha0    -2.454  0.208  -2.865  -2.449  -2.056    FALSE 1.000 1.002  1124
-# alpha1     1.878  0.308   1.323   1.860   2.533    FALSE 1.000 1.002  1022
-# sigma      0.521  0.043   0.444   0.519   0.615    FALSE 1.000 1.002  1102
-# N         78.992 11.405  59.000  78.000 104.000    FALSE 1.000 1.001  1236
-# D          1.234  0.178   0.922   1.219   1.625    FALSE 1.000 1.001  1236
-# s[1,1]     3.006  0.377   2.258   3.007   3.740    FALSE 1.000 1.000  6000
-# s[2,1]     4.720  0.331   4.091   4.706   5.406    FALSE 1.000 1.000  4089
-# s[3,1]     5.226  0.408   4.416   5.242   5.972    FALSE 1.000 1.001  2284
+#          mean     sd   2.5%    50%   97.5% overlap0     f  Rhat n.eff
+# alpha   1.878  0.308  1.323  1.860   2.533    FALSE 1.000 1.002  1022
+# sigma   0.521  0.043  0.444  0.519   0.615    FALSE 1.000 1.002  1102
+# N      78.992 11.405 59.000 78.000 104.000    FALSE 1.000 1.001  1236
+# D       1.234  0.178  0.922  1.219   1.625    FALSE 1.000 1.001  1236
+# s[1,1]  3.006  0.377  2.258  3.007   3.740    FALSE 1.000 1.000  6000
+# s[2,1]  4.720  0.331  4.091  4.706   5.406    FALSE 1.000 1.000  4089
+# s[3,1]  5.226  0.408  4.416  5.242   5.972    FALSE 1.000 1.001  2284
 # [... output truncated ...]
+
 
 # ~~~~ Plot posteriors of population size and density parameters, figure 4.18 ~~~~
 op <- par(mfrow=c(1, 2), mar=c(5,5,4,3), cex.axis=1.25, cex.lab=1.25, las=1)
@@ -336,7 +329,7 @@ sum(D.hat1)                             # Check, should be the same as the poste
 
 # Make a plot of that density table
 image(xg, yg, D.hat1, col=cl, xlab='x-coordinate', ylab='y-coordinate', asp=1,
-    main='Density based on home range centers')
+    main='Density based on home-range centers')
 points(Sobs, col='red', pch=16)
 points(traplocs, pch=16)
 points(S, col='red')
@@ -360,15 +353,13 @@ for (i in 1:niter){
   y <- ifelse(y < Xl, 2*Yl - y, y)
   u[i,,] <- cbind(x, y)
 }
-u[z == 0] <- NA # 'Remove' ghost individuals
-
+u[z == 0] <- NA                         # 'Remove' ghost individuals
 # Associate each draw with its pixel
 Lx2 <- cut(u[,,1], breaks=xg, include.lowest=TRUE)
 Ly2 <- cut(u[,,2], breaks=yg, include.lowest=TRUE)
 # Tally up the number of samples per pixel: a density table
 D.hat2 <- table(Lx2, Ly2) / niter
 sum(D.hat2)                             # Check, should be the same as the posterior mean of N
-
 # Make a plot of that density table
 image(xg, yg, D.hat2, col=cl, xlab='x-coordinate', ylab='y-coordinate', asp=1,
     main='Density based on animal locations')

@@ -1,11 +1,9 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 10 : Population viability analysis
 # ------------------------------------------
-# Code from proofs.
 
 # Run time approx 9 mins
 
-library(IPMbook) ; library(jagsUI)
 
 # 10.5 A PVA for simulated woodchat shrike data
 # =============================================
@@ -14,34 +12,34 @@ library(IPMbook) ; library(jagsUI)
 # ------------------------------------------------------------------
 
 # Load woodchat shrike data and produce data overview
-library(IPMbook)
+library(IPMbook); library(jagsUI)
 data(woodchat10)
 str(woodchat10)
 # List of 5
 # $ marr.a: num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
 # $ marr.j: num [1:19, 1:20] 1 0 0 0 0 0 0 0 0 0 ...
-# $ J : num [1:20] 11 12 17 9 12 30 17 11 10 20 ...
-# $ B : num [1:20] 9 10 9 4 10 13 11 11 8 10 ...
+# $ J     : num [1:20] 11 12 17 9 12 30 17 11 10 20 ...
+# $ B     : num [1:20] 9 10 9 4 10 13 11 11 8 10 ...
 # $ count : num [1:20] 10 12 9 4 11 14 18 11 8 13 ...
 
 # Bundle data
-K <- 15 # Number of years with predictions
+K <- 15                                           # Number of years with predictions
 jags.data <- list(marr.j=woodchat10$marr.j, marr.a=woodchat10$marr.a,
     n.occasions=ncol(woodchat10$marr.j), rel.j=rowSums(woodchat10$marr.j),
     rel.a=rowSums(woodchat10$marr.a), J=woodchat10$J, B=woodchat10$B, count=woodchat10$count,
     pNinit=dUnif(1, 50), K=K)
 str(jags.data)
 # List of 10
-# $ marr.j : num [1:19, 1:20] 1 0 0 0 0 0 0 0 0 0 ...
-# $ marr.a : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.j     : num [1:19, 1:20] 1 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
 # $ n.occasions: int 20
-# $ rel.j : num [1:19] 30 41 39 42 44 26 39 35 31 47 ...
-# $ rel.a : num [1:19] 18 16 14 20 21 21 20 17 19 18 ...
-# $ J : num [1:20] 11 12 17 9 12 30 17 11 10 20 ...
-# $ B : num [1:20] 9 10 9 4 10 13 11 11 8 10 ...
-# $ count : num [1:20] 10 12 9 4 11 14 18 11 8 13 ...
-# $ pNinit : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
-# $ K : num 15
+# $ rel.j      : num [1:19] 30 41 39 42 44 26 39 35 31 47 ...
+# $ rel.a      : num [1:19] 18 16 14 20 21 21 20 17 19 18 ...
+# $ J          : num [1:20] 11 12 17 9 12 30 17 11 10 20 ...
+# $ B          : num [1:20] 9 10 9 4 10 13 11 11 8 10 ...
+# $ count      : num [1:20] 10 12 9 4 11 14 18 11 8 13 ...
+# $ pNinit     : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
+# $ K          : num 15
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -59,7 +57,7 @@ model {
     p[t] <- mean.p
   }
 
-  for (t in 1:(n.occasions-1+K)){         # Here we extend the loop to K more years
+  for (t in 1:(n.occasions-1+K)){                 # Here we extend the loop to K more years
     logit.sj[t] <- mean.logit.sj + eps.sj[t]
     eps.sj[t] ~ dnorm(0, tau.sj)
     sj[t] <- ilogit(logit.sj[t])
@@ -68,7 +66,7 @@ model {
     sa[t] <- ilogit(logit.sa[t])
   }
 
-  for (t in 1:(n.occasions+K)){           # Extended loop also here
+  for (t in 1:(n.occasions+K)){                   # Extended loop also here
     log.f[t] <- mean.log.f + eps.f[t]
     eps.f[t] ~ dnorm(0, tau.f)
     f[t] <- exp(log.f[t])
@@ -80,16 +78,17 @@ model {
   tau.sa <- pow(sigma.sa, -2)
   sigma.f ~ dunif(0, 10)
   tau.f <- pow(sigma.f, -2)
+
   sigma ~ dunif(0.5, 50)
   tau <- pow(sigma, -2)
 
   # Population count data (state-space model)
-  # Model for the initial population size: uniform priors
+  # Model for the initial population size: discrete uniform priors
   N[1,1] ~ dcat(pNinit)
   N[2,1] ~ dcat(pNinit)
 
   # Process model over time: our model of population dynamics
-  for (t in 1:(n.occasions-1+K)){         # Note extended loop
+  for (t in 1:(n.occasions-1+K)){                 # Note extended loop
     N[1,t+1] ~ dpois(sj[t] * f[t] * (N[1,t] + N[2,t]))
     N[2,t+1] ~ dbin(sa[t], (N[1,t] + N[2,t]))
   }
@@ -113,7 +112,7 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    q[t] <- 1-p[t] # Probability of non-recapture
+    q[t] <- 1-p[t]                                # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -191,7 +190,9 @@ print(out1, 3)
 # [ ...  output truncated... ]
 # extinct[15]   0.229  0.421   0.000   0.000   1.000     TRUE 1 1.000 15000
 
+# ~~~ Save output for use later ~~~
 save(out1, file="DataFig10.2.Rdata")
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ plots of the predicted population sizes and demographic rates ~~~~
 # Figure 10.2
@@ -257,7 +258,7 @@ axis(2, las=1)
 D <- c(1, 3, 5, 7)
 T <- length(woodchat10$count)
 library(scales)
-color <- viridis_pal(option='E')(20)[c(18,13,7,1)]  ### ~~~~ Not the same colours as appear in the proofs
+color <- viridis_pal(option='E')(20)[c(18,13,7,1)]
 plot(y=rep(0,K), x=1:K, type="n", ylim=c(0, 0.5), ylab="Quasi-extinction probability",
     xlab="Year of forecast", axes=FALSE)
 axis(2, las=1)
@@ -272,9 +273,11 @@ legend("topleft", legend=c("D = 7", "D = 5", "D = 3", "D = 1"), col=rev(color), 
 # Probability of smaller future population size
 round(mean(out1$sims.list$Ntot[,T] > out1$sims.list$Ntot[,T+K]), 2)
 # [1] 0.65
+
 # Probability of the same population size in the future
 round(mean(out1$sims.list$Ntot[,T] == out1$sims.list$Ntot[,T+K]), 2)
 # [1] 0.02
+
 # Probability of a larger future population size
 round(mean(out1$sims.list$Ntot[,T] < out1$sims.list$Ntot[,T+K]), 2)
 # [1] 0.33
@@ -282,12 +285,14 @@ round(mean(out1$sims.list$Ntot[,T] < out1$sims.list$Ntot[,T+K]), 2)
 D <- 3
 T <- length(woodchat10$count)
 qextinct <- out1$sims.list$Ntot[,(T+1):(T+K)] <= D
-ext <- qextinct[,K] # extinct by year K, TRUE/FALSE
+ext <- qextinct[,K]                               # extinct by year K, TRUE/FALSE
 time.to.extinction <- K + 1 - apply(qextinct[ext,], 1, sum)
 ns <- sum(ext)
+
+# Fig 10.5
 a <- barplot(table(time.to.extinction) / ns, col="grey", ylab="Relative frequency",
     xlab="Conditional time to extinction (years)", axes=FALSE, names.arg=c(1, NA, 3, NA, 5, NA, 7,
-    NA, 9, NA, 11, NA, 13, NA, 15), border=NA)
+        NA, 9, NA, 11, NA, 13, NA, 15), border=NA)
 axis(1, at=a, labels=NA)
 axis(2, las=1)
 
@@ -317,6 +322,7 @@ model {
   tau.sa <- pow(sigma.sa, -2)
   sigma.f ~ dunif(0, 10)
   tau.f <- pow(sigma.f, -2)
+
   sigma ~ dunif(0.5, 50)
   tau <- pow(sigma, -2)
 
@@ -360,14 +366,15 @@ model {
   # Future: reduction of temporal variability by half
   for (t in n.occasions:(n.occasions-1+K)){
     logit.sa[t,2] <- mean.logit.sa + eps.sa[t,2]
-    eps.sa[t,2] ~ dnorm(0, tau.sa*2) # Temporal precision increased
+    eps.sa[t,2] ~ dnorm(0, tau.sa*2)              # Temporal precision increased
     sa[t,2] <- ilogit(logit.sa[t,2])
   }
 
   # Population count data (state-space model)
-  # Model for the initial population size: uniform priors
+  # Model for the initial population size: discrete uniform priors
   N[1,1,1] ~ dcat(pNinit)
   N[2,1,1] ~ dcat(pNinit)
+
   # Process model over time: our model of population dynamics
   # Control, no change (option 4)
   for (t in 1:(n.occasions-1+K)){
@@ -387,7 +394,7 @@ model {
     N[2,t+1,2] ~ dbin(sa[t,1], (N[1,t,2] + N[2,t,2]))
   }
 
-  # Option 2: decrease of temporal var. in adult survival
+  # Option 2: decrease of temporal variability in adult survival
   # Past
   for (t in 1:n.occasions){
     N[1,t,3] <- N[1,t,1]
@@ -435,7 +442,7 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    q[t] <- 1-p[t] # Probability of non-recapture
+    q[t] <- 1-p[t]                                # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t,1] * p[t]
     # Above main diagonal
@@ -482,8 +489,8 @@ out2 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb,
 traceplot(out2)
 print(out2, 3)
 
-
-D <- 0 # Define extinction threshold (here for absolute extinction)
+# Fig. 10.6
+D <- 0                                            # Define extinction threshold (here for absolute extinction)
 T <- length(woodchat10$count)
 extinct <- (out2$sims.list$Ntot[, (T+1):(T+K), ] <= D)
 ext.prob <- apply(extinct, 2:3, mean)
@@ -499,6 +506,7 @@ legend("topleft", lty=rep(1, 4), lwd=rep(2, 4), col=color, legend=c("Do nothing 
 par(op)
 
 last.year <- jags.data$n.occasions + jags.data$K
+
 # Probability that option 1 (increased productivity) is better than control
 round(mean(out2$sims.list$Ntot[,last.year,2] >
     out2$sims.list$Ntot[,last.year,1]), 2)
@@ -519,6 +527,7 @@ round(mean(out2$sims.list$Ntot[,last.year,4] >
     out2$sims.list$Ntot[,last.year,2]), 2)
 # [1] 0.43
 
+
 # Write JAGS model file
 cat(file="model3.txt", "
 model {
@@ -535,7 +544,7 @@ model {
     p[t] <- mean.p
   }
 
-  for (t in 1:(n.occasions-1+K)){ # Extend the loop to K more years
+  for (t in 1:(n.occasions-1+K)){                 # Extend the loop to K more years
     logit.sj[t] <- mean.logit.sj + eps.sj[t]
     eps.sj[t] ~ dnorm(0, tau.sj)
     sj[t] <- ilogit(logit.sj[t])
@@ -550,7 +559,6 @@ model {
     eps.f[t] ~ dnorm(0, tau.f)
     f[t] <- exp(log.f[t])
   }
-
   # Productivity in the future: increased by rep.inc
   for (t in n.occasions:(n.occasions+K)){
     log.f[t] <- mean.log.f + eps.f[t] + log(rep.inc)
@@ -569,7 +577,7 @@ model {
   tau <- pow(sigma, -2)
 
   # Population count data (state-space model)
-  # Model for the initial population size: uniform priors
+  # Model for the initial population size: discrete uniform priors
   N[1,1] ~ dcat(pNinit)
   N[2,1] ~ dcat(pNinit)
 
@@ -598,7 +606,7 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    q[t] <- 1-p[t] # Probability of non-recapture
+    q[t] <- 1-p[t]                                # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -640,11 +648,12 @@ rep.inc <- seq(1.4, 1.6, 0.025)
 postN <- matrix(NA, nrow=(ni - nb) / nt * nc, ncol=length(rep.inc))
 
 # Fit IPM for each level of increased productivity
-for (i in 1:length(rep.inc)){ # Takes about 10 min total
+for (i in 1:length(rep.inc)){                     # Takes about 10 min total
+
   cat(paste('*** Running model for', (rep.inc[i]-1)*100, '% productivity increase ***\n'))
 
   # Bundle data
-  K <- 15 # Number of years with predictions
+  K <- 15                                         # Number of years with predictions
   jags.data <- list(marr.j=woodchat10$marr.j, marr.a=woodchat10$marr.a,
       n.occasions=ncol(woodchat10$marr.j), rel.j=rowSums(woodchat10$marr.j),
       rel.a=rowSums(woodchat10$marr.a), J=woodchat10$J, B=woodchat10$B, count=woodchat10$count,

@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -12,13 +11,13 @@ library(IPMbook) ; library(jagsUI)
 # 3.4.6 Matrix population models with density-dependence and demographic stochasticity
 # ------------------------------------------------------------------------------------
 
-# Define means of the demographic rates and strength of density-dependence
+# Define means of the demographic rates and strength of density dependence
 mean.sj <- 0.3
 mean.sa <- 0.55
-f1.int <- 2.3     # Productivity of 1y females when population size is 0
-f1.beta <- -0.02  # Strength of density-dependence on 1y productivity
-fa.int <- 2.3     # Productivity of adult females when population size is 0
-fa.beta <- -0.01  # Strength of density-dependence on ad productivity
+f1.int <- 2.3           # Productivity of 1y females when population size is 0
+f1.beta <- -0.02        # Strength of density dependence on 1y productivity
+fa.int <- 2.3           # Productivity of adult females when population size is 0
+fa.beta <- -0.01        # Strength of density dependence on ad productivity
 
 # Define the number of years with predictions
 T <- 200
@@ -43,7 +42,7 @@ model {
     # Population model
     N[1,t+1] ~ dpois(sj * (f1[t] * N[1,t] + fa[t] * N[2,t]))
     N[2,t+1] ~ dbin(sa, (N[1,t] + N[2,t]))
-    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0) # Determines whether
+    extinct[t] <- equals(N[1,t+1] + N[2,t+1], 0)          # Determines whether
         # population is still thriving (extinct = 0) or went extinct (extinct = 1)
   }
 }
@@ -65,7 +64,7 @@ out8 <- jags(jags.data, inits, parameters, "model8.txt", n.adapt=na, n.chains=nc
     n.iter=ni, n.burnin=nb, DIC=FALSE)
 print(out8, 4)
 
-                # mean     sd    2.5%    50%   97.5% overlap0 f
+#                 mean     sd    2.5%    50%   97.5% overlap0 f
 # N[1,1]       10.0000 0.0000 10.0000 10.000 10.0000    FALSE 1
 # N[2,1]       10.0000 0.0000 10.0000 10.000 10.0000    FALSE 1
 # N[1,2]       11.9210 3.3838  6.0000 12.000 19.0000    FALSE 1
@@ -83,6 +82,7 @@ print(out8, 4)
 # fa[3]         2.0391 0.0628  1.9097  2.040  2.1600    FALSE 1
 # fa[4]         2.0099 0.0797  1.8500  2.010  2.1600    FALSE 1
 # [ ... output truncated ... ]
+
 
 # Carrying capacity
 mean(rowSums(out8$sims.list$N[,,T+1]))

@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time for test script 70 secs, full run 11 mins
 
@@ -28,16 +27,16 @@ nind <- length(f)                       # Total number of marked individuals
 
 # State or ecological process
 # Simulate true system state
-z <- array(NA, dim=c(nind, nyears))     # Empty dead/alive matrix
+z <- array(NA, dim=c(nind, nyears))     # Empty alive/dead matrix
 
 # Initial conditions: all individuals alive at f(i)
 for (i in 1:nind){
   z[i,f[i]] <- 1
 }
 
-set.seed(3) # Initialize the RNGs in R
-# Propagate dead/alive process forwards via transition rule
-# Alive individuals survive with probability phi
+set.seed(3)                             # Initialize the RNGs in R
+# Propagate alive/dead process forwards via transition rule
+# Alive individuals survive with probability s
 for (i in 1:nind){
   for (t in (f[i]+1):nyears){
     z[i,t] <- rbinom(1, 1, z[i,t-1] * s)
@@ -54,8 +53,7 @@ for (i in 1:nind){
   } #t
 } #i
 
-y # Complete simulated data set
-
+y                                       # Complete simulated data set(not shown)
 # Compute the total number of dead recoveries
 sum(rowSums(y, na.rm=TRUE)==2)
 # [1] 131
@@ -75,6 +73,7 @@ model {
   # Priors and linear models
   s.const ~ dunif(0, 1)                 # Vague prior for constant s
   r.const ~ dunif(0, 1)                 # Vague prior for constant r
+
   for (i in 1:nind){                    # Loop over individuals
     for (t in f[i]:(nyears-1)){         # Loop over time intervals/occasions
       s[i,t] <- s.const                 # Here model pattern in s ...
@@ -104,12 +103,12 @@ parameters <- c("s.const", "r.const")
 
 # MCMC settings
 # ni <- 30000; nb <- 5000; nc <- 3; nt <- 10; na <- 5000
-ni <- 3000; nb <- 500; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
+ni <- 3000; nb <- 500; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing, 1 min
 
 # Call JAGS from R (ART 13 min), check convergence and summarize posteriors
 out23 <- jags(jags.data, inits, parameters, "model20.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out23)                        # Not shown
+traceplot(out23) # Not shown
 acf(out23$sims.list$s.const)            # Check out autocorrelation for s (not shown)
 print(out23, 3)
 #             mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
@@ -146,6 +145,7 @@ model {
   for (t in 1:(nyears-1)){
     marr[t,1:nyears] ~ dmulti(pi[t,], rel[t])
   }
+
   # Define the cell probabilities of the m-array
   for (t in 1:(nyears-1)){
     # Main diagonal
@@ -177,8 +177,8 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 3000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out24 <- jags(jags.data, inits, parameters, "model21.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
-  n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out24)                        # Not shown
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out24) # Not shown
 print(out24)
 #             mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # s.const    0.771 0.035   0.701   0.771   0.840    FALSE 1 1.001  3343

@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # 4.4 Models for productivity surveys
 # ===================================
@@ -13,10 +12,10 @@ library(IPMbook); library(jagsUI)
 data(wryneck)
 str(wryneck)
 # 'data.frame': 181 obs. of 5 variables:
-# $ f  : int 49 15 23 23 47 11 23 15 65 2 ...
-# $ j  : int 53 32 37 40 66 30 37 30 71 18 ...
-# $ k  : int 53 32 37 40 66 30 37 30 72 18 ...
-# $ x  : int 1 1 1 1 1 1 1 1 0 1 ...
+# $ f : int 49 15 23 23 47 11 23 15 65 2 ...
+# $ j : int 53 32 37 40 66 30 37 30 71 18 ...
+# $ k : int 53 32 37 40 66 30 37 30 72 18 ...
+# $ x : int 1 1 1 1 1 1 1 1 0 1 ...
 # $ age: int 16 2 4 2 2 2 5 2 5 2 ...
 
 tail(wryneck)
@@ -40,8 +39,10 @@ for (i in 1:length(wryneck$f)){
 for (i in 1:length(fail)){
   y[fail[i],wryneck$k[fail[i]]] <- 0
 }
+
 y[176,]
 # [1] ... NA 1 NA NA ... NA NA 1 NA NA ...
+
 y[177,]
 # [37] ... NA NA 1 NA NA 1 NA NA NA 0 NA NA ...
 
@@ -65,6 +66,7 @@ model {
       phi[i,t] <- phia[age[i] + t - f[i]]
     } #t
   } #i
+
   for (a in 1:T){
     phia[a] <- ilogit(alpha + beta * a)
   }
@@ -92,10 +94,10 @@ parameters <- c("phia", "nu", "alpha", "beta")
 # MCMC settings
 ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
-# Call JAGS from R (ART 0.1 min) and check convergence
+# Call JAGS from R (ART 1 min) and check convergence
 out16 <- jags(jags.data, inits, parameters, "model13.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out16)                        # Not shown
+traceplot(out16) # Not shown
 print(out16, 3)
 #             mean     sd   2.5%     50%   97.5% overlap0     f  Rhat n.eff
 # phia[1]    0.971  0.008  0.953   0.972   0.985    FALSE 1.000 1.001  1650

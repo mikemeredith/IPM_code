@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 8 : Integrated population models with density-dependence
 # ----------------------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -21,7 +20,7 @@ n <- nrow(N)
 
 r <- sigma.r <- alpha.star <- beta.star <- sigma.star <- alpha <- beta <- sigma <- numeric(n)
 N.star <- matrix(NA, nrow=n, ncol=T)
-for (i in 1:n){                                  # loop over all MCMC draws
+for (i in 1:n){                                       # loop over all MCMC draw
   if(round(i %% 500 ) == 0) {cat(paste('** Processing draw', i, '**\n'))}
   # 1. Estimate the growth parameters under the exponential model (i.e., without DD)
   z <- lm(log(N[i,-1] / N[i,-T]) ~ 1)
@@ -44,6 +43,7 @@ for (i in 1:n){                                  # loop over all MCMC draws
   sigma[i] <- summary(z)$sigma
 } #i
 
+
 # ~~~~ Code for Fig. 8.4 ~~~~
 plot(density(beta), ylim=c(0, 20), xlim=c(-0.6, 0.2), main=NA,
     xlab=expression('Strength of density-dependence ('*beta*')'),
@@ -55,7 +55,6 @@ legend("topleft", lwd=c(1, 1), col=c("red", "black"),
 axis(1)
 axis(2, las=1)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 mean(beta < beta.star)
 # [1] 0.8665333

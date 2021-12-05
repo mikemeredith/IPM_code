@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 17 : Elk
 # ----------------
-# Code from proofs.
 
 # Run time for test script 26 mins, full run 65 mins
 
@@ -25,6 +24,7 @@ str(elk)
 # .. ..$ : chr [1:3] "hunted" "died naturally" "survived"
 # .. ..$ : chr [1:6] "1988" "1989" "1990" "1991" ...
 
+
 # 17.4.1 Age-at-harvest data (no code)
 # 17.4.2 Hunter survey data (no code)
 # 17.4.3 Radio tracking data (no code)
@@ -33,23 +33,23 @@ str(elk)
 # 17.5 The integrated population model
 # ====================================
 
-s <- 0.8 # Guess of annual survival
-f <- 0.25 # Guess of recruitment
+s <- 0.8                                          # Guess of annual survival
+f <- 0.25                                         # Guess of recruitment
 
-# Create matrix population model
+# Create matrix population model (transition matrix A)
 A <- matrix(0, ncol=17, nrow=17)
 A[1,2:17] <- f
 for (a in 2:17){
   A[a,a-1] <- s
 }
 
-# Compute stable age distribution (right eigenvector)
+# Compute stable age distribution (right eigenvector of A)
 z <- which.max(Re(eigen(A)$values))
 revec <- Re(eigen(A)$vectors[,z])
 
 # Population size in first age class of first year
-r <- 0.5 # Guess of reporting rate
-h <- 0.1 # Guess of hunting mortality
+r <- 0.5                                          # Guess of reporting rate
+h <- 0.1                                          # Guess of hunting mortality
 N1 <- elk$C[1,1] / (h * r)
 
 # Compute age-specific population sizes in first year
@@ -60,23 +60,23 @@ jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R), n.year
     n.age=nrow(C), n=n))
 str(jags.data)
 # List of 8
-# $ C : num [1:17, 1:6] 21 36 15 8 7 8 6 5 3 3 ...
+# $ C      : num [1:17, 1:6] 21 36 15 8 7 8 6 5 3 3 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : chr [1:17] "1" "2" "3" "4" ...
 # .. ..$ : chr [1:6] "1988" "1989" "1990" "1991" ...
-# $ a : Named num [1:6] 275 290 211 360 201 325
+# $ a      : Named num [1:6] 275 290 211 360 201 325
 # ..- attr(*, "names")= chr [1:6] "1988" "1989" "1990" "1991" ...
-# $ b : Named num [1:6] 143 154 211 272 201 155
+# $ b      : Named num [1:6] 143 154 211 272 201 155
 # ..- attr(*, "names")= chr [1:6] "1988" "1989" "1990" "1991" ...
-# $ R : num [1:3, 1:6] 1 2 10 4 1 20 0 1 24 0 ...
+# $ R      : num [1:3, 1:6] 1 2 10 4 1 20 0 1 24 0 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : chr [1:3] "hunted" "died naturally" "survived"
 # .. ..$ : chr [1:6] "1988" "1989" "1990" "1991" ...
-# $ total : Named num [1:6] 13 25 25 16 25 23
+# $ total  : Named num [1:6] 13 25 25 16 25 23
 # ..- attr(*, "names")= chr [1:6] "1988" "1989" "1990" "1991" ...
 # $ n.years: int 6
-# $ n.age : int 17
-# $ n : num [1:17] 420 338 272 218 176 ...
+# $ n.age  : int 17
+# $ n      : num [1:17] 420 338 272 218 176 ...
 
 # Write JAGS model file
 cat(file = "model1.txt", "
@@ -140,11 +140,11 @@ inits <- function() {list(s=runif(jags.data$n.years, 0.8, 1), h=runif(jags.data$
 parameters <- c("h", "s", "f", "r", "Ntot", "N")
 
 # MCMC settings
-ni <- 250000; nt <- 20; nb <- 50000; nc <- 3; na <- 5000
+ni <- 250000; nb <- 50000; nc <- 3; nt <- 20; na <- 5000
 
 # Call JAGS from R (ART 4 min) and check convergence
-out1 <- jags(jags.data, inits, parameters, "model1.txt", n.chains = nc, n.thin = nt, n.iter = ni,
-    n.burnin = nb, n.adapt = na, parallel = T)
+out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
 
 
@@ -188,6 +188,7 @@ print(out1, 3)
 # [...output truncated...]
 # N[16,6]    15.846   4.218    8.000   16.000   25.000    FALSE 1 1.001  2284
 # N[17,6]    12.726   3.854    6.000   12.000   21.000    FALSE 1 1.001  3377
+
 
 # Calculation of annual survival (s*)
 s.star <- (1-out1$sims.list$h) * out1$sims.list$s
@@ -825,6 +826,7 @@ par(op)
 # 17.8 Specification of the survival process with hazard rates
 # ============================================================
 
+# ~~~~ Recreate the priors used for the first IPM (lines 36-56 above ~~~~
 s <- 0.8                    # Guess of annual survival
 f <- 0.25                   # Guess of recruitment
 
@@ -846,6 +848,7 @@ N1 <- elk$C[1,1] / (h * r)
 
 # Compute age-dependent population size in first year
 n <- N1 * revec / revec[1]
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Bundle data and produce data overview
 jags.data <- with(elk, list(C=C, a=H[1,], b=H[2,], R=R, total=colSums(R), n.years=ncol(C),
@@ -860,12 +863,12 @@ model {
   }
   for (t in 1:n.years){
     # Priors for hazard rates
-    mh[t] ~ dgamma(0.1, 0.1) # Hunting mortality hazard rate
-    mo[t] ~ dgamma(0.1, 0.1) # Background mortality hazard rate
+    mh[t] ~ dgamma(0.1, 0.1)                              # Hunting mortality hazard rate
+    mo[t] ~ dgamma(0.1, 0.1)                              # Background mortality hazard rate
     # Calculate probabilities from hazard rates
-    s[t] <- exp(-(mh[t] + mo[t])) # Overall survival
-    h[t] <- (1 - s[t]) * (mh[t] / (mh[t] + mo[t])) # Hunting mortality
-    o[t] <- (1 - s[t]) * (mo[t] / (mh[t] + mo[t])) # Background mortality
+    s[t] <- exp(-(mh[t] + mo[t]))                         # Overall survival
+    h[t] <- (1 - s[t]) * (mh[t] / (mh[t] + mo[t]))        # Hunting mortality
+    o[t] <- (1 - s[t]) * (mo[t] / (mh[t] + mo[t]))        # Background mortality
     # Prior for reporting rate
     r[t] ~ dunif(0, 1)
   }
@@ -919,15 +922,15 @@ inits <- function() {list(mh=runif(jags.data$n.years, 0.01, 0.1), mo=runif(jags.
 parameters <- c("mh", "mo", "h", "s", "o", "f", "r", "Ntot", "N")
 
 # MCMC settings
-ni <- 450000; nt <- 40; nb <- 50000; nc <- 3; na <- 5000
+ni <- 450000; nb <- 50000; nc <- 3; nt <- 40; na <- 5000
 
 # Call JAGS from R (ART 9 min) and check convergence
-out9 <- jags(jags.data, inits, parameters, "model3.txt", n.chains = nc, n.thin = nt, n.iter = ni,
-    n.burnin = nb, n.adapt = na, parallel = TRUE)
+out9 <- jags(jags.data, inits, parameters, "model3.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
+    n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out9)
 print(out9, 3)
 
-             # mean      sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
+#              mean      sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # mh[1]       0.129   0.015    0.102    0.128    0.161    FALSE 1 1.001  8101
 # mh[2]       0.152   0.020    0.118    0.150    0.197    FALSE 1 1.003  1669
 # mh[3]       0.083   0.011    0.065    0.082    0.110    FALSE 1 1.004  1791

@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook)
 
@@ -12,14 +11,14 @@ library(IPMbook)
 # ----------------------------------------------------------------------
 
 # Define mean and SD of the demographic parameters
-mean.sj <- 0.3    # Point estimate of juv. survival
-se.sj.e <- 0.03   # Uncertainty of juv. survival as SE on natural scale
-mean.sa <- 0.55   # Point estimate of ad. survival
-se.sa.e <- 0.015  # Uncertainty of ad. survival as SE on nat. scale
-mean.f1 <- 1.3    # Point estimate of productivity of 1y females
-se.f1.e <- 0.3    # Uncertainty of 1y productivity as SE on nat. scale
-mean.fa <- 1.8    # Point estimate of productivity of ad. females
-se.fa.e <- 0.1    # Uncertainty of ad. productivity as SE on nat. scale
+mean.sj <- 0.3                  # Point estimate of juv. survival
+se.sj.e <- 0.03                 # Uncertainty of juv. survival as SE on natural scale
+mean.sa <- 0.55                 # Point estimate of ad. survival
+se.sa.e <- 0.015                # Uncertainty of ad. survival as SE on natural scale
+mean.f1 <- 1.3                  # Point estimate of productivity of 1y females
+se.f1.e <- 0.3                  # Uncertainty of 1y productivity as SE on natural scale
+mean.fa <- 1.8                  # Point estimate of productivity of ad. females
+se.fa.e <- 0.1                  # Uncertainty of ad. productivity as SE on natural scale
 
 # Define number of simulations, vectors and matrices to store results
 nsim <- 100000
@@ -28,14 +27,16 @@ stable.stage <- matrix(NA, ncol=2, nrow=nsim)
 sensitivity <- matrix(NA, ncol=4, nrow=nsim)
 
 # Generate demographic values from beta and normal distributions
+library(IPMbook)
 sj.sim <- rbeta2(nsim, mean.sj, se.sj.e)
 sa.sim <- rbeta2(nsim, mean.sa, se.sa.e)
 f1.sim <- rnorm(nsim, mean.f1, se.f1.e)
 fa.sim <- rnorm(nsim, mean.fa, se.fa.e)
 
-# Perform Monte Carlo simulation
+# Perform Monte Carlo simulations
 for (s in 1:nsim){
-  if(s %% 1000 == 0) {cat(paste("*** Simrep", s, "***\n"))} # Counter
+  if(s %% 1000 == 0) {cat(paste("*** Simrep", s, "***\n"))}   # Counter
+
   # Transition matrix
   A <- matrix(c(sj.sim[s] * f1.sim[s], sj.sim[s] * fa.sim[s], sa.sim[s], sa.sim[s]),
   ncol=2, byrow=TRUE)
@@ -43,6 +44,7 @@ for (s in 1:nsim){
 
   # Asymptotic population growth rate
   lambda[s] <- max(Re(eigenA$values))
+
   # Stable stage distribution
   u <- which.max(Re(eigenA$values))
   revec <- Re(eigenA$vectors[,u])

@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 6 : Benefits of integrated population modeling
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 2.5 mins
 
@@ -53,7 +52,7 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    q[t] <- 1 - p[t] # Probability of non-recapture
+    q[t] <- 1 - p[t]                    # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -116,7 +115,6 @@ out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
 print(out1, 3)
-
 #                       mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # mean.sj              0.253  0.022   0.213   0.253   0.297    FALSE 1 1.000 11961
 # mean.sa              0.567  0.022   0.523   0.567   0.610    FALSE 1 1.000 30000
@@ -136,16 +134,16 @@ print(out1, 3)
 # Ntot[10]            96.358 11.774  72.446  96.441 119.201    FALSE 1 1.000 30000
 
 
-# model for productivity and population count data only
+# Model for productivity and population count data only
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''
 
+# Write JAGS model file
 cat(file="model2.txt", "
 model {
   # Priors and linear models
   mean.sj ~ dunif(0, 1)
   mean.sa ~ dunif(0, 1)
   mean.f ~ dunif(0, 10)
-
   sigma ~ dunif(0.5, 100)
   tau <- pow(sigma, -2)
 
@@ -156,13 +154,13 @@ model {
 
   # Process model over time: our model of population dynamics
   for (t in 1:(n.occasions-1)){
-  N[1,t+1] <- mean.f / 2 * mean.sj * (N[1,t] + N[2,t])
-  N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
+    N[1,t+1] <- mean.f / 2 * mean.sj * (N[1,t] + N[2,t])
+    N[2,t+1] <- mean.sa * (N[1,t] + N[2,t])
   }
 
   # Observation model
   for (t in 1:n.occasions){
-  count[t] ~ dnorm(N[1,t] + N[2,t], tau)
+    count[t] ~ dnorm(N[1,t] + N[2,t], tau)
   }
 
   # Productivity data (Poisson regression model)
@@ -171,18 +169,18 @@ model {
   # Derived parameters
   # Annual population growth rate
   for (t in 1:(n.occasions-1)){
-  ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
+    ann.growth.rate[t] <- (N[1,t+1] + N[2,t+1]) / (N[1,t] + N[2,t])
   }
   # Total population size
   for (t in 1:n.occasions){
-  Ntot[t] <- N[1,t] + N[2,t]
+    Ntot[t] <- N[1,t] + N[2,t]
   }
 }
 ")
 
 # Bundle data
-jags.data <- list(n.occasions=length(woodchat6$count), nJ=sum(woodchat6$J), n.rep=sum(woodchat6$B),
-    count=woodchat6$count)
+jags.data <- list(n.occasions=length(woodchat6$count), nJ=sum(woodchat6$J),
+    n.rep=sum(woodchat6$B), count=woodchat6$count)
 
 # Initial values
 inits <- function(){list(mean.sj=runif(1, 0, 0.5))}
@@ -216,7 +214,7 @@ print(out2, 3)
 # Ntot[10]            96.734 11.539 73.067 96.764 119.929    FALSE 1 1.000  5700
 
 
-# model with population count data alone
+# Model with population count data alone
 # ''''''''''''''''''''''''''''''''''''''
 
 # Write JAGS model file
@@ -226,7 +224,6 @@ model {
   mean.sj ~ dunif(0, 1)
   mean.sa ~ dunif(0, 1)
   mean.f ~ dunif(0, 10)
-
   sigma ~ dunif(0.5, 100)
   tau <- pow(sigma, -2)
 

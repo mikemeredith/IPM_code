@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 21 : Black bear
 # -----------------------
-# Code from proofs.
 
 # Run time for this test script approx 1.6 hrs, full run 15 hrs
 
@@ -12,8 +11,8 @@ library(IPMbook); library(jagsUI)
 data(bear)
 str(bear)
 # List of 3
-# $ scr : int [1:78, 1:128, 1:8, 1:3] 0 0 0 0 0 0 0 0 0 0 ...
-# $ occ : num [1:128, 1:8, 1:3] 0 0 0 0 0 NA 1 1 0 0 ...
+# $ scr       : int [1:78, 1:128, 1:8, 1:3] 0 0 0 0 0 0 0 0 0 0 ...
+# $ occ       : num [1:128, 1:8, 1:3] 0 0 0 0 0 NA 1 1 0 0 ...
 # $ trap.coord: num [1:128, 1:2] 618 619 618 620 621 ...
 
 
@@ -28,9 +27,9 @@ xlims <- c(615, 645)
 ylims <- c(3380, 3420)
 rect(xlims[1], ylims[1], xlims[2], ylims[2], col=alpha('grey', 0.3), border=NA)
 
-table(bear$scr)                        # Total number of detections
-#      0      1
-# 174640    626
+table(bear$scr)                                   # Total number of detections
+#      0   1
+# 174640 626
 
 # Replace the missing values by zero
 bear.sum <- bear$scr
@@ -40,17 +39,18 @@ bear.sum[is.na(bear.sum)] <- 0
 bearXtrap <- apply(bear.sum, c(1, 2), sum)
 
 table(bearXtrap)
-   # 0    1    2    3    4    5    6    7    8    9   10
+#    0    1    2    3    4    5    6    7    8    9   10
 # 9638  209   82   23   10    6    8    3    2    1    2
 
 table(apply(bearXtrap, 1, sum))
 #  1  2  3  4  5  6  7  8  9 11 13 14 18 20 21 23 25 27 38 91
 # 10  7 11  7  9  5  7  3  6  1  1  1  2  2  1  1  1  1  1  1
 
+
 # Loop over 78 individuals and map their locations (individually)
 # combined over all 3 years (which represent a 5-year duration)
-# op <- par(ask=TRUE)                       # Press Esc to interrupt
-op <- par(ask=dev.interactive(orNone=TRUE)) # Only ask if plotting on-screen
+# op <- par(ask=TRUE)                               # Press Esc to interrupt
+op <- par(ask=dev.interactive(orNone=TRUE))         # Only ask if plotting on-screen
 for (i in 1:nrow(bearXtrap)){
   cat(paste("\n\n*** Plot bear number", i, "***\n\n"))
   lucky.traps <- which(bearXtrap[i,] > 0)
@@ -77,40 +77,41 @@ jags.data <- list(y=y, o=bear$occ, T=6, K=dim(y)[3], J=dim(y)[2], M=M, x=bear$tr
     ylims=ylims)
 str(jags.data)
 # List of 9
-# $ y : num [1:200, 1:128, 1:8, 1:3] 0 0 0 0 0 0 0 0 0 0 ...
-# $ o : num [1:128, 1:8, 1:3] 0 0 0 0 0 NA 1 1 0 0 ...
-# $ T : num 6
-# $ K : int 8
-# $ J : int 128
-# $ M : num 200
-# $ x : num [1:128, 1:2] 618 619 618 620 621 ...
+# $ y    : num [1:200, 1:128, 1:8, 1:3] 0 0 0 0 0 0 0 0 0 0 ...
+# $ o    : num [1:128, 1:8, 1:3] 0 0 0 0 0 NA 1 1 0 0 ...
+# $ T    : num 6
+# $ K    : int 8
+# $ J    : int 128
+# $ M    : num 200
+# $ x    : num [1:128, 1:2] 618 619 618 620 621 ...
 # $ xlims: num [1:2] 615 645
 # $ ylims: num [1:2] 3380 3420
+
 
 # Write JAGS model file
 cat(file="model1.txt", "
 model {
   # Priors
-  psi ~ dunif(0, 1)                       # M*psi = E[N(1)], for data augmentation
-  phi ~ dunif(0, 1)                       # Survival
-  gamma ~ dunif(0, 3)                     # Per-capita recruitment
-  p0 ~ dunif(0, 1)                        # Baseline capture probability
-  sigma ~ dunif(0, 50)                    # Scale parameter of detection function
+  psi ~ dunif(0, 1)                               # M*psi = E[N(1)], for data augmentation
+  phi ~ dunif(0, 1)                               # Survival
+  gamma ~ dunif(0, 3)                             # Per-capita recruitment
+  p0 ~ dunif(0, 1)                                # Baseline capture probability
+  sigma ~ dunif(0, 50)                            # Scale parameter of detection function
 
   # Derived parameters
   for (t in 1:T){
-    N[t] <- sum(z[,t])                    # Population size at time t
-    EB[t] <- N[t] * gamma                 # Expected recruits
-    A[t] <- max(M - sum(a[,t]), 0.001)    # Bears available to be recruited
-    b[t] <- min(EB[t] / A[t], 0.999)      # Probability of being recruited
+    N[t] <- sum(z[,t])                            # Population size at time t
+    EB[t] <- N[t] * gamma                         # Expected number of recruits
+    A[t] <- max(M - sum(a[,t]), 0.001)            # Bears available to be recruited
+    b[t] <- min(EB[t] / A[t], 0.999)              # Probability of being recruited
   }
 
-  # Population model (individual based model)
+  # Population model (individual-based model)
+  # Initial state
   for (i in 1:M){
-    # Initial state
-    z[i,1] ~ dbern(psi)                   # Is a member of M alive?
-    a[i,1] <- z[i,1] # Recruited yet?
-    s[i,1] ~ dunif(xlims[1], xlims[2])    # Activity center, homogeneous
+    z[i,1] ~ dbern(psi)                           # Is a member of M alive?
+    a[i,1] <- z[i,1]                              # Recruited yet?
+    s[i,1] ~ dunif(xlims[1], xlims[2])            # Activity center, homogeneous
     s[i,2] ~ dunif(ylims[1], ylims[2])
 
     # Dynamics over time
@@ -124,18 +125,18 @@ model {
   # Spatial capture-recapture data
   for (i in 1:M){
     for (j in 1:J){
-      d2[i,j] <- (s[i,1] - x[j,1])^2 + (s[i,2] - x[j,2])^2 # Dist. squared
+      d2[i,j] <- (s[i,1] - x[j,1])^2 + (s[i,2] - x[j,2])^2  # Distance squared
       p[i,j] <- p0 * exp(-d2[i,j] / (2 * sigma^2))
     } #j
-    for (j in 1:J){                       # trap
-      for (k in 1:K){                     # secondary occasions
+    for (j in 1:J){                               # Trap
+      for (k in 1:K){                             # Secondary occasions
         # The years with SCR data
         y[i,j,k,1] ~ dbern(p[i,j] * z[i,1])
         y[i,j,k,2] ~ dbern(p[i,j] * z[i,3])
         y[i,j,k,3] ~ dbern(p[i,j] * z[i,5])
       } #k
     } #j
-    zi[i] <- (sum(z[i,]) > 0)             # Was this bear ever alive?
+    zi[i] <- (sum(z[i,]) > 0)                     # Was this bear ever alive?
   } #i
 
   # Occupancy data
@@ -146,7 +147,7 @@ model {
       o[j,k,3] ~ dbern(1-prod(1-p[,j] * z[,6]))
     } #k
   } #j
-  N.ever <- sum(zi[])                     # Bears ever alive – superpopulation size
+  N.ever <- sum(zi[])                             # Bears ever alive – superpopulation size
 }
 ")
 
@@ -154,26 +155,26 @@ model {
 zin <- array(0, dim=c(dim(y)[1],6))
 zin[1:150,] <- 1
 inits <- function() {list(z=zin, phi=runif(1, 0.7, 0.9), p0=runif(1, 0.01, 0.1),
-    psi=runif(1, 0.2, 0.4))}
+    psi=runif(1, 0.2, 0.4), sigma=runif(1, 3, 4), gamma=runif(1, 0.2, 0.3))}
 
 # Parameters monitored
 parameters <- c("psi", "phi", "gamma", "p0", "sigma", "N", "EB", "b", "A", "s", "zi", "z", "N.ever")
 
 # MCMC settings
 # ni <- 5000; nb <- 2000; nc <- 3; nt <- 3; na <- 2000  # 14 hrs
-ni <- 500; nb <- 200; nc <- 3; nt <- 1; na <- 200  # ~~~ for testing
-
+ni <- 500; nb <- 200; nc <- 3; nt <- 1; na <- 200  # ~~~ for testing, 90 mins
 
 # Call JAGS from R (ART 1400 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out1)
 
 # 21.6 Results
 # ============
 
 print(out1, 3)
 
-             # mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
+#              mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # psi         0.243  0.037    0.175    0.241    0.320    FALSE 1 1.001  3000
 # phi         0.807  0.035    0.736    0.808    0.871    FALSE 1 1.001  1485
 # gamma       0.235  0.037    0.166    0.233    0.312    FALSE 1 1.001  3000
@@ -224,7 +225,7 @@ segments(1:6, out1$q2.5$N, 1:6, out1$q97.5$N)
 axis(1, at=1:6, labels = 2007:2012)
 axis(2, las=1)
 
-# Fig. 21.4
+# ~~~~ Fig. 21.4 ~~~~
 
 library(scales)
 co <- viridis_pal(option='E')(20)[c(5, 16)]
@@ -237,7 +238,6 @@ legend('topleft', col=co, lwd=rep(2, 2), bty='n',
     legend=c(expression(paste('Adult survival (', phi, ')')),
         expression(paste('Per capita recruitment (', gamma, ')'))))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 # Make Fig. 21.5
 # Define the grid
@@ -254,16 +254,17 @@ library(AHMbook)
 cl <- terrain.colors(100, rev=TRUE)[c(1, 1:5*10, 51:100)]
 op <- par(mar=c(4, 4, 2, 4), mfrow=c(3, 2))
 year <- 2007:2012
-
 # Define density classes
 h <- seq(0, 0.3, length.out=100)
 for (t in 1:6){
   # Allocate the locations to the defined grid cells
   sx <- cut(ac.x[z[,,t]==1], breaks=xgrid, include.lowest=TRUE)
   sy <- cut(ac.y[z[,,t]==1], breaks=ygrid, include.lowest=TRUE)
+
   # Cross-tabulation and down-scaling by the number of MCMC draws
   dens <- table(sx, sy) / out1$mcmc.info$n.samples
   # Draw map
+
   image(x=xgrid, y=ygrid, z=dens, col=cl, asp=1, axes=FALSE, xlim=xlims, ylim=ylims,
       xlab='x coordinate', ylab='y coordinate', main=year[t], zlim=c(0, 0.3))
   axis(1); axis(2, las=1)
@@ -272,16 +273,18 @@ image_scale(c(0, 0.3), col=cl[seq(1, length(cl), length=13)], digits=2, labels =
     cex.legend=0.8)
 par(op)
 
-
-out1$mean$N[3] / 1200 * 100
+out1$mean$N[3] / 1200 * 100                       # Posterior mean
 # > 5.92
-out1$q2.5$N[3] / 1200 * 100
+
+out1$q2.5$N[3] / 1200 * 100                       # Lower credible limit
 # > 5.42
-out1$q97.5$N[3] / 1200 * 100
+
+out1$q97.5$N[3] / 1200 * 100                      # Upper credible limit
 # > 6.50
 
+
 # Make Fig. 21.6
-op <- par(mar=c(4,4,2,4), las=1)
+op <- par(mar=c(4, 4, 2, 4), las=1)
 # To compute the geometric mean, we only need the density in the first and the last year
 # Allocate the locations to the defined grid cells in year 2007
 sx <- cut(ac.x[z[,,1]==1], breaks=xgrid, include.lowest=TRUE)
@@ -314,7 +317,6 @@ glam <- matrix(.bincode(lam, h), nrow=60, ncol=80)
 
 # Draw map
 image(x=xgrid, y=ygrid, z=glam, col=cl, asp=1, axes=FALSE, xlim=xlims, ylim=ylims, xlab='x coordinate',
-ylab='y coordinate', zlim=c(1, 6))
+    ylab='y coordinate', zlim=c(1, 6))
 axis(1); axis(2)
 par(op)
-

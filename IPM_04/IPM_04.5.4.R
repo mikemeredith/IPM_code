@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 80 secs
 
@@ -22,8 +21,8 @@ str(stork)
 marr <- marray(stork, unobs=2)
 
 # Bundle data
-unobs <- 2 # Number of unobserved states
-ns <- length(unique(as.numeric(stork))) - 1 + unobs # Total num. states
+unobs <- 2                                            # Number of unobserved states
+ns <- length(unique(as.numeric(stork))) - 1 + unobs   # Total num. states
 jags.data <- list(marr=marr, nyears=ncol(stork), rel=rowSums(marr), ns=ns,
     zero=matrix(0, ns, ns), ones = diag(ns))
 str(jags.data)
@@ -40,24 +39,23 @@ cat(file="model22.txt", "
 model {
   # Priors and linear models
   for (t in 1:(nyears-1)){
-    logit.s[t] ~ dnorm(mu, tau)         # Means parameterization of random effect
+    logit.s[t] ~ dnorm(mu, tau)                       # Means parameterization of random effect
     s[t] <- ilogit(logit.s[t])
     f[t] <- mean.f
     r[t] <- mean.r
     p[t] ~ dunif(0, 1)
   }
 
-  mean.s ~ dunif(0, 1)                  # Prior for mean survival
-  mean.f ~ dunif(0, 1)                  # Prior for mean site fidelity
-  mean.r ~ dunif(0, 1)                  # Prior for mean recovery
-
+  mean.s ~ dunif(0, 1)                                # Prior for mean survival
+  mean.f ~ dunif(0, 1)                                # Prior for mean site fidelity
+  mean.r ~ dunif(0, 1)                                # Prior for mean recovery
   mu <- logit(mean.s)
-  sigma ~ dunif(0, 10)                  # Prior for temporal variability of survival
+  sigma ~ dunif(0, 10)                                # Prior for temporal variability of survival
   tau <- pow(sigma, -2)
 
   # Define state-transition and observation probabilities
   for (t in 1:(nyears-1)){
-    psi[1,t,1] <- s[t] * f[t]
+    psi[1,t,1] <- s[t] * f[t]                         # State-transitions
     psi[1,t,2] <- 1-s[t]
     psi[1,t,3] <- s[t] * (1-f[t])
     psi[1,t,4] <- 0
@@ -74,7 +72,7 @@ model {
     psi[4,t,3] <- 0
     psi[4,t,4] <- 1
 
-    po[1,t] <- p[t]
+    po[1,t] <- p[t]                                   # Observation probabilities
     po[2,t] <- r[t]
     po[3,t] <- 0
     po[4,t] <- 0
@@ -98,8 +96,8 @@ model {
       for (m in 1:(s-1)){
         dp[s,t,m] <- 0
         dq[s,t,m] <- 0
-      } #m
-    } #s
+      } #s
+    } #m
   } #t
 
   # Define the multinomial likelihood
@@ -130,12 +128,14 @@ model {
     } #j
   } #t
   pi[(nyears-2)*ns+(1:ns),(nyears-2)*ns+(1:ns)] <- psi[,nyears-1,] %*% dp[,nyears-1,]
+
   # Below main diagonal
   for (t in 2:(nyears-1)){
     for (j in 1:(t-1)){
       pi[(t-1)*ns+(1:ns),(j-1)*ns+(1:ns)] <- zero
     } #j
   } #t
+
   # Last column: probability of non-recapture
   for (t in 1:((nyears-1)*ns)){
     pi[t,(nyears*ns-(ns-1))] <- 1-sum(pi[t,1:((nyears-1)*ns)])
@@ -155,7 +155,8 @@ ni <- 10000; nb <- 5000; nc <- 3; nt <- 1; na <- 5000
 # Call JAGS from R (ART 1 min) and check convergence
 out25 <- jags(jags.data, inits, parameters, "model22.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out25)                        # Not shown
+# par(mfrow=c(3, 3)); traceplot(out25) # Not shown
+traceplot(out25) # Not shown
 print(out25)
 #             mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # mean.s     0.793 0.047   0.717   0.788   0.890    FALSE 1 1.004   716

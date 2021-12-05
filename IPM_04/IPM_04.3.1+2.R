@@ -1,7 +1,7 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
+
 
 # 4.3 Models for population size surveys
 # ======================================
@@ -10,24 +10,24 @@
 # ---------------------------------
 
 # Choose constants
-nyears <- 25                 # Number of years
-N1 <- 30                     # Abundance at t = 1
-mu.lam <- 1.02               # Mean of the distribution of lambda
-sig2.lam <- 0.02             # Variance of the distribution of lambda
-sig2.y <- 400                # Variance of observation error
+nyears <- 25                                        # Number of years
+N1 <- 30                                            # Abundance at t = 1
+mu.lam <- 1.02                                      # Mean of the distribution of lambda
+sig2.lam <- 0.02                                    # Variance of the distribution of lambda
+sig2.y <- 400                                       # Variance of observation error
 
 # Simulate true system state
 N <- numeric(nyears)
-N[1] <- N1                   # Set initial abundance
-set.seed(1)                  # Initialize the RNGs
-lambda <- rnorm(nyears-1, mu.lam, sqrt(sig2.lam)) # Draw random lambdas
+N[1] <- N1                                          # Set initial abundance
+set.seed(1)                                         # Initialize the RNGs
+lambda <- rnorm(nyears-1, mu.lam, sqrt(sig2.lam))   # Draw random lambdas
 for (t in 1:(nyears-1)){
-N[t+1] <- lambda[t] * N[t]   # Propagate population size forwards
+  N[t+1] <- lambda[t] * N[t]                        # Propagate population size forwards
 }
 
 # Simulate observations
-eps <- rnorm(nyears, 0, sqrt(sig2.y)) # Draw random residuals
-y <- N + eps
+eps <- rnorm(nyears, 0, sqrt(sig2.y))               # Draw random residuals
+y <- N + eps                                        # Add residual (error) to value of true state
 
 # ~~~~ code for Figure 4.1 ~~~~
 op <- par(cex=1.25)
@@ -53,14 +53,14 @@ str(jags.data)
 # $ T: int 25
 
 # Write JAGS model file
-cat(file="model1.txt","
+cat(file="model1.txt", "
 model {
   # Priors and linear models
-  mu.lam ~ dunif(0, 10) # Prior for mean growth rate
-  sig.lam ~ dunif(0, 1) # Prior for sd of growth rate
+  mu.lam ~ dunif(0, 10)                             # Prior for mean growth rate
+  sig.lam ~ dunif(0, 1)                             # Prior for sd of growth rate
   sig2.lam <- pow(sig.lam, 2)
   tau.lam <- pow(sig.lam, -2)
-  sig.y ~ dunif(0.1, 100) # Prior for sd of observation process
+  sig.y ~ dunif(0.1, 100)                           # Prior for sd of observation process
   sig2.y <- pow(sig.y, 2)
   tau.y <- pow(sig.y, -2)
 
@@ -75,14 +75,14 @@ model {
   }
 
   # Observation process
-  for (t in 1:T) {
+  for (t in 1:T){
     y[t] ~ dnorm(N[t], tau.y)
   }
 }
 ")
 
 # Initial values
-inits <- function(){list(sig.lam = runif(1, 0, 1))}
+inits <- function(){list(sig.lam=runif(1, 0, 1))}
 
 # Parameters monitored
 parameters <- c("lambda", "mu.lam", "sig2.y", "sig2.lam", "sig.y", "sig.lam", "N")
@@ -174,10 +174,10 @@ out2 <- jags(jags.data1, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb
     n.thin=nt, n.adapt=na, parallel=TRUE)
 out3 <- jags(jags.data2, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out2)              # Not shown
-traceplot(out3)              # Not shown
-print(out2, 3)               # Not shown
-print(out3, 3)               # Not shown
+traceplot(out2) # Not shown
+traceplot(out3) # Not shown
+print(out2, 3) # Not shown
+print(out3, 3) # Not shown
 
 # ~~~~ code for Figure 4.4 ~~~~
 # Plot of true and observed and estimated states

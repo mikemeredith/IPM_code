@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -13,15 +12,15 @@ library(IPMbook) ; library(jagsUI)
 # -----------------------------------------------------------------
 
 # Define the demographic rates
-sj <- 0.3   # Juvenile survival
-sa <- 0.55  # Adult survival
-f1 <- 1.3   # Number of female fledglings per 1-year old female
-fa <- 1.8   # Number of female fledglings per adult female
+sj <- 0.3                                           # Juvenile survival
+sa <- 0.55                                          # Adult survival
+f1 <- 1.3                                           # Number of female fledglings per 1-year old female
+fa <- 1.8                                           # Number of female fledglings per adult female
 
-# Define the transition matrix A (inspired by Woodchat shrike demography)
+# Define the transition matrix A (inspired by woodchat shrike demography)
 A <- matrix(c(f1 * sj, fa * sj, sa, sa), ncol=2, byrow=TRUE)
 dimnames(A) <- list(c("1y", "ad"), c("1y", "ad"))
-A # print the matrix
+A                                                   # print the matrix
 #      1y   ad
 # 1y 0.39 0.54
 # ad 0.55 0.55
@@ -32,8 +31,8 @@ A # print the matrix
 N1 <- c(10, 1)
 
 T <- 7
-N <- matrix(NA, nrow=2, ncol=T)     # Population sizes
-gr <- matrix(NA, nrow=3, ncol=T-1)  # Growth rates
+N <- matrix(NA, nrow=2, ncol=T)                     # Population sizes
+gr <- matrix(NA, nrow=3, ncol=T-1)                  # Growth rates
 N[,1] <- N1
 for (t in 2:T){
   N[,t] <- A %*% N[,t-1]
@@ -41,7 +40,7 @@ for (t in 2:T){
   gr[2,t-1] <- N[2,t] / N[2,t-1]
   gr[3,t-1] <- (N[1,t] + N[2,t]) / (N[1,t-1] + N[2,t-1])
 }
-sr <- N[1, ] / colSums(N)           # State distribution (prop. 1y)
+sr <- N[1, ] / colSums(N)                           # State distribution (proportion of 1y)
 
 # ~~~~ extra code for Figure 3.8 ~~~~
 op <- par(las=1, "mfrow")
@@ -100,7 +99,7 @@ Abat <- matrix(c(0, rho1*s1/2, rho2*s1/2,
 
 # Define R structures and do computations
 T <- 9
-N1 <- c(10, 5, 5)                       # Initial population sizes
+N1 <- c(10, 5, 5)                   # Initial population sizes
 N <- matrix(NA, nrow=3, ncol=T)     # Population size
 gr <- matrix(NA, nrow=4, ncol=T-1)  # Growth rate
 N[,1] <- N1
@@ -156,9 +155,9 @@ par(op)
 # Stable stage distribution:
 # ''''''''''''''''''''''''''
 
-( u <- which.max(Re(eigen(A)$values)) )
+u <- which.max(Re(eigen(A)$values))
 # [1] 1
-( revec <- Re(eigen(A)$vectors[,u]) )
+revec <- Re(eigen(A)$vectors[,u])
 # [1] -0.6503047 -0.7596734
 
 revec/sum(revec)
@@ -172,42 +171,41 @@ levec <- Re((eigen(A)$vectors)[u,])
 levec / sum(levec)
 # [1] 0.4631655 0.5368345
 
-
 # Net reproductive rate:
 # ''''''''''''''''''''''
 
-i <- 1:100 # 100 as our approximation to infinity
-( R0 <- sj * f1 + sj * fa * sum(sa^i) )
+i <- 1:100                                          # 100 as our approximation to infinity
+R0 <- sj * f1 + sj * fa * sum(sa^i)
 # [1] 1.05
 
 # Generation time
 # '''''''''''''''
 
-Q <- 100 # Our approximation to infinity
+Q <- 100                                            # Our approximation to infinity
 i <- 2:Q
-( G <- sj * f1 / lambda + sj * fa * sum(i * sa^(i-1) * lambda^(-i)) )
+G <- sj * f1 / lambda + sj * fa * sum(i * sa^(i-1) * lambda^(-i))
 # [1] 2.339834
 
-( GT <- log(R0) / log(lambda) )
+GT <- log(R0) / log(lambda)
 # [1] 2.368012
 
 
 # Sensitivity and elasticity (perturbation analysis):
 # '''''''''''''''''''''''''''''''''''''''''''''''''''
 
-( senmat <- levec %*% t(revec) )
-          # [,1]      [,2]
+senmat <- levec %*% t(revec)
+#           [,1]      [,2]
 # [1,] 0.4228963 0.4940192
 # [2,] 0.4901602 0.5725957
 
-( elasmat <- senmat * A / lambda )
-          # 1y        ad
+elasmat <- senmat * A / lambda
+#           1y        ad
 # 1y 0.1615661 0.2613301
 # ad 0.2640904 0.3085053
 
 derivmat <- matrix(c(f1, fa, 0, 0), ncol=2, byrow=TRUE)
-ssj <- sum(senmat * derivmat)  # Sensitivity
-esj <- sj / lambda * ssj       # Elasticity
+ssj <- sum(senmat * derivmat)                       # Sensitivity
+esj <- sj / lambda * ssj                            # Elasticity
 ssj; esj
 # [1] 1.439
 # [1] 0.4228963
@@ -276,3 +274,4 @@ lines(y=lame[,3], x=es, col=co[3], lwd=lw)
 lines(y=lame[,4], x=es, col=co[4], lwd=lw)
 mtext("B", at=0.9, line=0.5, cex=1.5)
 par(op)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

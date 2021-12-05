@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 10 : Population viability analysis
 # ------------------------------------------
-# Code from proofs.
 
 # Run time for test script 4 mins, full run 36 mins
 
@@ -23,7 +22,7 @@ marr.a <- marr[,,2]
 jags.data <- with(hoopoe$reproAgg, list(marr.j=marr.j, marr.a=marr.a, n.occasions=ncol(marr.j),
   rel.j=rowSums(marr.j), rel.a=rowSums(marr.a), J1=J1, B1=B1, J2=J2, B2=B2, count=hoopoe$count,
   pNinit=dUnif(1, 50), K=10))
-str(jags.data) # Remind ourselves of how the data look like
+str(jags.data)                                    # Remind ourselves of how the data look like
 
 # Write JAGS model file
 cat(file="model4.txt", "
@@ -68,11 +67,11 @@ model {
     for (j in (i+1):5){
       sigma2[i,j] <- sigma[i] * sigma[j] * rho[i,j]
       sigma2[j,i] <- sigma2[i,j]
-      rho[i,j] ~ dunif(-1,1)
+      rho[i,j] ~ dunif(-1, 1)                     # prior for rho
     } #j
   } #i
 
-  # Specify priors for SD and rho
+  # Specify priors for SD
   for (i in 1:5){
     sigma[i] ~ dunif(0, 5)
   }
@@ -98,7 +97,7 @@ model {
     count[t] ~ dnorm(Ntot[t], tau.res)
   }
   for (t in 1:(n.occasions+K)){
-    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]      # total population size
+    Ntot[t] <- N[1,t] + N[2,t] + N[3,t]           # total population size
   }
 
   # Productivity data (Poisson regression model)
@@ -160,6 +159,7 @@ ni <- 11000; nb <- 1000; nc <- 3; nt <- 10; na <- 200  # ~~~ for testing
 out4 <- jags(jags.data, inits, parameters, "model4.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out4)
+
 
 # ~~~~ code for modified model ~~~~
 # Write JAGS model file

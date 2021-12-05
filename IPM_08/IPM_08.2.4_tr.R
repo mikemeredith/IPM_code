@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 8 : Integrated population models with density-dependence
 # ----------------------------------------------------------------
-# Code from proofs.
 
 # Run time for test script 12 mins, full run 1.7 hrs
 
@@ -64,7 +63,7 @@ model {
   tau ~ dgamma(0.001, 0.001)
   sigma2 <- 1 / tau
 
-  # Priors for the mean of demographic and resighting rates
+  # Priors for the mean of resighting rates
   b0.pj ~ dunif(0, 1)
   b0.pa ~ dunif(0, 1)
 
@@ -80,20 +79,20 @@ model {
 
   # Population count data (state-space model)
   # Model for initial stage-spec. population sizes: discrete uniform priors
-  R[1] ~ dcat(pNinit)     # Local recruits
-  S[1] ~ dcat(pNinit)     # Surviving adults
-  I[1] ~ dpois(omega[1])  # Immigrants
+  R[1] ~ dcat(pNinit)                             # Local recruits
+  S[1] ~ dcat(pNinit)                             # Surviving adults
+  I[1] ~ dpois(omega[1])                          # Immigrants
 
   # Process model over time: our model of population dynamics
   for (t in 2:n.occasions){
-    R[t] ~ dpois(f[t-1]/2 * phij[t-1] * N[t-1]) # No. local recruits
-    S[t] ~ dbin(phia[t-1], N[t-1])              # No. surviving adults
-    I[t] ~ dpois(omega[t])                      # No. immigrants
+    R[t] ~ dpois(f[t-1]/2 * phij[t-1] * N[t-1])   # No. local recruits
+    S[t] ~ dbin(phia[t-1], N[t-1])                # No. surviving adults
+    I[t] ~ dpois(omega[t])                        # No. immigrants
   }
 
   # Observation process
   for (t in 1:n.occasions){
-    N[t] <- S[t] + R[t] + I[t]                  # Total number of breeding females
+    N[t] <- S[t] + R[t] + I[t]                    # Total number of breeding females
     logN[t] <- log(N[t])
     C[t] ~ dlnorm(logN[t], tau)
   }
@@ -107,8 +106,8 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    qj[t] <- 1-pj[t]                            # Probability of non-recapture (juv)
-    qa[t] <- 1-pa[t]                            # Probability of non-recapture (ad)
+    qj[t] <- 1-pj[t]                              # Probability of non-recapture (juv)
+    qa[t] <- 1-pa[t]                              # Probability of non-recapture (ad)
     pr.j[t,t] <- phij[t] * pj[t]
     pr.a[t,t] <- phia[t] * pa[t]
     # Above main diagonal
@@ -144,7 +143,7 @@ parameters <- c("phij", "phia", "f", "omega", "b0.pj", "b0.pa", "sigma2.phij", "
     "sigma2.om", "sigma2.pj", "sigma2.pa", "R", "S", "I", "N", "pa", "pj", "sigma2", "alpha", "beta")
 
 # MCMC settings
-ni <- 110000; nb <- 10000; nc <- 3; nt <- 20; na <- 1000
+# ni <- 110000; nb <- 10000; nc <- 3; nt <- 20; na <- 1000
 ni <- 11000; nb <- 1000; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing, 11 mins
 
 # Call JAGS (ART 139 min), check convergence and summarize posteriors

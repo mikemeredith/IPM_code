@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -11,15 +10,15 @@ library(IPMbook) ; library(jagsUI)
 
 # Simulate the two data sets and plot them
 # Choose sample size and parameter values for both data sets
-nsites1 <- 200                     # Sample size for count data
-nsites2 <- 500                     # Sample size for detection/nondetection data
-mean.lam <- 2                      # Average expected abundance (lambda) per site
-beta <- -2                         # Coefficient of elevation covariate on lambda
+nsites1 <- 200                                      # Sample size for count data
+nsites2 <- 500                                      # Sample size for detection/nondetection data
+mean.lam <- 2                                       # Average expected abundance (lambda) per site
+beta <- -2                                          # Coefficient of elevation covariate on lambda
 
 # Simulate elevation covariate for both and standardize to mean of 1000 and
 # standard deviation also of 1000 m
 set.seed(2016)
-elev1 <- sort(runif(nsites1, 200, 2000)) # Imagine 200-2000 m a.s.l.
+elev1 <- sort(runif(nsites1, 200, 2000))            # Imagine 200-2000 m a.s.l.
 elev2 <- sort(runif(nsites2, 200, 2000))
 selev1 <- (elev1 - 1000) / 1000
 selev2 <- (elev2 - 1000) / 1000
@@ -29,8 +28,8 @@ C1 <- rpois(nsites1, exp(log(mean.lam) + beta * selev1))
 C2 <- rpois(nsites2, exp(log(mean.lam) + beta * selev2))
 
 # Turn count data set 2 (C2) into detection/nondetection data (y)
-y <- C2                            # Make a copy
-y[y > 1] <- 1                      # Squash to binary
+y <- C2                                             # Make a copy
+y[y > 1] <- 1                                       # Squash to binary
 
 # ~~~~ extra code for Fig 2.19 ~~~~
 # Plot counts in both data sets and detection-nondetection data
@@ -50,9 +49,10 @@ par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Get MLEs for individual data sets
-# Data set 1: Poisson GLM with log link for counts
+# Data Set 1: Poisson GLM with log link for counts
 summary(fm1 <- glm(C1 ~ selev1, family=poisson(link="log")))
-exp(coef(fm1)[1]) # Estimate of lambda on natural scale from counts
+exp(coef(fm1)[1])                                   # Estimate of lambda on natural scale from counts
+
 # Coefficients:
 #             Estimate Std. Error z value Pr(>|z|)
 # (Intercept)  0.62035    0.06213   9.985   <2e-16 ***
@@ -62,7 +62,7 @@ exp(coef(fm1)[1]) # Estimate of lambda on natural scale from counts
 # (Intercept)
     # 1.85958
 
-# Data set 2: Bernoulli GLM with cloglog link for detection-nondetection
+# Data Set 2: Bernoulli GLM with cloglog link for detection-nondetection
 summary(fm2 <- glm(y ~ selev2, family=binomial(link="cloglog")))
 exp(coef(fm2)[1]) # Estimate of lambda on natural scale from binary data
 
@@ -90,19 +90,21 @@ str(jags.data)
 cat(file="model9.txt", "
 model {
   # Priors and linear models: shared for models of both data sets
-  alpha ~ dunif(-10, 10)                         # Abundance intercept
+  alpha ~ dunif(-10, 10)                            # Abundance intercept
   mean.lam <- exp(alpha)
   beta ~ dnorm(0, 0.01)
-  # Likelihoods for Data sets 1 and 2
+
+  # Likelihoods for Data Sets 1 and 2
   # Note identical alpha and beta for both data sets
-  for (i in 1:nsites1){                          # Data set 1
-    C[i] ~ dpois(lambda1[i])
+  for (i in 1:nsites1){                             # Data Set 1
+  C[i] ~ dpois(lambda1[i])
     log(lambda1[i]) <- alpha + beta * selev1[i]
   }
-  for (j in 1:nsites2){                          # Data set 2
+  for (j in 1:nsites2){                             # Data Set 2
     y[j] ~ dbern(psi[j])
     cloglog(psi[j]) <- alpha + beta * selev2[j]
-    # Alternative implementation of same model for Data set 2
+
+    # Alternative implementation of same model for Data Set 2
     # y[j] ~ dbern(psi[j])
     # psi[j] <- 1 - exp(-lambda2[j])
     # log(lambda2[j]) <- alpha + beta * selev2[j]
@@ -124,7 +126,6 @@ out10 <- jags(jags.data, inits, parameters, "model9.txt", n.iter=ni, n.burnin=nb
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out10) # Not shown
 print(out10, 3)
-
 #               mean    sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # mean.lam     1.902 0.079    1.747    1.901    2.061    FALSE 1 1.000  3000
 # alpha        0.642 0.041    0.558    0.643    0.723    FALSE 1 1.000  3000
@@ -132,24 +133,24 @@ print(out10, 3)
 
 
 # Definition of negative log-likelihood (NLL) for Poisson GLM
-NLL1 <- function(param, y, x) {
-  alpha <- param[1]                                # Organize parameters in a vector
+NLL1 <- function(param, y, x){
+  alpha <- param[1]                                 # Organize parameters in a vector
   beta <- param[2]
-  lambda <- exp(alpha + beta * x)                  # Linear predictor
-  L <- dpois(y, lambda)                            # Likelihood contribution for one datum
-  return(-sum(log(L)))                             # NLL for all observations in data set
+  lambda <- exp(alpha + beta * x)                   # Linear predictor
+  L <- dpois(y, lambda)                             # Likelihood contribution for each datum
+  return(-sum(log(L)))                              # NLL for all observations in data set
 }
 
 # Minimize NLL
-inits <- c(alpha=0, beta=0) # Need to provide initial values
+inits <- c(alpha=0, beta=0)                         # Need to provide initial values
 sol1 <- optim(inits, NLL1, y=C1, x=selev1, hessian=TRUE)
-mle1 <- sol1$par # Grab the MLEs
-VC1 <- solve(sol1$hessian) # Get variance-covariance matrix
-ASE1 <- sqrt(diag(VC1)) # Extract asymptotic SEs
-print(cbind(mle1, ASE1), 3) # Print MLEs and asymptotic SEs
-#        mle1   ASE1
-# alpha  0.62 0.0621
-# beta  -2.19 0.1169
+mle1 <- sol1$par                                    # Grab the MLEs
+VC1 <- solve(sol1$hessian)                          # Get variance-covariance matrix
+ASE1 <- sqrt(diag(VC1))                             # Extract asymptotic SEs
+print(cbind(mle1, ASE1), 3)                         # Print MLEs and asymptotic SEs
+#       mle1   ASE1
+# alpha 0.62 0.0621
+# beta -2.19 0.1169
 
 # ~~~~ Compare with 'official' solution ~~~~
 summary(glm(C1 ~ selev1, family=poisson(link="log")))
@@ -161,25 +162,25 @@ summary(glm(C1 ~ selev1, family=poisson(link="log")))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Definition of negative log-likelihood for Bernoulli GLM with cloglog link
-NLL2 <- function(param, y, x) {
+NLL2 <- function(param, y, x){
   alpha <- param[1]
   beta <- param[2]
-  lambda <- exp(alpha + beta * x)                # Linear predictor
-  psi <- 1-exp(-lambda)                          # cloglog link
-  L <- dbinom(y, 1, psi)                         # Likelihood contribution for one datum
-  return(-sum(log(L)))                           # NLL for all observations in data set
+  lambda <- exp(alpha + beta * x)                   # Linear predictor
+  psi <- 1-exp(-lambda)                             # cloglog link
+  L <- dbinom(y, 1, psi)                            # Likelihood contribution for each datum
+  return(-sum(log(L)))                              # NLL for all observations in data set
 }
 
 # Minimize NLL
 inits <- c(alpha=0, beta=0)
 sol2 <- optim(inits, NLL2, y=y, x=selev2, hessian=TRUE)
-mle2 <- sol2$par # Grab MLEs
-VC2 <- solve(sol2$hessian) # Get variance-covariance matrix
-ASE2 <- sqrt(diag(VC2)) # Extract asymptotic SEs
-print(cbind(mle2, ASE2), 3) # Print MLEs and asymptotic SEs
-#         mle2   ASE2
-# alpha  0.598 0.0794
-# beta  -1.953 0.1765
+mle2 <- sol2$par                                    # Grab MLEs
+VC2 <- solve(sol2$hessian)                          # Get variance-covariance matrix
+ASE2 <- sqrt(diag(VC2))                             # Extract asymptotic SEs
+print(cbind(mle2, ASE2), 3)                         # Print MLEs and asymptotic SEs
+#        mle2   ASE2
+# alpha 0.598 0.0794
+# beta -1.953 0.1765
 
 # ~~~~ Compare with 'official' solution ~~~~
 summary(glm(y ~ selev2, family=binomial(link="cloglog")))
@@ -191,23 +192,23 @@ summary(glm(y ~ selev2, family=binomial(link="cloglog")))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Definition of the joint NLL for the integrated model
-NLLjoint <- function(param, y1, x1, y2, x2) {
+NLLjoint <- function(param, y1, x1, y2, x2){
   # Definition of elements in param vector (shared between data sets)
   alpha <- param[1]
   beta <- param[2]
 
   # Likelihood for the Poisson GLM for data set 1 (y1, x1)
   lambda1 <- exp(alpha + beta * x1)
-  L1 <- dpois(y1, lambda1)                       # Likelihood contribution one datum
+  L1 <- dpois(y1, lambda1)                          # Likelihood contribution each datum
 
   # Likelihood for the cloglog Bernoulli GLM for data set 2 (y2, x2)
   lambda2 <- exp(alpha + beta * x2)
   psi <- 1-exp(-lambda2)
-  L2 <- dbinom(y2, 1, psi)                       # Likelihood contribution one datum
+  L2 <- dbinom(y2, 1, psi)                          # Likelihood contribution each datum
 
   # Joint log-likelihood and joint NLL: here you can see that sum!
-  JointLL <- sum(log(L1)) + sum(log(L2))         # Joint LL
-  return(-JointLL) # Return joint NLL
+  JointLL <- sum(log(L1)) + sum(log(L2))            # Joint LL
+  return(-JointLL)                                  # Return joint NLL
 }
 
 # Minimize NLLjoint
@@ -215,10 +216,10 @@ inits <- c(alpha=0, beta=0)
 solJoint <- optim(inits, NLLjoint, y1=C1, x1=selev1, y2=y, x2=selev2, hessian=TRUE)
 
 # Get MLE and asymptotic SE and print them
-mleJoint <- solJoint$par # Grab MLEs
-VC <- solve(solJoint$hessian) # Get variance-covariance matrix
-ASE <- sqrt(diag(VC)) # Extract asymptotic SEs
-print(cbind(mleJoint, ASE), 3) # Print MLEs and asymptotic SEs
+mleJoint <- solJoint$par                            # Grab MLEs
+VC <- solve(solJoint$hessian)                       # Get variance-covariance matrix
+ASE <- sqrt(diag(VC))                               # Extract asymptotic SEs
+print(cbind(mleJoint, ASE), 3)                      # Print MLEs and asymptotic SEs
 #       mleJoint    ASE
 # alpha    0.642 0.0408
 # beta    -2.130 0.0804

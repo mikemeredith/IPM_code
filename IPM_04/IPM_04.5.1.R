@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time without 'browser()' approx. 7 mins
 
@@ -16,33 +15,32 @@ library(IPMbook) ; library(jagsUI)
 # 4.5.1.1 State-space formulation
 # '''''''''''''''''''''''''''''''
 
-# Choose values for data simulation
 nmarked <- 10                           # Number of marked individuals at each occasion
 nyears <- 11                            # Number of years
 phi <- 0.8                              # Constant apparent survival probability
-p <- 0.4                                # Constant tecapture probability
+p <- 0.4                                # Constant recapture probability
 
 # Determine occasion when an individual first captured and marked
 f <- rep(1:(nyears-1), each=nmarked)
 nind <- length(f)                       # Total number of marked individuals
 
 # State or ecological process
-z <- array(NA, dim=c(nind, nyears))     # Empty dead/alive matrix
+z <- array(NA, dim=c(nind, nyears))     # Empty alive/dead matrix
 
 # Initial conditions: all individuals alive at f(i)
 for (i in 1:nind){
   z[i,f[i]] <- 1
 }
 
-set.seed(1) # Initialize the RNGs in R
-# Propagate dead/alive process forwards via transition rule:
+set.seed(1)                             # Initialize the RNGs in R
+# Propagate alive/dead process forwards via transition rule:
 # Alive individuals survive with probability phi
 for (i in 1:nind){
   for (t in (f[i]+1):nyears){
     z[i,t] <- rbinom(1, 1, z[i,t-1] * phi)
   } #t
 } #i
-head(z); tail(z)                        # not shown: look at start and end of z
+head(z); tail(z)                        # Not shown: look at start and end of z
 
 # Observation process: simulate observations
 y <- array(0, dim=c(nind, nyears))
@@ -53,9 +51,8 @@ for (i in 1:nind){
   } #t
 } #i
 
-y # Complete simulated capture-recapture data set (not shown)
-for (i in 1:10){ # Look at true and observed states of first 10 individuals
-  cat("\n  Individual #", i, "\n")
+y                                       # Complete simulated capture-recapture data set (not shown)
+for (i in 1:10){                        # Look at true and observed states of first 10 individuals
   print(rbind("True state (z)" = z[i,], "Observed state (y)" = y[i,]))
   # browser()  # ~~~ take out for testing
 }
@@ -75,9 +72,10 @@ model {
   # Priors and linear models
   phi.const ~ dunif(0, 1)               # Vague prior for constant phi
   p.const ~ dunif(0, 1)                 # Vague prior for constant p
+
   for (i in 1:nind){                    # Loop over individuals
     for (t in f[i]:(nyears-1)){         # Loop over time intervals/occasions
-      phi[i,t] <- phi.const             # Here model pattern in phi ...
+      phi[i,t] <- phi.const             # Here we model pattern in phi ...
       p[i,t] <- p.const                 # ... and p
     } #t
   } #i
@@ -107,8 +105,8 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
 # Call JAGS from R (ART < 1 min) and check convergence
 out17 <- jags(jags.data, inits, parameters, "model14.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
-  n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out17)                        # Not shown
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out17) # Not shown
 print(out17, 3)
 #              mean     sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # phi.const   0.830  0.028   0.774   0.830   0.884    FALSE 1 1.002   834
@@ -128,9 +126,10 @@ last <- which(f==ncol(woodchat5$ch))
 f <- f[-last]
 ch <- woodchat5$ch[-last,]
 age <- woodchat5$age[-last]
+
 x <- createAge(f, age, 20, 2)
 
-x[50:51,] # Most columns omitted
+x[50:51,]                               # Most columns omitted
 #      [,1] [,2] [,3] [,4] ...
 # [1,]    2    2    2    2 ...
 # [2,]    1    2    2    2 ...
@@ -156,8 +155,8 @@ model {
 
   for (i in 1:nind){
     for (t in f[i]:(nyears-1)){
-      phi[i,t] <- beta[x[i,t]] # Linear model for phi ...
-      p[i,t] <- p.const # ... and p
+      phi[i,t] <- beta[x[i,t]]          # Linear model for phi ...
+      p[i,t] <- p.const                 # ... and p
     } #t
   } #i
 
@@ -187,7 +186,7 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 # Call JAGS from R (ART 5 min) and check convergence
 out18 <- jags(jags.data, inits, parameters, "model15.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out18)                        # Not shown
+traceplot(out18) # Not shown
 print(out18)
 #              mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # beta[1]     0.304  0.017    0.273    0.304    0.339    FALSE 1 0.998  6000
@@ -214,8 +213,8 @@ print(marr)
 
 rel <- rowSums(marr)
 print(rel)
-# Y1  Y2  Y3  Y4  Y5  Y6  Y7  Y8  Y9 Y10
-# 10  13  17  15  26  27  23  24  28  22
+# Y1 Y2 Y3 Y4 Y5 Y6 Y7 Y8 Y9 Y10
+# 10 13 17 15 26 27 23 24 28  22
 
 # Bundle data
 jags.data <- list(marr=marr, rel=rel, nyears=ncol(marr))
@@ -274,12 +273,13 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 
 # Call JAGS (ART <1 min), check convergence and summarize posteriors
 out19 <- jags(jags.data, inits, parameters, "model16.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
-    n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out19)                        # Not shown
+  n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out19) # Not shown
 print(out19)
 #              mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # phi.const   0.831 0.027   0.777   0.832   0.881    FALSE 1 1.001  5290
 # p.const     0.415 0.037   0.345   0.414   0.488    FALSE 1 1.001  3714
+
 
 # Analysis of simulated woodchat data
 # ...................................
@@ -321,7 +321,7 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(nyears-1)){
     # Main diagonal
-    q[t] <- 1 - p[t]                    # Probability of non-recapture
+    q[t] <- 1 - p[t]                                # Probability of non-recapture
     pi.j[t,t] <- phij[t] * p[t]
     pi.a[t,t] <- phia[t] * p[t]
     # Above main diagonal
@@ -355,7 +355,7 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 # Call JAGS (ART <1 min), check convergence and summarize posteriors
 out20 <- jags(jags.data, inits, parameters, "model17.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out20)                        # Not shown
+traceplot(out20) # Not shown
 print(out20)
 #               mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
 # phij.const   0.304 0.016   0.274   0.304   0.337    FALSE 1 1.001  6000

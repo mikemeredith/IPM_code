@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -10,25 +9,25 @@ library(IPMbook) ; library(jagsUI)
 
 # 4.3.5 Transitioning from Gaussian to discrete-valued state-space
 #       models for population counts
-# ------------------------------------------------------
+# ----------------------------------------------------------------
 
 # Choose constants
-nyear <- 25                                      # Number of years
-N1 <- 30                                         # Initial abundance
-mu.lam <- 1.02                                   # Mean of the distribution of lambda
-sig2.lam <- 0.02                                 # Variance of the distribution of lambda
+nyear <- 25                             # Number of years
+N1 <- 30                                # Initial abundance
+mu.lam <- 1.02                          # Mean of the distribution of lambda
+sig2.lam <- 0.02                        # Variance of the distribution of lambda
 
 # Simulate true system state
 N <- numeric(nyear)
-N[1] <- N1                                       # Set initial abundance
-set.seed(1)                                      # Initialize the RNGs
+N[1] <- N1                              # Set initial abundance
+set.seed(1)                             # Initialize the RNGs
 lambda <- rnorm(nyear-1, mu.lam, sqrt(sig2.lam)) # Draw random lambda
 for (t in 1:(nyear-1)){
-  N[t+1] <- rpois(1, lambda[t] * N[t])           # Propagate pop. size forwards
+  N[t+1] <- rpois(1, lambda[t] * N[t])  # Propagate population size forwards
 }
 
 # Simulate observations
-y <- rpois(nyear, N)                             # Observation error is now Poisson noise
+y <- rpois(nyear, N)                    # Observation error is now Poisson noise
 
 # Data bundle
 jags.data <- list(y=y, T=length(y))
@@ -41,8 +40,8 @@ str(jags.data)
 cat(file = "model6.txt", "
 model {
   # Priors and linear models
-  mu.lam ~ dunif(0, 10) # Prior for mean growth rate
-  sig.lam ~ dunif(0, 2) # Prior for sd of growth rate
+  mu.lam ~ dunif(0, 10)                 # Prior for mean growth rate
+  sig.lam ~ dunif(0, 2)                 # Prior for sd of growth rate
   sig2.lam <- pow(sig.lam, 2)
   tau.lam <- pow(sig.lam, -2)
 
@@ -76,8 +75,8 @@ ni <- 20000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out9 <- jags(jags.data, inits, parameters, "model6.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out9) # Not shown
-print(out9, 3)
+traceplot(out9)     # Not shown
+print(out9, 3)      # Not shown
 
 # ~~~~ Plot of true and observed and estimated states (Fig. 4.8) ~~~~
 ylim <- c(min(c(N, y)), max(c(N, y)))

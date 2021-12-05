@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time testing 6 mins, full run 12 mins
 
@@ -17,31 +16,28 @@ load("IPM_04.3.1+2_output.RData")
 # -------------------------------------------------
 
 library(IPMbook); library(jagsUI)
-?simMHB                      # Check out help function
+?simMHB                                       # Check out help function
 
 # Some examples of how the simMHB function works
 # Explicit default values for all function arguments
 str(dat <- simMHB(nsites=267, nsurveys=3, nyears=25, mean.lam=1, mean.beta=0.03,
     sd.lam=c(0.5, 0.05), mean.p=0.6, beta.p=0.1, show.plot=TRUE))
-str(dat <- simMHB())                        # Same, implicit
-str(dat <- simMHB(nsites=1000))             # More sites
-str(dat <- simMHB(nsurveys=10))             # More surveys
-str(dat <- simMHB(nyears=50))               # More years
-str(dat <- simMHB(mean.lam=5))              # Higher mean abundance
-str(dat <- simMHB(mean.beta=-0.03))         # Population declines
-str(dat <- simMHB(sd.lam=c(0, 0)))          # No site variability in lambda
-str(dat <- simMHB(mean.p=1))                # Perfect detection
-str(dat <- simMHB(mean.p=0.6, beta.p=0))    # Constant p = 0.6
-str(dat <- simMHB(mean.p=0.6, beta.p=-0.2)) # Declining p
-str(dat <- simMHB(show.plot=FALSE))         # No plots (when used in simulations)
+str(dat <- simMHB())                          # Same, implicit
+str(dat <- simMHB(nsites=1000))               # More sites
+str(dat <- simMHB(nsurveys=10))               # More surveys
+str(dat <- simMHB(nyears=50))                 # More years
+str(dat <- simMHB(mean.lam=5))                # Higher mean abundance
+str(dat <- simMHB(mean.beta=-0.03))           # Population declines
+str(dat <- simMHB(sd.lam=c(0, 0)))            # No site variability in lambda
+str(dat <- simMHB(mean.p=1))                  # Perfect detection
+str(dat <- simMHB(mean.p=0.6, beta.p=0))      # Constant p = 0.6
+str(dat <- simMHB(mean.p=0.6, beta.p=-0.2))   # Declining p
+str(dat <- simMHB(show.plot=FALSE))           # No plots (when used in simulations)
 
 # Create one data set for our hypothetical surveys of jays
 set.seed(1982)
 str(MHBdata <- simMHB(nsites=267, nsurveys=3, nyears=25, mean.lam=1, mean.beta=0.03,
     sd.lam=c(0.5, 0.05), mean.p=0.6, beta.p=0, show.plot=TRUE))
-str(MHBdata$C)
-# List of 1
-# $ C: int [1:267, 1:3, 1:25] 0 0 0 2 0 0 0 1 0 3 ...
 
 # Bundle and summarize data set
 jags.data <- with(MHBdata, (list(C=C, nsites=dim(C)[1], nsurveys=dim(C)[2], nyears=dim(C)[3])))
@@ -56,21 +52,22 @@ str(jags.data)
 cat(file = "model2.txt", "
 model {
   # Priors
-  for (t in 1:nyears){                 # Loop over years
-    lambda[t] ~ dunif(0, 100)          # Expected abundance
-    p[t] ~ dunif(0, 1)                 # Detection probability
+  for (t in 1:nyears){                              # Loop over years
+    lambda[t] ~ dunif(0, 100)                       # Expected abundance
+    p[t] ~ dunif(0, 1)                              # Detection probability
   }
 
   # Ecological model for true abundance
-  for (i in 1:nsites){                 # Loop over 267 sites
-    for (t in 1:nyears){               # Loop over 25 years
+  for (i in 1:nsites){                              # Loop over 267 sites
+    for (t in 1:nyears){                            # Loop over 25 years
       N[i,t] ~ dpois(lambda[t])
       # Observation model for replicated counts
-      for (j in 1:nsurveys){           # Loop over 3 occasions
+      for (j in 1:nsurveys){                        # Loop over 3 occasions
         C[i,j,t] ~ dbin(p[t], N[i,t])
       } #j
     } #t
   } #i
+
   # Total abundance across all surveyed sites as a derived quantity
   for (t in 1:nyears){
     totalN[t] <- sum(N[,t])
@@ -92,9 +89,10 @@ ni <- 5000; nb <- 1000; nc <- 3; nt <- 4; na <- 1000
 
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
 out4 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
-    n.thin=nt, n.adapt=na, parallel=TRUE )
-traceplot(out4)              # Not shown
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out4) # Not shown
 print(out4, 2)
+
 #                 mean      sd      2.5%       50%     97.5% overlap0 f  Rhat n.eff
 # totalN[1]    258.159   6.900   246.000   258.000   273.000    FALSE 1 1.000  3000
 # totalN[2]    231.374   8.227   217.000   231.000   250.000    FALSE 1 1.001  1133
@@ -110,7 +108,7 @@ for (i in 1:nyears){
     vcMat[i,j] <- cov(out4$sims.list$totalN[,i], out4$sims.list$totalN[,j])
   } #j
 } #i
-print(round(vcMat,1), 1)                # Look at that beast! (not shown)
+print(round(vcMat,1), 1)                            # Look at that beast! (not shown)
 
 # ~~~~ code to check ~~~~
 diag(vcMat)                             # Check out (not shown)
@@ -134,16 +132,17 @@ par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Plot posterior distributions of totalN (results not shown)
-# par(mfrow=c(3, 2), ask=TRUE)
+# par(mfrow=c(3, 2))
 op <- par(mfrow=c(3, 2), ask=dev.interactive(orNone=TRUE))  # ~~~ better for testing
 for (t in 1:25){
   hist(out4$sims.list$totalN[,t], freq=FALSE, col='grey', main=paste('totalN in year', t))
   lines(density(out4$sims.list$totalN[,t]), col='blue', lwd=3)
   curve(dnorm(x, mean=out4$mean$totalN[t], sd=out4$sd$totalN[t]),
   range(out4$sims.list$totalN[,t]), col='red', lwd=3, add=TRUE)
-  #browser()
+  # browser()
 }
 par(op)
+
 
 # Data bundle
 jags.data <- list(Nhat=out4$mean$totalN, var.Nhat=out4$sd$totalN^2, T=length(out4$mean$totalN))
@@ -154,14 +153,14 @@ str(jags.data)
 # $ T       : int 25
 
 # Write JAGS model file
-cat(file="model3.txt","
+cat(file="model3.txt", "
 model {
   # Priors and linear models
-  mu.lam ~ dunif(0, 10)                # Prior for mean growth rate
-  sig.lam ~ dunif(0, 10)               # Prior for sd of growth rate
+  mu.lam ~ dunif(0, 10)                             # Prior for mean growth rate
+  sig.lam ~ dunif(0, 10)                            # Prior for sd of growth rate
   sig2.lam <- pow(sig.lam, 2)
   tau.lam <- pow(sig.lam, -2)
-  sig.ystar ~ dunif(0, 10000)          # Prior for sd of observation process
+  sig.ystar ~ dunif(0, 10000)                       # Prior for sd of observation process
   sig2.ystar <- pow(sig.ystar, 2)
   tau.ystar <- pow(sig.ystar, -2)
 
@@ -174,10 +173,11 @@ model {
     lambda[t] ~ dnorm(mu.lam, tau.lam)
     N[t+1] <- N[t] * lambda[t]
   }
+
   # Observation process for the abundance estimates with their SEs
   for (t in 1:T){
     Nhat[t] ~ dnorm(ystar[t], tau.se[t])
-    tau.se[t] <- 1/var.Nhat[t] # Assumed known and given by variance of Nhat
+    tau.se[t] <- 1/var.Nhat[t]                      # Assumed known and given by variance of Nhat
     ystar[t] ~ dnorm(N[t], tau.ystar)
   }
 }
@@ -194,9 +194,9 @@ ni <- 50000; nb <- 25000; nc <- 3; nt <- 25; na <- 10000
 
 # Call JAGS from R (ART <1 min), check convergence and summarize posteriors
 out5 <- jags(jags.data, inits, parameters, "model3.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
-    n.thin=nt, n.adapt=na, parallel=TRUE )
-traceplot(out5)              # Not shown
-print(out5, 3)               # Not shown
+    n.thin=nt, n.adapt=na, parallel=TRUE)
+traceplot(out5) # Not shown
+print(out5, 3) # Not shown
 
 # ~~~~ code for Fig. 4.5 ~~~~
 library(scales)
@@ -227,14 +227,14 @@ str(jags.data)
 # $ T         : int 25
 
 # Write JAGS model file
-cat(file="model4.txt","
+cat(file="model4.txt", "
 model {
   # Priors and linear models
-  mu.lam ~ dunif(0, 10)                # Prior for mean growth rate
-  sig.lam ~ dunif(0, 10)               # Prior for sd of growth rate
+  mu.lam ~ dunif(0, 10)                             # Prior for mean growth rate
+  sig.lam ~ dunif(0, 10)                            # Prior for sd of growth rate
   sig2.lam <- pow(sig.lam, 2)
   tau.lam <- pow(sig.lam, -2)
-  sig.ystar ~ dunif(0, 10000)          # Prior for sd of observation process
+  sig.ystar ~ dunif(0, 10000)                       # Prior for sd of observation process
   sig2.ystar <- pow(sig.ystar, 2)
   tau.ystar <- pow(sig.ystar, -2)
 
@@ -265,14 +265,14 @@ inits <- function(){list(N=Nst, lambda=lamst, sig.lam=runif(1, 0, 1))} # Works f
 parameters <- c("lambda", "mu.lam", "sig2.ystar", "sig2.lam", "sig.ystar", "sig.lam", "N", "ystar")
 
 # MCMC settings
-# ni <- 50000; nb <- 20000; nc <- 3; nt <- 10; na <- 5000
+# ni <- 50000; nb <- 20000; nc <- 3; nt <- 10; na <- 5000   # 8 mins
 ni <- 5000; nb <- 2000; nc <- 3; nt <- 1; na <- 500  # ~~~ for testing
 
 # Call JAGS from R (ART 11 min), check convergence and summarize posteriors
 out6 <- jags(jags.data, inits, parameters, "model4.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out6)              # Not shown
-print(out6, 3)               # Not shown
+traceplot(out6) # Not shown
+print(out6, 3) # Not shown
 
 # Compare posterior means and SDs under the two models
 print(cbind('pm (model 2)'=out5$mean$N, 'psd (model 2)'=out5$sd$N, 'pm (model 3)'=out6$mean$N,

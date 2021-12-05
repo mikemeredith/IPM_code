@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from proofs.
 
 library(IPMbook) ; library(jagsUI)
 
@@ -13,29 +12,29 @@ library(IPMbook) ; library(jagsUI)
 # --------------------------------------------------------------------
 
 # Set constants in simulation
-npop <- 10                                            # Number of populations
-grand.mean <- 200                                     # Grand mean of mass
-sigma.pop <- 10                                       # SD of population variability in snake mass
-beta <- -30                                           # Slope of mass on elevation
-sigma.snake <- 50                                     # SD of individual variability of snake mass
+npop <- 10                                              # Number of populations
+grand.mean <- 200                                       # Grand mean of mass
+sigma.pop <- 10                                         # SD of population variability in snake mass
+beta <- -30                                             # Slope of mass on elevation
+sigma.snake <- 50                                       # SD of individual variability of snake mass
 
 # Simulate new snake mass data
 set.seed(39)
 
 # Simulate population-level data
-mean.mass <- round(rnorm(npop, grand.mean, sigma.pop)) # Average mass (g) in each population at
-                                                       #  average elevation
-elevPop <- sort(runif(npop, 200, 2000))                # 200 m to 2000 m elevation
+mean.mass <- round(rnorm(npop, grand.mean, sigma.pop))  # Average mass (g) in each population at
+                                                        # average elevation
+elevPop <- sort(runif(npop, 200, 2000))                 # 200 m to 2000 m elevation
 elevPopSc <- as.numeric(scale(elevPop))
 mean.pop.mass <- mean.mass + beta * elevPopSc
-plot(mean.pop.mass, elevPop, pch=16)                   # Not shown: population-level plot
+plot(mean.pop.mass, elevPop, pch=16)                    # Not shown: population-level plot
 
 # Simulate snake-level data
-nsnakes <- rpois(npop, 20)                             # Number of snakes caught per population
+nsnakes <- rpois(npop, 20)                              # Number of snakes caught per population
 mass <- numeric()
 for (j in 1:npop){
-massPop <- rnorm(nsnakes[j], mean.pop.mass[j], sigma.snake)
-mass <- c(mass, massPop)
+  massPop <- rnorm(nsnakes[j], mean.pop.mass[j], sigma.snake)
+  mass <- c(mass, massPop)
 }
 
 # Create individual-level elevation covariate and population factor
@@ -71,18 +70,17 @@ cat(file="model8.txt", "
 model {
   # Priors and linear models
   for (j in 1:npop){
-    alpha[j] ~ dnorm(mu.alpha, tau.alpha)        # Random effects
+    alpha[j] ~ dnorm(mu.alpha, tau.alpha)               # Random effects
   }
-
   # Priors for hyper-parameters
-  mu.alpha ~ dnorm(0, 1.0E-06)                   # Hyperprior for mean hyperparam
+  mu.alpha ~ dnorm(0, 1.0E-06)                          # Hyperprior for mean hyperparam
   tau.alpha <- pow(sd.alpha, -2)
-  sd.alpha ~ dunif(0, 100)                       # Hyperprior for sd hyperparam
+  sd.alpha ~ dunif(0, 100)                              # Hyperprior for sd hyperparam
 
   # Other priors
-  beta ~ dnorm(0, 1.0E-06)                       # Slope of mass on elevation
+  beta ~ dnorm(0, 1.0E-06)                              # Slope of mass on elevation
   tau <- pow(sd, -2)
-  sd ~ dunif(0, 1000)                            # 1/residual variance
+  sd ~ dunif(0, 1000)                                   # 1/residual variance
 
   # 'Likelihood'
   for (i in 1:n){
@@ -129,17 +127,17 @@ mean.mass
 
 # Get frequentist restricted MLEs for comparison
 library(lme4)
-fm <- lmer(mass ~ elev + (1 | as.factor(pop)), REML=TRUE) # Fit model
-summary(fm)                                               # Show summary
-ranef(fm)                                                 # Give estimates of population mean deviations (not shown)
+fm <- lmer(mass ~ elev + (1 | as.factor(pop)), REML=TRUE)   # Fit model
+summary(fm)                                         # Show summary
+ranef(fm)                                           # Give estimates of population mean deviations (not shown)
 
 # Random effects:
- # Groups         Name        Variance Std.Dev.
- # as.factor(Pop) (Intercept)   99.15   9.958
- # Residual                   2242.97  47.360
+#  Groups         Name        Variance Std.Dev.
+#  as.factor(Pop) (Intercept)   99.15   9.958
+#  Residual                   2242.97  47.360
 # Number of obs: 178, groups:  as.factor(Pop), 10
 
 # Fixed effects:
-            # Estimate Std. Error t value
+#             Estimate Std. Error t value
 # (Intercept)  195.664      4.767  41.048
 # elev         -30.777      4.933  -6.239

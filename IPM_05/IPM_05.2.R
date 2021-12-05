@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
-# Code from proofs.
 
 # 5.2 Feeding demographic data into the analysis of a matrix population model
 # ===========================================================================
@@ -27,13 +26,13 @@ jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     rel.j=rowSums(marr[,,1]), rel.a=rowSums(marr[,,2]), mean.f=c(2.6, 3.6), T=15)
 str(jags.data)
 # List of 7
-# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
-# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
 # $ n.occasions: int 20
-# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
-# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
-# $ mean.f : num [1:2] 2.6 3.6
-# $ T : num 15
+# $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ mean.f     : num [1:2] 2.6 3.6
+# $ T          : num 15
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -82,7 +81,6 @@ model {
   # Define initial stage-specific population sizes
   N[1,1] <- 1
   N[2,1] <- 1
-
   # Loop over time
   for (t in 1:T){
     # Population projection
@@ -107,7 +105,6 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000
 # Call JAGS (ART <1 min), check convergence and summarize posteriors
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na)
-# par(mfrow=c(2, 3)); traceplot(out1)
 traceplot(out1)
 print(out1, 3)
 #             mean    sd    2.5%     50%   97.5% overlap0 f  Rhat n.eff
@@ -127,14 +124,14 @@ jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     age=woodchat5$repro[,3], T=15)
 str(jags.data)
 # List of 8
-# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
-# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
 # $ n.occasions: int 20
-# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
-# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
-# $ J : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
-# $ age : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
-# $ T : num 15
+# $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ J          : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
+# $ age        : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ T          : num 15
 
 # Write JAGS model file
 cat(file="model2.txt", "
@@ -163,10 +160,11 @@ model {
     marr.j[t,1:n.occasions] ~ dmulti(pr.j[t,], rel.j[t])
     marr.a[t,1:n.occasions] ~ dmulti(pr.a[t,], rel.a[t])
   }
+
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    q[t] <- 1 - p[t]              # Probability of non-recapture
+    q[t] <- 1 - p[t]                    # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal

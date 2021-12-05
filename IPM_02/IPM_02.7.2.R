@@ -1,17 +1,16 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 1 min
 
 library(IPMbook) ; library(jagsUI)
 
-# ~~~ need following fcode from 2.7.1 ~~~~~~~~
+# ~~~ need following code from 2.7.1 ~~~~~~~~
 original.elev <- c(500, 400, 700, 500, 600, 800, 1000, 900, 1000, 900)
-elev <- (original.elev - mean(original.elev)) / 1000  # Center and scale
-C <- c(6, 10, 2, 7, 4, 1, 1, 2, 0, 0)   # Counts
-times.bigger <- 100      # Results in sample size of 1000
+elev <- (original.elev - mean(original.elev)) / 1000    # Center and scale
+C <- c(6, 10, 2, 7, 4, 1, 1, 2, 0, 0)                   # Counts
+times.bigger <- 100                                     # Results in sample size of 1000
 newC <- rep(C, times.bigger)
 newElev <- rep(elev, times.bigger)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -23,11 +22,12 @@ newElev <- rep(elev, times.bigger)
 # -----------------------------------------
 
 # Turn counts into detection/nondetection data
-y <- as.numeric(newC > 0); table(y) # Not shown
+y <- as.numeric(newC > 0); table(y)       # Not shown
 
 # Bundle data
 jags.data <- list(y=y, elev=newElev, n=length(y))
 str(jags.data)
+
 # List of 3
 # $ y   : num [1:1000] 1 1 1 1 1 1 1 1 0 0 ...
 # $ elev: num [1:1000] -0.23 -0.33 -0.03 -0.23 -0.13 0.07 0.27 0.17...
@@ -37,15 +37,15 @@ str(jags.data)
 cat(file="model2.txt", "
 model {
   # Priors and linear models
-  alpha <- logit(mean.theta)                     # Intercept on logit link scale
-  mean.theta ~ dunif(0, 1)                       # Intercept on prob. scale
-  beta ~ dnorm(0, 1.0E-06)                       # Slope on logit link scale
+  alpha <- logit(mean.theta)                      # Intercept on logit link scale
+  mean.theta ~ dunif(0, 1)                        # Intercept on prob. scale
+  beta ~ dnorm(0, 1.0E-06)                        # Slope on logit link scale
 
   # Likelihood of the Bernoulli GLM
   for (i in 1:n){
-    y[i] ~ dbern(theta[i])                       # Stochastic part of response
-    logit(theta[i]) <- alpha + beta * elev[i]    # Link function and lin. pred.
-    # theta[i] <- ilogit(alpha + beta * elev[i]) # Same written differently
+    y[i] ~ dbern(theta[i])                        # Stochastic part of response
+    logit(theta[i]) <- alpha + beta * elev[i]     # Link function and lin. pred.
+    # theta[i] <- ilogit(alpha + beta * elev[i])  # Same written differently
   }
 }
 ")
@@ -62,9 +62,7 @@ ni <- 50000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART 1 min), check convergence and summarize posteriors
 out3 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-
-# par(mfrow=c(2, 2)); traceplot(out3) # May need jagsUI::traceplot
-traceplot(out3) # May need jagsUI::traceplot
+traceplot(out3)                 # May need jagsUI::traceplot
 print(out3, 3)
 #               mean    sd    2.5%     50%   97.5% overlap0 f Rhat n.eff
 # alpha        2.972 0.231   2.536   2.967   3.441    FALSE 1    1 12000
@@ -82,7 +80,6 @@ summary(glm(y ~ newElev, family='binomial'))
 
 # Inspect the posterior draws available after our run of JAGS
 str(out3$sims.list)
-
 # List of 4
 # $ alpha     : num [1:12000] 2.83 2.54 2.95 2.79 2.82 ...
 # $ beta      : num [1:12000] -11.5 -11.9 -12 -11.9 -11.7 ...
@@ -101,10 +98,9 @@ pred1 <- array(NA, dim=c(1000, 12000))
 for (i in 1:12000){
   pred1[,i] <- plogis(out3$sims.list$alpha[i] + out3$sims.list$beta[i] * elev.pred)
 }
-
 # Summarize posterior distribution of theta_hat
-pm <- apply(pred1, 1, mean) # Posterior mean
-psd <- apply(pred1, 1, sd) # Posterior SD (like prediction SE)
+pm <- apply(pred1, 1, mean)                             # Posterior mean
+psd <- apply(pred1, 1, sd)                              # Posterior SD (like prediction SE)
 CRI <- apply(pred1, 1, quantile, probs=c(0.025, 0.975)) # 95% CRI
 
 # ~~~~ extra code for Figure 2.13 ~~~~
@@ -119,8 +115,8 @@ par(op)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Prepare another covariate with different range
-mean(original.elev)                              # Remind ourselves of the mean in the original cov.
-alt.elev.pred <- 601:1600                        # For prediction
+mean(original.elev)                                     # Remind ourselves of the mean in the original cov.
+alt.elev.pred <- 601:1600                               # For prediction
 elev.pred <- (alt.elev.pred - mean(original.elev)) / 1000
 
 # Get posterior distribution of predictions of theta
@@ -130,11 +126,9 @@ for(i in 1:12000){
 }
 
 # Get posterior mean of theta (theta_hat)
-pm <- apply(pred2, 1, mean) # Posterior mean
-
+pm <- apply(pred2, 1, mean)                             # Posterior mean
 # Compute probability that theta_hat < 0.01
 prob <- apply(pred2, 1, function(x) mean((x - 0.01) < 0))
-
 # Compute minimum elevation at which prob > 0.95
 min.elev <- min(alt.elev.pred[prob > 0.95])
 print(min.elev)
@@ -147,6 +141,6 @@ lines(alt.elev.pred, prob, lwd=2, col='black')
 abline(h=0.95, lwd=1, lty=3)
 abline(v=min.elev, lwd=2, lty=1, col='red')
 legend(x=600, y=0.3, lwd=rep(2, 2), col=c('blue', 'black'), bty='n',
-    legend=c(expression(paste('Predicted apparent occupancy (', hat(theta),')')),
+    legend=c(expression(paste('Occupancy (', hat(theta),')')),
         expression(paste(italic(p),'(', hat(theta), ')<0.01'))))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

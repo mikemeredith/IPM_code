@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 4 : Components of integrated population models
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 3 mins
 
@@ -14,9 +13,9 @@ library(IPMbook) ; library(jagsUI)
 # ----------------------------------------
 
 # Choose constants in simulation
-nbrood <- 1000                          # Number of broods with young counted
-brood.mean <- 1.5                       # Average brood size
-sd.brood <- 0.3                         # log-linear brood random effect
+nbrood <- 1000                            # Number of broods with young counted
+brood.mean <- 1.5                         # Average brood size
+sd.brood <- 0.3                           # log-linear brood random effect
 
 # Draw Poisson random numbers
 set.seed(24)
@@ -27,6 +26,7 @@ C <- rpois(nbrood, expNyoung)
 plot(table(C), lwd=20, col='grey', lend='butt', frame=FALSE, xlab='Brood size',
     ylab='Number')
 # ~~~~~~~~~~~~~~~~~
+
 table(C)
 # C
 #   0   1   2   3   4   5   6   7   8
@@ -45,11 +45,11 @@ str(jags.data)
 cat(file="model8.txt", "
 model {
   # Priors and linear models
-  rho1 ~ dunif(0, 5)                              # Mean brood size in model 1
-  rho2 ~ dunif(0, 5)                              # Mean brood size in model 2
-  rho3 ~ dunif(0, 5)                              # Mean brood size in model 3
+  rho1 ~ dunif(0, 5)                      # Mean brood size in model 1
+  rho2 ~ dunif(0, 5)                      # Mean brood size in model 2
+  rho3 ~ dunif(0, 5)                      # Mean brood size in model 3
   tau.rho3 <- pow(sd.rho3, -2)
-  sd.rho3 ~ dunif(0, 3)                           # Brood-level overdispersion in model 3
+  sd.rho3 ~ dunif(0, 3)                   # Brood-level overdispersion in model 3
 
   # Likelihoods for three separate models
   # Model 1: Poisson GLM for disaggregated data
@@ -82,8 +82,9 @@ ni <- 60000; nb <- 10000; nc <- 3; nt <- 10; na <- 1000
 # Call JAGS from R (ART 3 min), check convergence and summarize posteriors
 out11 <- jags(jags.data, inits, parameters, "model8.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-traceplot(out11)                        # Not shown
+traceplot(out11)    # Not shown
 print(out11, 3)
+
 #              mean     sd     2.5%      50%    97.5% overlap0 f  Rhat n.eff
 # rho1        1.530  0.039    1.454    1.529    1.609    FALSE 1 1.000 15000
 # rho2        1.530  0.039    1.453    1.530    1.606    FALSE 1 1.000 15000

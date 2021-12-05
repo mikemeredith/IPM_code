@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 6 : Benefits of integrated population modeling
 # ------------------------------------------------------
-# Code from proofs.
 
 # Run time for test script 2 mins, full run 20 mins
 
@@ -41,8 +40,8 @@ model {
   for (t in 1:(n.occasionsCR-1)){
     p[t] <- mean.p[recap[t]]
   }
-  mean.p[1] ~ dunif(0, 1)                                  # Prior for years with recapture
-  mean.p[2] <- 0                                           # Fix to zero for year without recaptures
+  mean.p[1] ~ dunif(0, 1)               # Prior for years with recapture
+  mean.p[2] <- 0                        # Fix to zero for year without recaptures
 
   mu[1] <- logit(mean.sj)
   mu[2] <- logit(mean.sa)
@@ -71,10 +70,12 @@ model {
     N[1,t+1] <- f[t] / 2 * sj[t] * (N[1,t] + N[2,t])
     N[2,t+1] <- sa[t] * (N[1,t] + N[2,t])
   }
+
   # Observation model (for years with counts only)
   for (t in 1:n.occasionsC){
     C[t] ~ dnorm(N[1,t] + N[2,t], tau)
   }
+
   # Capture-recapture data (CJS model with multinomial likelihood)
   # For years with CR data only
   for (t in 1:(n.occasionsCR-1)){
@@ -84,9 +85,9 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasionsCR-1)){
     # Main diagonal
-    q[t] <- 1 - p[t] # Probability of non-recapture
-    pr.j[t,t] <- sj[t+10] * p[t]                           # increase index of survival
-    pr.a[t,t] <- sa[t+10] * p[t]                           # to match with population model
+    q[t] <- 1 - p[t]                    # Probability of non-recapture
+    pr.j[t,t] <- sj[t+10] * p[t]        # increase index of survival
+    pr.a[t,t] <- sa[t+10] * p[t]        # to match with population model
     # Above main diagonal
     for (j in (t+1):(n.occasionsCR-1)){
       pr.j[t,j] <- sj[t+10] * prod(sa[((t+1):j)+10]) * prod(q[t:(j-1)]) * p[j]
@@ -131,6 +132,7 @@ ni <- 40000; nb <- 10000; nc <- 3; nt <- 30; na <- 2000
 out5 <- jags(jags.data, inits, parameters, "model5.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out5)
+
 
 # ~~~ code for  Fig. 6.7 ~~~~
 av.count <- 1:20

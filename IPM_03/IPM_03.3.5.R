@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 3 : Introduction to stage-structured population models
 # ----------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 3 mins
 
@@ -15,22 +14,22 @@ library(IPMbook)
 # ---------------------------------------------------------------------
 
 # Define mean, measurement error and temporal variability of the demographic parameters
-mean.sj <- 0.3    # Mean value of juv. survival
-sd.sj.e <- 0.005  # Uncertainty of mean juv. survival as SD on natural scale
-sd.sj.t <- 0.25   # Temporal variability of juv. survival as SD on logit scale
-mean.sa <- 0.55   # Mean value of ad. survival
-sd.sa.e <- 0.005  # Uncertainty of mean ad. survival as SD on natural scale
-sd.sa.t <- 0.07   # Temporal variability of ad. survival as SD on logit scale
-mean.f1 <- 1.3    # Mean value of productivity of 1y females
-sd.f1.e <- 0.05   # Uncertainty of mean productivity as SD on natural scale
-sd.f1.t <- 0.3    # Temporal variability of productivity as SD on natural scale
-mean.fa <- 1.8    # Mean value of productivity of adult females
-sd.fa.e <- 0.03   # Uncertainty of mean productivity as SD on natural scale
-sd.fa.t <- 0.3    # Temporal variability of productivity as SD on natural scale
+mean.sj <- 0.3          # Mean value of juv. survival
+sd.sj.e <- 0.005        # Uncertainty of mean juv. survival as SD on natural scale
+sd.sj.t <- 0.25         # Temporal variability of juv. survival as SD on logit scale
+mean.sa <- 0.55         # Mean value of ad. survival
+sd.sa.e <- 0.005        # Uncertainty of mean ad. survival as SD on natural scale
+sd.sa.t <- 0.07         # Temporal variability of ad. survival as SD on logit scale
+mean.f1 <- 1.3          # Mean value of productivity of 1y females
+sd.f1.e <- 0.05         # Uncertainty of mean productivity as SD on natural scale
+sd.f1.t <- 0.3          # Temporal variability of productivity as SD on natural scale
+mean.fa <- 1.8          # Mean value of productivity of adult females
+sd.fa.e <- 0.03         # Uncertainty of mean productivity as SD on natural scale
+sd.fa.t <- 0.3          # Temporal variability of productivity as SD on natural scale
 
 # Define the number of years with predictions and the Monte Carlo setting
-T <- 200          # Number of years (projection time frame)
-nsim <- 100000    # Number of replicate populations simulated
+T <- 200                # Number of years (projection time frame)
+nsim <- 100000          # Number of replicate populations simulated
 
 # Define population matrix and initial stage-specific population sizes
 N <- array(NA, dim=c(2, T+1, nsim))
@@ -41,7 +40,7 @@ mean.r <- numeric(nsim)
 
 # Project population
 for (s in 1:nsim){ # Loop over replicate populations
-  if(s %% 100 == 0) {cat(paste("*** Simrep", s, "***\n")) } # Counter
+  if(s %% 100 == 0) {cat(paste("*** Simrep", s, "***\n")) }   # Counter
   # Generate a mean of the demographic rates (subject to measurement error)
   msj <- rbeta2(1, mean.sj, sd.sj.e)
   msa <- rbeta2(1, mean.sa, sd.sa.e)
@@ -51,11 +50,11 @@ for (s in 1:nsim){ # Loop over replicate populations
   # Generate annual demographic rates (subject to temporal variability)
   sj <- plogis(rnorm(T, qlogis(msj), sd.sj.t))
   sa <- plogis(rnorm(T, qlogis(msa), sd.sa.t))
-  f1 <- pmax(0, rnorm(T, mf1, sd.f1.t)) # Avoids negative values
-  fa <- pmax(0, rnorm(T, mfa, sd.fa.t)) # Ditto
+  f1 <- pmax(0, rnorm(T, mf1, sd.f1.t))                       # Avoids negative values
+  fa <- pmax(0, rnorm(T, mfa, sd.fa.t))                       # Dito
 
   # Project population (include demographic stochasticity)
-  for (t in 1:T){ # Loop over years
+  for (t in 1:T){                                             # Loop over years
     N[1,t+1,s] <- rpois(1, sj[t] * (f1[t] * N[1,t,s] + fa[t] * N[2,t,s]))
     N[2,t+1,s] <- rbinom(1, sum(N[,t,s]), sa[t])
     if (sum(N[,t+1,s]) == 0) break

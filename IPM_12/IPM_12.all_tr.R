@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 12 : Peregrine falcon
 # -----------------------------
-# Code from proofs.
 
 # Run time for test script 6 mins, full run 1 hr
 
@@ -12,7 +11,7 @@ library(IPMbook); library(jagsUI)
 data(peregrine)
 str(peregrine)
 # List of 3
-# $ count : num [1:43, 1:2] 1965 1966 1967 1968 1969 ...
+# $ count       : num [1:43, 1:2] 1965 1966 1967 1968 1969 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : NULL
 # .. ..$ : chr [1:2] "Year" "Breeding_pairs"
@@ -20,7 +19,7 @@ str(peregrine)
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : NULL
 # .. ..$ : chr [1:3] "Year" "No_surveyed_brood" "No_fledglings"
-# $ recoveries : int [1:1810, 1:43] 0 0 0 0 0 0 0 0 0 0 ...
+# $ recoveries  : int [1:1810, 1:43] 0 0 0 0 0 0 0 0 0 0 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : NULL
 # .. ..$ : chr [1:43] "1965" "1966" "1967" "1968" ...
@@ -84,11 +83,11 @@ jags.data <- with(peregrine, list(nyears=ncol(peregrine$recoveries), marr=m.dead
 str(jags.data)
 # List of 7
 # $ nyears: int 43
-# $ marr : num [1:42, 1:43] 0 0 0 0 0 0 0 0 0 0 ...
-# $ rel : num [1:42] 2 2 3 3 3 1 0 0 0 1 ...
-# $ y : num [1:43] 50 43 39 24 21 23 20 18 20 23 ...
-# $ B : num [1:43] 29 36 24 14 13 14 14 16 18 20 ...
-# $ J : num [1:43] 32 38 41 24 12 10 17 15 23 35 ...
+# $ marr  : num [1:42, 1:43] 0 0 0 0 0 0 0 0 0 0 ...
+# $ rel   : num [1:42] 2 2 3 3 3 1 0 0 0 1 ...
+# $ y     : num [1:43] 50 43 39 24 21 23 20 18 20 23 ...
+# $ B     : num [1:43] 29 36 24 14 13 14 14 16 18 20 ...
+# $ J     : num [1:43] 32 38 41 24 12 10 17 15 23 35 ...
 # $ pNinit: num [1:70] 0.0143 0.0143 0.0143 0.0143 0.0143 ...
 
 # IPM1: temporal random effects on the demographic rates
@@ -104,23 +103,23 @@ model {
     logit.s[2,t] ~ dnorm(l.mean.s[2], tau.s[2])
     s[2,t] <- ilogit(logit.s[2,t])
     alpha[t] <- mean.alpha
-    logit(r[t]) <- beta[1] + beta[2] * t  # Linear trend in recovery
+    logit(r[t]) <- beta[1] + beta[2] * t          # Linear trend in recovery
   }
   for (u in 1:2){
-    mean.s[u] ~ dunif(0, 1)               # Priors for mean age-dep. survival
+    mean.s[u] ~ dunif(0, 1)                       # Priors for mean age-dep. survival
     l.mean.s[u] <- logit(mean.s[u])
     sigma.s[u] ~ dunif(0, 5)
     tau.s[u] <- pow(sigma.s[u], -2)
   }
-  mean.alpha ~ dunif(0, 1)                # Prior for prob. start reproduction at age 2y
-  for (i in 1:2){ # Priors for betas
+  mean.alpha ~ dunif(0, 1)                        # Prior for prob. start reproduction at age 2y
+  for (i in 1:2){                                 # Priors for betas
     beta[i] ~ dnorm(0, 0.001)
   }
   for (t in 1:nyears){
     log.rho[t] ~ dnorm(l.mean.rho, tau.rho)
     rho[t] <- exp(log.rho[t])
   }
-  mean.rho ~ dunif(0, 5)                  # Prior for mean productivity
+  mean.rho ~ dunif(0, 5)                          # Prior for mean productivity
   l.mean.rho <- log(mean.rho)
   sigma.rho ~ dunif(0, 5)
   tau.rho <- pow(sigma.rho, -2)
@@ -147,7 +146,7 @@ model {
     # GOF for population count data: mean absolute percentage error
     y.pred[t] ~ dpois(NB[t])
     disc.y[t] <- pow(((y[t] - NB[t]) / y[t]) * ((y[t] - NB[t]) / (y[t] +
-        0.001)), 0.5)                     # Add a small number to avoid potential division by 0
+        0.001)), 0.5)                             # Add a small number to avoid potential division by 0
     discN.y[t] <- pow(((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)) *
         ((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)), 0.5)
   }
@@ -159,14 +158,13 @@ model {
   for (t in 1:(nyears-1)){
     marr[t,1:nyears] ~ dmulti(pr[t,], rel[t])
   }
-
   # Define the cell probabilities of the m-array
   for (t in 1:(nyears-1)){
     # Main diagonal
-    pr[t,t] <- (1-s[1,t])*r[t]
-    # Further above main diagonal
+    pr[t,t] <- (1-s[1,t]) * r[t]
+    # Further than one above main diagonal
     for (j in (t+2):(nyears-1)){
-      pr[t,j] <- s[1,t]*prod(s[2,(t+1):(j-1)])*(1-s[2,j])*r[j]
+      pr[t,j] <- s[1,t] * prod(s[2,(t+1):(j-1)]) * (1-s[2,j]) * r[j]
     } #j
     # Below main diagonal
     for (j in 1:(t-1)){
@@ -174,8 +172,8 @@ model {
     } #j
   } #t
   for (t in 1:(nyears-2)){
-    # One above main diagonal
-    pr[t,t+1] <- s[1,t]*(1-s[2,t+1])*r[t+1]
+  # One above main diagonal
+    pr[t,t+1] <- s[1,t] * (1-s[2,t+1]) * r[t+1]
   } #t
   # Last column: probability of non-recovery
   for (t in 1:(nyears-1)){
@@ -186,7 +184,6 @@ model {
   for (t in 1:(nyears-1)){
     # Simulated m-arrays
     marr.pred[t,1:nyears] ~ dmulti(pr[t,], rel[t])
-
     # Expected values and test statistics
     for (j in 1:nyears){
       marr.E[t,j] <- pr[t,j] * rel[t]
@@ -194,7 +191,6 @@ model {
       E.new[t,j] <- pow((pow(marr.pred[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
     } #j
   } #t
-
   fit.DR <- sum(E.org)
   fitN.DR <- sum(E.new)
 
@@ -217,17 +213,18 @@ model {
 inits <- function(){list(mean.s=runif(2, 0.6, 0.8))}
 
 # Parameters monitored
-parameters <- c("mean.s", "mean.alpha", "mean.rho", "beta", "sigma.rho", "sigma.r", "s", "rho", "r",
+parameters <- c("mean.s", "mean.alpha", "mean.rho", "beta", "sigma.rho", "sigma.s", "s", "rho", "r",
     "N", "NB", "fit.y", "fitN.y", "fit.DR", "fitN.DR", "fit.J", "fitN.J")
 
 # MCMC settings
-ni <- 100000; nb <- 20000; nc <- 3; nt <- 80; na <- 5000
+# ni <- 100000; nb <- 20000; nc <- 3; nt <- 80; na <- 5000
 ni <- 10000; nb <- 2000; nc <- 3; nt <- 8; na <- 500  # ~~~ for testing, 2 mins
 
 # Call JAGS from R (ART 56 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
+
 
 # IPM2: random-walk smoothers for all demographic rates
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -236,14 +233,14 @@ traceplot(out1)
 cat(file = "model2.txt", "
 model {
   # Priors and linear models
-  s[1,1] ~ dunif(0, 1)                    # Prior of first-year survival in year 1
+  s[1,1] ~ dunif(0, 1)                            # Prior of first-year survival in year 1
   logit.s[1,1] <- logit(s[1,1])
-  s[2,1] ~ dunif(0, 1)                    # Prior of adult survival in year 1
+  s[2,1] ~ dunif(0, 1)                            # Prior of adult survival in year 1
   logit.s[2,1] <- logit(s[2,1])
-  rho[1] ~ dunif(0, 5)                    # Prior of productivity in year 1
+  rho[1] ~ dunif(0, 5)                            # Prior of productivity in year 1
   log.rho[1] <- log(rho[1])
 
-  for (t in 2:(nyears-1)){                # Autoregressive models for s
+  for (t in 2:(nyears-1)){                        # Autoregressive models for s
     logit.s[1,t] ~ dnorm(logit.s[1,t-1], tau.s[1])
     s[1,t] <- ilogit(logit.s[1,t])
     logit.s[2,t] ~ dnorm(logit.s[2,t-1], tau.s[2])
@@ -254,18 +251,18 @@ model {
     tau.s[u] <- pow(sigma.s[u], -2)
   }
 
-  for (t in 2:nyears){                    # Autoregressive models for rho
+  for (t in 2:nyears){                            # Autoregressive models for rho
     log.rho[t] ~ dnorm(log.rho[t-1], tau.rho)
     rho[t] <- exp(log.rho[t])
   }
   sigma.rho ~ dunif(0, 5)
   tau.rho <- pow(sigma.rho, -2)
 
-  for (t in 1:(nyears-1)){                # Models for alpha and r
+  for (t in 1:(nyears-1)){                        # Models for alpha and r
     alpha[t] <- mean.alpha
     logit(r[t]) <- beta[1] + beta[2] * t
   }
-  mean.alpha ~ dunif(0, 1)                # Prior for prob. start reproduction at age 2y
+  mean.alpha ~ dunif(0, 1)                        # Prior for prob. start reproduction at age 2y
   for (i in 1:2){
     beta[i] ~ dnorm(0, 0.001)
   }
@@ -288,10 +285,11 @@ model {
   for (t in 1:nyears){
     NB[t] <- N[3,t] + N[4,t]
     y[t] ~ dpois(NB[t])
+
     # GOF for population count data: mean absolute percentage error
     y.pred[t] ~ dpois(NB[t])
     disc.y[t] <- pow(((y[t] - NB[t]) / y[t]) * ((y[t] - NB[t]) / (y[t] +
-        0.001)), 0.5)                     # Add a small number to avoid potential division by 0
+        0.001)), 0.5)                             # Add a small number to avoid potential division by 0
     discN.y[t] <- pow(((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)) *
         ((y.pred[t] - NB[t]) / (y.pred[t] + 0.001)), 0.5)
   }
@@ -303,14 +301,13 @@ model {
   for (t in 1:(nyears-1)){
     marr[t,1:nyears] ~ dmulti(pr[t,], rel[t])
   }
-
   # Define the cell probabilities of the m-array
   for (t in 1:(nyears-1)){
     # Main diagonal
-    pr[t,t] <- (1-s[1,t])*r[t]
-    # Further above main diagonal
+    pr[t,t] <- (1-s[1,t]) * r[t]
+    # Further than one above main diagonal
     for (j in (t+2):(nyears-1)){
-      pr[t,j] <- s[1,t]*prod(s[2,(t+1):(j-1)])*(1-s[2,j])*r[j]
+      pr[t,j] <- s[1,t] * prod(s[2,(t+1):(j-1)]) * (1-s[2,j]) * r[j]
     } #j
     # Below main diagonal
     for (j in 1:(t-1)){
@@ -318,8 +315,8 @@ model {
     } #j
   } #t
   for (t in 1:(nyears-2)){
-    # One above main diagonal
-    pr[t,t+1] <- s[1,t]*(1-s[2,t+1])*r[t+1]
+  # One above main diagonal
+    pr[t,t+1] <- s[1,t] * (1-s[2,t+1]) * r[t+1]
   } #t
   # Last column: probability of non-recovery
   for (t in 1:(nyears-1)){
@@ -338,13 +335,13 @@ model {
       E.new[t,j] <- pow((pow(marr.pred[t,j], 0.5) - pow(marr.E[t,j], 0.5)), 2)
     } #j
   } #t
-
   fit.DR <- sum(E.org)
   fitN.DR <- sum(E.new)
 
   # Productivity data (Poisson regression)
   for (t in 1:nyears){
     J[t] ~ dpois(B[t] * rho[t])
+
     # GOF for productivity data: deviance
     J.pred[t] ~ dpois(B[t] * rho[t])
     J.exp[t] <- B[t] * rho[t]
@@ -367,13 +364,14 @@ parameters <-c("mean.alpha", "beta", "s", "rho", "r", "sigma.s", "sigma.rho", "N
     "fitN.y", "fit.DR", "fitN.DR", "fit.J", "fitN.J")
 
 # MCMC settings
-ni <- 200000; nb <- 50000; nc <- 3; nt <- 150; na <- 5000
+# ni <- 200000; nb <- 50000; nc <- 3; nt <- 150; na <- 5000
 ni <- 20000; nb <- 5000; nc <- 3; nt <- 15; na <- 500  # ~~~ for testing, 3 mins
 
 # Call JAGS from R (ART 103 min) and check convergence
 out2 <- jags(jags.data, inits, parameters, "model2.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out2)
+
 
 # 12.6 Results
 # ============
@@ -575,7 +573,7 @@ str(out1$sims.list$N)                             # Draws of N from model 1
 str(out2$sims.list$N)                             # Draws of N from model 2
 Ndraws <- array(NA, dim=c(6000, 4, 43))           # Create empty array
 Ndraws[1:3000,,] <- out1$sims.list$N              # Fill in draws from IPM1
-Ndraws[3001:6000,,] <- out2$sims.list$N[1:3000,,] #... and from IPM2
+Ndraws[3001:6000,,] <- out2$sims.list$N           #... and from IPM2
 stage.comp1 <- apply(Ndraws, c(2,3), mean)        # Compute posterior mean
 dimnames(stage.comp1)<- list(c("N1 (Nonbr.)", "N2 (Nonbr.)", "N3 (Br.)", "N4 (Br)"), 1965:2007)
 
@@ -587,10 +585,8 @@ dimnames(stage.comp2)<- list(c("Floaters", "Breeders"), 1965:2007)
 all <- apply(apply(Ndraws, c(1,3), sum), 2, mean)
 # Number of floaters
 prop.floaters <- (Ndraws[,1,] + Ndraws[,2,]) / apply(Ndraws, c(1,3), sum)
-
 round(range(all))
 # [1] 33 374
-
 
 # ~~~~ Fig. 12.6 ~~~~
 co1 <- viridis_pal(option='E')(20)[c(2,9,15,19)]

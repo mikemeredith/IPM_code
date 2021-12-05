@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 11 : Woodchat shrike
 # ----------------------------
-# Code from proofs.
 
 # Run time for testing 1 min, full run 9 mins
 
@@ -12,13 +11,12 @@ library(IPMbook); library(jagsUI)
 data(woodchat11)
 str(woodchat11)
 # List of 6
-# $ ch : int [1:1079, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
-# $ age : num [1:1079] 1 1 1 1 1 1 1 1 1 1 ...
+# $ ch   : int [1:1079, 1:29] 0 0 0 0 0 0 0 0 0 0 ...
+# $ age  : num [1:1079] 1 1 1 1 1 1 1 1 1 1 ...
 # $ count: num [1:29] 10 13 25 15 17 16 6 16 7 7 ...
-# $ f : int [1:365] 5 0 6 0 3 6 6 3 0 3 ...
-# $ d : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
+# $ f    : int [1:365] 5 0 6 0 3 6 6 3 0 3 ...
+# $ d    : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
 # $ year : int [1:365] 1964 1964 1964 1964 1964 1964 1964 1964 1965 1965 ...
-
 
 # 11.4.1 Population count data (no code)
 
@@ -39,6 +37,7 @@ par(op)
 censored <- woodchat11$f + 1
 censored[woodchat11$d==1] <- woodchat11$f[woodchat11$d==1]
 woodchat11$f[woodchat11$d==1] <- NA
+
 
 # 11.4.3 Capture-recapture data
 # -----------------------------
@@ -61,18 +60,18 @@ jags.data <- list(n.years=dim(marr)[2], marr.j=marr[,,1], marr.a=marr[,,2], rel.
 str(jags.data)
 # List of 13
 # $ n.years : int 29
-# $ marr.j : num [1:28, 1:29] 1 0 0 0 0 0 0 0 0 0 ...
-# $ marr.a : num [1:28, 1:29] 3 0 0 0 0 0 0 0 0 0 ...
-# $ rel.j : num [1:28] 27 32 26 32 55 26 22 32 0 25 ...
-# $ rel.a : num [1:28] 9 14 18 16 15 13 8 17 2 0 ...
-# $ recap : num [1:28] 1 2 3 4 5 6 7 8 19 9 ...
+# $ marr.j  : num [1:28, 1:29] 1 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a  : num [1:28, 1:29] 3 0 0 0 0 0 0 0 0 0 ...
+# $ rel.j   : num [1:28] 27 32 26 32 55 26 22 32 0 25 ...
+# $ rel.a   : num [1:28] 9 14 18 16 15 13 8 17 2 0 ...
+# $ recap   : num [1:28] 1 2 3 4 5 6 7 8 19 9 ...
 # $ n.recap : num 19
-# $ f : int [1:365] 5 0 6 0 3 6 6 3 0 NA ...
-# $ d : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
+# $ f       : int [1:365] 5 0 6 0 3 6 6 3 0 NA ...
+# $ d       : int [1:365] 0 0 0 0 0 0 0 0 0 1 ...
 # $ censored: num [1:365] 6 1 7 1 4 7 7 4 1 3 ...
-# $ year : num [1:365] 1 1 1 1 1 1 1 1 2 2 ...
-# $ C : num [1:29] 10 13 25 15 17 16 6 16 7 7 ...
-# $ pNinit : num [1:20] 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 ...
+# $ year    : num [1:365] 1 1 1 1 1 1 1 1 2 2 ...
+# $ C       : num [1:29] 10 13 25 15 17 16 6 16 7 7 ...
+# $ pNinit  : num [1:20] 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 ...
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -86,6 +85,7 @@ model {
     pj[t] <- p.j[recap[t]]
     pa[t] <- p.a[recap[t]]
   }
+
   for (t in 1:n.years){
     logit.nu[t] ~ dnorm(l.mean.nu, tau.nu)
     nu[t] <- ilogit(logit.nu[t])
@@ -94,7 +94,8 @@ model {
     log.omega[t] ~ dnorm(l.mean.omega, tau.omega)
     omega[t] <- exp(log.omega[t])
   }
-  for (t in 1:(n.recap-1)){ # Recapture probability
+
+  for (t in 1:(n.recap-1)){
     p.j[t] <- mean.p[1]
     p.a[t] <- mean.p[2]
   }
@@ -131,25 +132,26 @@ model {
 
   # Population count data (state-space model)
   # Model for the initial population size: uniform priors
-  R[1] ~ dcat(pNinit)                       # Local recruits
-  S[1] ~ dcat(pNinit)                       # Surviving adults
-  I[1] ~ dpois(omega[1])                    # Immigrants
+  R[1] ~ dcat(pNinit)                             # Local recruits
+  S[1] ~ dcat(pNinit)                             # Surviving adults
+  I[1] ~ dpois(omega[1])                          # Immigrants
 
   # Process model over time: our model of population dynamics
   for (t in 2:n.years){
     R[t] ~ dpois(nu[t-1] * kappa[t-1]/2 * phij[t-1] * N[t-1]) # Local recruits
-    S[t] ~ dbin(phia[t-1], N[t-1])          # Surviving adults
-    I[t] ~ dpois(omega[t])                  # Immigrants
+    S[t] ~ dbin(phia[t-1], N[t-1])                            # Surviving adults
+    I[t] ~ dpois(omega[t])                                    # Immigrants
   }
 
   # Observation model
   for (t in 1:n.years){
-    N[t] <- S[t] + R[t] + I[t] # Total number of breeding females
+    N[t] <- S[t] + R[t] + I[t]                    # Total number of breeding females
     C[t] ~ dpois(N[t])
+
     # GoF for population count data: mean absolute percentage error
     C.pred[t] ~ dpois(N[t])
     disc.C[t] <- pow(((C[t] - N[t]) / C[t]) * ((C[t] - N[t]) / (C[t] +
-        0.001)), 0.5) # Add a small number to avoid potential division by 0
+        0.001)), 0.5)                             # Add a small number to avoid potential division by 0
     discN.C[t] <- pow(((C.pred[t] - N[t]) / (C.pred[t] + 0.001)) *
         ((C.pred[t] - N[t]) / (C.pred[t] + 0.001)), 0.5)
   }
@@ -204,7 +206,7 @@ model {
     pr.a[t,n.years] <- 1-sum(pr.a[t,1:(n.years-1)])
   }
 
-  # GoF for cap.-recap.data: Freeman-Tukey test statistics
+  # GoF for cap.-recap. data: Freeman-Tukey test statistics
   for (t in 1:(n.years-1)){
     # Simulated m-arrays
     marr.j.pred[t,1:n.years] ~ dmulti(pr.j[t,], rel.j[t])
@@ -254,8 +256,11 @@ ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 1000  # ~~~ for testing
 # Call JAGS from R (ART 3 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
-# par(mfrow=c(3, 3)); traceplot(out1)
 traceplot(out1)
+
+# ~~~~ save the output ~~~~
+save(out1, file = "ShrikeResults.Rdata")
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 11.6 Results
 # ============
@@ -317,9 +322,6 @@ print(out1, 3)
 # [... output truncated ...]
 # N[29]            11.063    2.641    6.000   11.000   17.000    FALSE 1 1.000  6000
 
-# ~~~~ save the output ~~~~
-save(out1, file = "ShrikeResults.Rdata")
-# ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~ code for figure 11.3 ~~~~
 op <- par(mfrow=c(1,3), las=1, mar=c(4.1, 4.5, 3, 2))
@@ -359,6 +361,7 @@ mean(sj); quantile(sj, c(0.025, 0.975))
 
 xsi <- 1 - out1$sims.list$mean.phij / sj
 mean(xsi); quantile(xsi, c(0.025, 0.975))
+
 
 # ~~~~ plotting code for figure 11.4 ~~~~~
 op <- par(mfrow=c(3, 2), mar=c(3, 4, 2, 2))
@@ -424,6 +427,7 @@ axis(1, at=a, tcl=-0.25, label=NA)
 axis(1, at=a[c(2, 7, 12, 17, 22, 27)], label=time)
 axis(2, las=1)
 par(op)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 # 11.7 More parsimonious models

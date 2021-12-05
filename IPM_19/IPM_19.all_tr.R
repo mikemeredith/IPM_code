@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 19 : Grey catbird
 # -------------------------
-# Code from proofs.
 
 # Run time for test script 17 mins, full run 3.5 hrs
 
@@ -12,18 +11,19 @@ library(IPMbook); library(jagsUI)
 data(catbird)
 str(catbird)
 # List of 9
-# $ y : num [1:4276, 1:17] 0 1 0 0 1 1 0 0 0 0 ...
+# $ y       : num [1:4276, 1:17] 0 1 0 0 1 1 0 0 0 0 ...
 # ..- attr(*, "dimnames")=List of 2
 # .. ..$ : chr [1:4276] "427696" "427697" "427699" "427703" ...
 # .. ..$ : chr [1:17] "1992" "1993" "1994" "1995" ...
-# $ r : num [1:4276] 0 0 0 0 0 0 0 0 1 0 ...
+# $ r       : num [1:4276] 0 0 0 0 0 0 0 0 1 0 ...
 # $ station : num [1:4276] 1 1 1 1 1 1 1 1 1 1 ...
-# $ count : num [1:1298] 23 10 14 39 22 26 28 30 23 27 ...
+# $ count   : num [1:1298] 23 10 14 39 22 26 28 30 23 27 ...
 # $ stratum : num [1:1298] 1 1 1 1 1 1 1 1 1 1 ...
-# $ year : num [1:1298] 1992 1992 1992 1992 1992 ...
+# $ year    : num [1:1298] 1992 1992 1992 1992 1992 ...
 # $ observer: num [1:1298] 1 2 3 4 5 6 7 8 9 8 ...
 # $ firstyr : num [1:1298] 0 1 0 0 0 0 0 0 1 0 ...
-# $ area : num [1:9] 10982 14868 14329 2132 4192 ...
+# $ area    : num [1:9] 10982 14868 14329 2132 4192 ...
+
 
 # 19.4.1 Population count data (BBS data) (no code)
 # 19.4.2 Capture-recapture data (MAPS data) (no code)
@@ -38,23 +38,23 @@ jags.data <- with(catbird, list(y=y, f=getFirst(y), r=r, sta=station,
     n.obs=length(unique(observer)), area=area, pNinit=dUnif(1, 50)))
 str(jags.data)
 # List of 17
-# $ y : num [1:4276, 1:17] 0 1 0 0 1 1 0 0 0 0 ...
-# $ f : Named int [1:4276] 4 1 4 4 1 1 4 4 4 4 ...
-# $ r : num [1:4276] 0 0 0 0 0 0 0 0 1 0 ...
-# $ sta : num [1:4276] 1 1 1 1 1 1 1 1 1 1 ...
-# $ n.sta : int 38
+# $ y       : num [1:4276, 1:17] 0 1 0 0 1 1 0 0 0 0 ...
+# $ f       : Named int [1:4276] 4 1 4 4 1 1 4 4 4 4 ...
+# $ r       : num [1:4276] 0 0 0 0 0 0 0 0 1 0 ...
+# $ sta     : num [1:4276] 1 1 1 1 1 1 1 1 1 1 ...
+# $ n.sta   : int 38
 # $ n.years : int 17
-# $ n.ind : int 4276
-# $ C : num [1:1298] 23 10 14 39 22 26 28 30 23 27 ...
-# $ n.counts : int 1298
-# $ str : num [1:1298] 1 1 1 1 1 1 1 1 1 1 ...
-# $ yr : num [1:1298] 1 1 1 1 1 1 1 1 1 1 ...
-# $ n.str : int 9
-# $ I : num [1:1298] 0 1 0 0 0 0 0 0 1 0 ...
-# $ obs : num [1:1298] 1 2 3 4 5 6 7 8 9 8 ...
-# $ n.obs : int 172
-# $ area : num [1:9] 10982 14868 14329 2132 4192 ...
-# $ pNinit : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
+# $ n.ind   : int 4276
+# $ C       : num [1:1298] 23 10 14 39 22 26 28 30 23 27 ...
+# $ n.counts: int 1298
+# $ str     : num [1:1298] 1 1 1 1 1 1 1 1 1 1 ...
+# $ yr      : num [1:1298] 1 1 1 1 1 1 1 1 1 1 ...
+# $ n.str   : int 9
+# $ I       : num [1:1298] 0 1 0 0 0 0 0 0 1 0 ...
+# $ obs     : num [1:1298] 1 2 3 4 5 6 7 8 9 8 ...
+# $ n.obs   : int 172
+# $ area    : num [1:9] 10982 14868 14329 2132 4192 ...
+# $ pNinit  : num [1:50] 0.02 0.02 0.02 0.02 0.02 0.02 0.02 0.02 ...
 
 # Write JAGS model file
 cat(file="model1.txt", "
@@ -67,12 +67,12 @@ model {
   } #i
 
   for (t in 1:(n.years-1)){
-    phi[t] ~ dunif(0, 1)        # Survival probability
-    lp0[t] <- logit(p0[t])      # Recapture probability
+    phi[t] ~ dunif(0, 1)                                  # Survival probability
+    lp0[t] <- logit(p0[t])                                # Recapture probability
     p0[t] ~ dunif(0, 1)
-    kappa[t] ~ dunif(0, 1)      # Predetermined residency probability
-    pi[t] ~ dunif(0, 1)         # Residency probability
-    rho[t] ~ dunif(0, 5)        # Recruitment
+    kappa[t] ~ dunif(0, 1)                                # Predetermined residency probability
+    pi[t] ~ dunif(0, 1)                                   # Residency probability
+    rho[t] ~ dunif(0, 5)                                  # Recruitment
   }
 
   # Random station effect for recapture probability
@@ -126,7 +126,7 @@ model {
     } #t
     # Model for residency state
     u[i] ~ dbern(pi[f[i]])
-    r[i] ~ dbern(u[i] * kappa[f[i]])                           # Observation model for residency
+    r[i] ~ dbern(u[i] * kappa[f[i]])                      # Observation model for residency
     # State process
     for (t in (f[i]+1):n.years){
       z[i,t] ~ dbern(z[i,t-1] * phi[t-1] * u[i])
@@ -140,10 +140,10 @@ model {
     for (t in 1:n.years){
       wN[s,t] <- area[s] * N[s,t] / sum(area)
     } #t
-    trend[s] <- pow(N[s,n.years] / N[s,1], 1/(n.years-1))      # Strata-spe.trend
+    trend[s] <- pow(N[s,n.years] / N[s,1], 1/(n.years-1)) # Strata-spe.trend
   } #s
   for (t in 1:n.years){
-    wIndex[t] <- sum(wN[1:n.str,t])                            # Weighted abundance index
+    wIndex[t] <- sum(wN[1:n.str,t])                       # Weighted abundance index
   }
   trend.com <- pow(wIndex[n.years] / wIndex[1], 1/(n.years-1)) # Combined trend
 }
@@ -154,9 +154,9 @@ ny <- jags.data$n.years
 ns <- jags.data$n.str
 uini <- rep(1, nrow(catbird$y))
 inits <- function(){
-Nini <- matrix(NA, nrow=ns, ncol=ny)
-Nini[,1] <- rpois(ns, 17)
-list(z=zInit(catbird$y), u=uini, N=Nini, rho=runif(ny-1, 0.3, 1.3))
+  Nini <- matrix(NA, nrow=ns, ncol=ny)
+  Nini[,1] <- rpois(ns, 17)
+  list(z=zInit(catbird$y), u=uini, N=Nini, rho=runif(ny-1, 0.3, 1.3))
 }
 
 # Parameters monitored
@@ -165,13 +165,16 @@ parameters <- c("phi", "rho", "pi", "p0", "kappa", "eta", "alpha", "sd.om", "sd.
 
 # MCMC settings
 # ni <- 70000; nb <- 20000; nc <- 3; nt <- 25; na <- 2000
-ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 2000  # ~~~ for testing
+ni <- 3000; nb <- 1000; nc <- 3; nt <- 1; na <- 2000  # ~~~ for testing, 13 mins
 
 # Call JAGS from R (ART 191 min) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
 traceplot(out1)
+
+# ~~~ save the results ~~~
 save(out1, file="CatbirdResults.Rdata")
+# ~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 19.6 Results
 # ============
@@ -335,3 +338,4 @@ for(s in 1:9){
   text(y=lims[2], x=4.5, paste('stratum',s,': n = ', round(mean(count.stat[s,,7]),1)))
 }
 par(op)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

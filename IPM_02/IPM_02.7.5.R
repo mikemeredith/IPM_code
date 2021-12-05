@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 2 : Bayesian statistical modeling using JAGS
 # ----------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 5 mins
 
@@ -24,9 +23,9 @@ dimnames(habitat) <- list(hab.types, "Number of sites")
 # -------------------------------------------
 
 # 'Stretch out' the habitat data from Section 2.7.4.
-habitat                           # Check out habitat again (not shown)
-habitat2 <- rep(1:4, habitat)     # Disaggregated version of the habitat data
-habitat2; table(habitat2)         # Look at data (not shown)
+habitat                                     # Check out habitat again (not shown)
+habitat2 <- rep(1:4, habitat)               # Disaggregated version of the habitat data
+habitat2; table(habitat2)                   # Look at data (not shown)
 
 # Bundle data
 jags.data <- list(C=habitat2, k=length(unique(habitat2)), n=length(habitat2))
@@ -41,11 +40,10 @@ cat(file="model6.txt", "
 model {
   # Priors and linear models
   # Cell probabilities
-  for (i in 1:k){ # Loop over all cells
+  for (i in 1:k){                           # Loop over all cells
     d[i] ~ dgamma(1, 1)
     pi[i] <- d[i] / sum(d[])
   }
-
   # Likelihood
   for (i in 1:n){
     C[i] ~ dcat(pi)
@@ -75,5 +73,6 @@ print(out7, 3)
 # pi[4]       0.426 0.016    0.396    0.426    0.457    FALSE 1    1 14368
 
 # Compare run times of multinomial and categorical versions of analysis
+# ~~~ May need to reload out5 ~~~
 load("IPM_02.7.4_out5.RData")
 out7$mcmc.info$elapsed.mins / out5$mcmc.info$elapsed.mins # [1] 138.2222

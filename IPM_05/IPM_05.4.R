@@ -1,7 +1,6 @@
 # Schaub & Kéry (2022) Integrated Population Models
 # Chapter 5 : Introduction to integrated population models
 # --------------------------------------------------------
-# Code from proofs.
 
 # Run time approx. 1 min
 
@@ -20,8 +19,8 @@ marr <- marrayAge(woodchat5$ch, woodchat5$age)
 # 5.4.2 Formulation of the likelihood for each available data set separately (no code)
 # 5.4.3 Formulation of the joint likelihood (no code)
 
-# 5.4.4 Writing the BUGS code for the IPM
-# -----------------------------------------------------------------------------
+# 5.4.4 Writing the BUGS code for the Integrated Population Model
+# ---------------------------------------------------------------
 
 # Bundle data and produce data overview
 jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
@@ -29,16 +28,16 @@ jags.data <- list(marr.j=marr[,,1], marr.a=marr[,,2], n.occasions=dim(marr)[2],
     year=woodchat5$repro[,2], age=woodchat5$repro[,3], C=woodchat5$count, pNinit=dUnif(1, 300))
 str(jags.data)
 # List of 10
-# $ marr.j : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
-# $ marr.a : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
+# $ marr.j     : num [1:19, 1:20] 8 0 0 0 0 0 0 0 0 0 ...
+# $ marr.a     : num [1:19, 1:20] 16 0 0 0 0 0 0 0 0 0 ...
 # $ n.occasions: int 20
-# $ rel.j : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
-# $ rel.a : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
-# $ J : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
-# $ year : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
-# $ age : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
-# $ C : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
-# $ pNinit : num [1:300] 0.00333 0.00333 0.00333 0.00333 0.00333 ...
+# $ rel.j      : num [1:19] 51 53 55 65 73 66 61 76 65 75 ...
+# $ rel.a      : num [1:19] 36 39 44 61 61 50 43 61 51 53 ...
+# $ J          : num [1:929] 6 2 2 5 3 5 3 2 3 2 ...
+# $ year       : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ age        : num [1:929] 1 1 1 1 1 1 1 1 1 1 ...
+# $ C          : num [1:20] 91 119 131 88 139 145 148 116 112 106 ...
+# $ pNinit     : num [1:300] 0.00333 0.00333 0.00333 0.00333 0.00333 ...
 
 # Write JAGS model file
 cat(file="model4.txt", "
@@ -46,23 +45,23 @@ model {
   # Priors and linear models
   for (t in 1:(n.occasions-1)){
     logit.sj[t] ~ dnorm(mu.sj, tau.sj)
-    sj[t] <- ilogit(logit.sj[t])       # Back-transformation from logit scale
+    sj[t] <- ilogit(logit.sj[t])          # Back-transformation from logit scale
     logit.sa[t] ~ dnorm(mu.sa, tau.sa)
-    sa[t] <- ilogit(logit.sa[t])       # Back-transformation from logit scale
+    sa[t] <- ilogit(logit.sa[t])          # Back-transformation from logit scale
     p[t] <- mean.p
   }
 
   for (t in 1:n.occasions){
     log.f[1,t] ~ dnorm(mu.f[1], tau.f[1])
-    f[1,t] <- exp(log.f[1,t])          # Back-transformation from log scale
+    f[1,t] <- exp(log.f[1,t])             # Back-transformation from log scale
     log.f[2,t] ~ dnorm(mu.f[2], tau.f[2])
-    f[2,t] <- exp(log.f[2,t])          # Back-transformation from log scale
+    f[2,t] <- exp(log.f[2,t])             # Back-transformation from log scale
   }
 
   mean.sj ~ dunif(0, 1)
-  mu.sj <- logit(mean.sj)              # Logit transformation
+  mu.sj <- logit(mean.sj)                 # Logit transformation
   mean.sa ~ dunif(0, 1)
-  mu.sa <- logit(mean.sa)              # Logit transformation
+  mu.sa <- logit(mean.sa)                 # Logit transformation
   sigma.sj ~ dunif(0, 3)
   tau.sj <- pow(sigma.sj, -2)
   sigma.sa ~ dunif(0, 3)
@@ -70,7 +69,7 @@ model {
 
   for (j in 1:2){
     mean.f[j] ~ dunif(0, 10)
-    mu.f[j] <- log(mean.f[j])          # Log transformation
+    mu.f[j] <- log(mean.f[j])             # Log transformation
     sigma.f[j] ~ dunif(0, 3)
     tau.f[j] <- pow(sigma.f[j], -2)
   }
@@ -110,7 +109,7 @@ model {
   # Define the cell probabilities of the m-arrays
   for (t in 1:(n.occasions-1)){
     # Main diagonal
-    q[t] <- 1 - p[t] # Probability of non-recapture
+    q[t] <- 1 - p[t]                      # Probability of non-recapture
     pr.j[t,t] <- sj[t] * p[t]
     pr.a[t,t] <- sa[t] * p[t]
     # Above main diagonal
@@ -190,6 +189,7 @@ print(out4, 3)
 # Ntot[1]              101.947  9.925   84.000  101.000  123.000    FALSE 1 1.000 12582
 # [ ... output truncated ... ]
 # Ntot[20]             151.349 10.377  131.000  151.000  173.000    FALSE 1 1.000 15000
+
 
 # ~~~~ code for Figure 5.4 ~~~~
 mag <- 1.25
