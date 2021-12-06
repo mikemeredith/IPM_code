@@ -6,7 +6,9 @@
 
 Code from the proofs replaced with actual code in the book. Additional code not to be printed unchanged.
 
-Tested on Windows 10 with R 4.1.2 and R-devel (as at 2021-12-01), and up-to-date versions of packages, including `IPMbook` 0.1.2.9007, `unmarked` 1.1.1.9014 and `jagsUI` 1.5.2.9002.
+Tested on Windows 10 with
+* R 4.1.2, IPMbook 0.1.2 and up to date CRAN versions of other packages.
+* R 4.2 devel (as at 2021-12-01), `IPMbook` 0.1.2.9007, `unmarked` 1.1.1.9014 and `jagsUI` 1.5.2.9002. and up to date CRAN versions of other packages.
 
 ## 2021-08-28
 
