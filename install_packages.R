@@ -8,7 +8,7 @@ update.packages(ask='graphics',checkBuilt=TRUE)
 # to ensure everything is up to date, including dependencies.
 
 needed <- c("IPMbook", "jagsUI", "scales", "MCMCglmm", "AHMbook", "wiqid", "RColorBrewer",
-    "denstrip", "plotrix")
+    "denstrip", "plotrix", "fields")
 got <- rownames(installed.packages())
 
 ( notgot <- needed[!needed %in% got] )

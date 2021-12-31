@@ -20,7 +20,7 @@ When all are done, it records the overall time taken and the output from `sessio
 Before running the scripts, you may want to check that the necessary packages are installed. I suggest first running `update.packages(ask='graphics',checkBuilt=TRUE)` to ensure everything is up to date, including dependencies. You can then install any extra packages needed with:
 ```
 needed <- c("IPMbook", "jagsUI", "scales", "MCMCglmm", "AHMbook", "wiqid", "RColorBrewer",
-    "denstrip", "plotrix")
+    "denstrip", "plotrix", "fields")
 got <- rownames(installed.packages())
 
 ( notgot <- needed[!needed %in% got] )
