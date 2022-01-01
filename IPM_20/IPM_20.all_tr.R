@@ -398,6 +398,10 @@ parameters <-c("lambda.int", "alpha.lam", "phi.int", "alpha.phi", "gamma.int", "
 # ni <- 150000; nb <- 50000; nc <- 3; nt <- 200; na <- 10000
 ni <- 1500; nb <- 500; nc <- 3; nt <- 2; na <- 1000  # ~~~ for testing, 2 hrs
 
+# ~~~ This run requires approx. 5GB of memory. If insufficient memory is available to run all
+# the chains, the error message will read 
+# "Error in unserialize(node$con) : error reading from connection"
+
 # Call JAGS from R (ART 88 h!) and check convergence
 out1 <- jags(jags.data, inits, parameters, "model1.txt", n.iter=ni, n.burnin=nb, n.chains=nc,
     n.thin=nt, n.adapt=na, parallel=TRUE)
